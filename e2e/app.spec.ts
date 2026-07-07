@@ -128,6 +128,17 @@ test.describe("mobile (360px)", () => {
   });
 });
 
+test("removing the last track returns to the empty state", async ({ page }) => {
+  await page.goto("/");
+  await uploadWav(page, 3);
+  await expect(page.getByTitle("Rename loop")).toHaveCount(1);
+
+  await page.getByTitle("Remove", { exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Loop anything. Master every bar." }),
+  ).toBeVisible();
+});
+
 test("keyboard shortcut N adds a second loop", async ({ page }) => {
   await page.goto("/");
   await uploadWav(page, 3);

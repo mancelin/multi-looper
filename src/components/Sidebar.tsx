@@ -109,20 +109,18 @@ export function Sidebar() {
                   </div>
                 )}
               </div>
-              {tracks.length > 1 && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const wasCurrent = t.id === currentId;
-                    removeTrack(t.id);
-                    if (wasCurrent) player.afterRemoval();
-                  }}
-                  title="Remove"
-                  className="flex h-[22px] w-[22px] flex-none cursor-pointer items-center justify-center self-start rounded-[6px] border-none bg-transparent text-muted-5 hover:bg-[rgba(248,113,113,.1)] hover:text-danger"
-                >
-                  <CloseIcon />
-                </button>
-              )}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const wasCurrent = t.id === currentId;
+                  removeTrack(t.id);
+                  if (wasCurrent) player.afterRemoval();
+                }}
+                title="Remove"
+                className="flex h-[22px] w-[22px] flex-none cursor-pointer items-center justify-center self-start rounded-[6px] border-none bg-transparent text-muted-5 hover:bg-[rgba(248,113,113,.1)] hover:text-danger"
+              >
+                <CloseIcon />
+              </button>
             </div>
           );
         })}

@@ -53,8 +53,7 @@ export const useLibrary = create<LibraryState>()(
     removeTrack: (id) =>
       set((s) => {
         const list = s.tracks.filter((t) => t.id !== id);
-        if (!list.length) return s; // never remove the last track
-        const currentId = id === s.currentId ? list[0].id : s.currentId;
+        const currentId = id === s.currentId ? (list[0]?.id ?? null) : s.currentId;
         return { tracks: list, currentId };
       }),
 
