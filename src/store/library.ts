@@ -68,8 +68,10 @@ export const useLibrary = create<LibraryState>()(
         tracks: s.tracks.map((t) => {
           if (t.id !== id) return t;
           const loops = t.loops.map((l) => {
+            // A loop spanning the old (possibly placeholder) duration stays full-track.
+            const wasFull = l.b >= t.duration - 0.05;
             const a = Math.min(l.a, Math.max(0, d - 0.1));
-            const b = Math.min(l.b > d ? Math.min(d, a + 8) : l.b, d);
+            const b = wasFull ? d : Math.min(l.b > d ? Math.min(d, a + 8) : l.b, d);
             return { ...l, a, b };
           });
           return { ...t, duration: d, loops };

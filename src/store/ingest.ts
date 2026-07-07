@@ -20,7 +20,7 @@ export function addYoutubeUrl(input: string): boolean {
     artist: "youtube.com",
     tags: ["youtube"],
     duration: 210, // placeholder; patched from the IFrame player once ready
-    loops: [{ id: loopId, name: "Loop 1", a: 20, b: 40 }],
+    loops: [{ id: loopId, name: "Loop 1", a: 0, b: 210 }],
     activeLoopId: loopId,
     accent: ACCENTS.youtube,
     thumb: thumbUrl(videoId),
@@ -49,7 +49,7 @@ export async function addFiles(files: File[]): Promise<void> {
       artist: isVideo ? "Local video" : "Local file",
       tags: [(f.name.split(".").pop() || "audio").toUpperCase()],
       duration: dur,
-      loops: [{ id: loopId, name: "Loop 1", a: Math.min(4, dur * 0.1), b: Math.min(dur, dur * 0.4 || 12) }],
+      loops: [{ id: loopId, name: "Loop 1", a: 0, b: dur }],
       activeLoopId: loopId,
       accent: isVideo ? ACCENTS.videoFile : ACCENTS.audioFile,
       peaks,
