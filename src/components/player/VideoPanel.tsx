@@ -93,7 +93,7 @@ export function VideoPanel({
   return (
     <div
       ref={containerRef}
-      className="flex-none items-center justify-center px-[26px] pb-1 pt-[6px]"
+      className="flex-none items-center justify-center px-4 pb-1 pt-[6px] sm:px-[26px]"
       style={{ display: showPanel ? "flex" : "none" }}
     >
       <div

@@ -78,6 +78,37 @@ test("clicking another loop chip selects it", async ({ page }) => {
   await expect(page.getByTestId("loop-len")).toHaveText("0:03.000");
 });
 
+test.describe("mobile (360px)", () => {
+  test.use({ viewport: { width: 360, height: 740 } });
+
+  test("drawer sidebar, no horizontal overflow, playback works", async ({ page }) => {
+    await page.goto("/");
+    await uploadWav(page, 3);
+    await expect(page.getByTitle("Rename loop")).toHaveCount(1);
+
+    // narrow starts with the library closed; toggle opens it as a drawer
+    await expect(page.getByPlaceholder("Search loops & tags")).toBeHidden();
+    await page.getByTitle("Toggle library").click();
+    await expect(page.getByPlaceholder("Search loops & tags")).toBeVisible();
+    // picking a track closes the drawer
+    await page.getByText("sample").first().click();
+    await expect(page.getByPlaceholder("Search loops & tags")).toBeHidden();
+
+    const overflow = await page.evaluate(() => {
+      const doc = document.documentElement;
+      const main = document.querySelector("main");
+      return Math.max(
+        doc.scrollWidth - doc.clientWidth,
+        main ? main.scrollWidth - main.clientWidth : 0,
+      );
+    });
+    expect(overflow).toBe(0);
+
+    await page.getByRole("button", { name: "Play" }).click();
+    await expect(page.getByTestId("time")).not.toHaveText("0:00.000", { timeout: 5000 });
+  });
+});
+
 test("keyboard shortcut N adds a second loop", async ({ page }) => {
   await page.goto("/");
   await uploadWav(page, 3);

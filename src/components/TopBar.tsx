@@ -19,7 +19,7 @@ export function TopBar() {
   };
 
   return (
-    <header className="z-5 flex h-[58px] flex-none items-center gap-[18px] border-b border-white/7 bg-panel px-[18px]">
+    <header className="z-5 flex h-[58px] flex-none items-center gap-3 border-b border-white/7 bg-panel px-3 sm:gap-[18px] sm:px-[18px]">
       <div className="flex items-center gap-[11px]">
         <button
           onClick={toggleSidebar}
@@ -32,12 +32,12 @@ export function TopBar() {
           <div className="flex h-[26px] w-[26px] items-center justify-center rounded-[7px] bg-gradient-to-br from-accent-2 to-accent-3 shadow-[0_2px_10px_rgba(45,212,191,.35)]">
             <EqIcon />
           </div>
-          <span className="text-[14px] font-bold tracking-[.14em]">multi-looper</span>
+          <span className="hidden text-[14px] font-bold tracking-[.14em] min-[560px]:inline">multi-looper</span>
         </div>
       </div>
 
-      <div className="flex max-w-[640px] flex-1 items-center gap-[10px]">
-        <div className="flex h-[38px] flex-1 items-center gap-2 rounded-[9px] border border-white/9 bg-field px-[11px]">
+      <div className="flex min-w-0 max-w-[640px] flex-1 items-center gap-2 sm:gap-[10px]">
+        <div className="flex h-[38px] min-w-0 flex-1 items-center gap-2 rounded-[9px] border border-white/9 bg-field px-[11px]">
           <YoutubeIcon className="flex-none text-[#e11d48]" />
           <input
             value={ytUrl}
@@ -56,9 +56,10 @@ export function TopBar() {
         <button
           onClick={() => fileRef.current?.click()}
           className="flex h-[38px] flex-none cursor-pointer items-center gap-[7px] rounded-[9px] border border-white/9 bg-field px-[13px] text-[13px] font-medium text-ink"
+          title="Upload file"
         >
           <UploadIcon />
-          Upload file
+          <span className="hidden sm:inline">Upload file</span>
         </button>
         <input
           ref={fileRef}
@@ -74,7 +75,7 @@ export function TopBar() {
         <button
           onClick={toggleShortcuts}
           title="Keyboard shortcuts"
-          className="flex h-[38px] w-[38px] flex-none cursor-pointer items-center justify-center rounded-[9px] border border-white/9 bg-field text-muted"
+          className="hidden h-[38px] w-[38px] flex-none cursor-pointer items-center justify-center rounded-[9px] border border-white/9 bg-field text-muted sm:flex"
         >
           <KeyboardIcon />
         </button>

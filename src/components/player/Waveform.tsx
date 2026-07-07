@@ -103,7 +103,7 @@ export function Waveform({ track }: { track: Track }) {
   }));
 
   return (
-    <div className="flex flex-none flex-col px-[26px] pt-[6px]">
+    <div className="flex flex-none flex-col px-4 pt-[6px] sm:px-[26px]">
       <div
         ref={wrapRef}
         onPointerDown={(e) => player.setT(pctFromEvent(e) * d)}

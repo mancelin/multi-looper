@@ -14,6 +14,7 @@ export function Sidebar() {
   const removeTrack = useLibrary((s) => s.removeTrack);
   const narrow = useUi((s) => s.narrow);
   const sidebarOpen = useUi((s) => s.sidebarOpen);
+  const toggleSidebar = useUi((s) => s.toggleSidebar);
 
   if (!sidebarOpen) return null;
 
@@ -27,10 +28,17 @@ export function Sidebar() {
   );
 
   return (
-    <aside
-      className="flex min-h-0 flex-none flex-col border-r border-white/7 bg-panel"
-      style={{ width: narrow ? 260 : 300 }}
-    >
+    <>
+      {narrow && (
+        <div className="fixed inset-0 top-[58px] z-30 bg-black/55" onClick={toggleSidebar} />
+      )}
+      <aside
+        className={
+          narrow
+            ? "fixed bottom-0 left-0 top-[58px] z-40 flex w-[280px] max-w-[80vw] flex-col border-r border-white/7 bg-panel"
+            : "flex min-h-0 w-[300px] flex-none flex-col border-r border-white/7 bg-panel"
+        }
+      >
       <div className="flex-none px-[14px] pb-[10px] pt-[14px]">
         <div className="mb-[11px] flex items-center justify-between">
           <span className="text-[11px] font-semibold tracking-[.13em] text-muted-3">LIBRARY</span>
@@ -52,7 +60,10 @@ export function Sidebar() {
           return (
             <div
               key={t.id}
-              onClick={() => player.selectTrack(t.id)}
+              onClick={() => {
+                player.selectTrack(t.id);
+                if (narrow) toggleSidebar();
+              }}
               className="relative mb-[3px] flex cursor-pointer gap-[11px] rounded-[10px] border p-[10px]"
               style={{
                 background: active ? "rgba(94,234,212,.08)" : "transparent",
@@ -116,6 +127,7 @@ export function Sidebar() {
           );
         })}
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }

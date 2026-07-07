@@ -64,8 +64,8 @@ export function LoopTrim({ track }: { track: Track }) {
     "tno w-[82px] rounded-[7px] border border-white/9 bg-field-2 px-0 py-[3px] text-center text-[16px] font-semibold text-ink focus:border-accent";
 
   return (
-    <div className="flex flex-wrap items-stretch gap-[10px] px-[26px] pt-3">
-      <div className="flex items-center gap-[14px] rounded-[11px] border border-white/8 bg-panel-2 px-[15px] py-[9px]">
+    <div className="flex flex-wrap items-stretch gap-[10px] px-4 pt-3 sm:px-[26px]">
+      <div className="flex flex-wrap items-center gap-x-[14px] gap-y-2 rounded-[11px] border border-white/8 bg-panel-2 px-[15px] py-[9px]">
         <div className="flex flex-col gap-[2px]">
           <span className="text-[9.5px] font-semibold tracking-[.1em] text-accent">LOOP START</span>
           <div className="flex items-center gap-[6px]">
@@ -86,7 +86,7 @@ export function LoopTrim({ track }: { track: Track }) {
             </NudgeButton>
           </div>
         </div>
-        <div className="w-px self-stretch bg-white/8" />
+        <div className="w-px self-stretch bg-white/8 max-sm:hidden" />
         <div className="flex flex-col gap-[2px]">
           <span className="text-[9.5px] font-semibold tracking-[.1em] text-accent">LOOP END</span>
           <div className="flex items-center gap-[6px]">
@@ -107,7 +107,7 @@ export function LoopTrim({ track }: { track: Track }) {
             </NudgeButton>
           </div>
         </div>
-        <div className="w-px self-stretch bg-white/8" />
+        <div className="w-px self-stretch bg-white/8 max-sm:hidden" />
         <div className="flex flex-col gap-[2px]">
           <span className="text-[9.5px] font-semibold tracking-[.1em] text-muted-3">LENGTH</span>
           <span data-testid="loop-len" className="tno text-[16px] font-semibold text-ink">{fmt(lp.b - lp.a)}</span>
@@ -117,13 +117,13 @@ export function LoopTrim({ track }: { track: Track }) {
       <div className="flex items-center gap-2">
         <button
           onClick={() => setLoopA(player.getT())}
-          className="h-full cursor-pointer whitespace-nowrap rounded-[11px] border border-[rgba(94,234,212,.3)] bg-[rgba(94,234,212,.07)] px-[15px] text-[12.5px] font-semibold text-accent"
+          className="h-full cursor-pointer whitespace-nowrap rounded-[11px] border border-[rgba(94,234,212,.3)] bg-[rgba(94,234,212,.07)] px-[15px] py-[10px] text-[12.5px] font-semibold text-accent"
         >
           Set A here
         </button>
         <button
           onClick={() => setLoopB(player.getT())}
-          className="h-full cursor-pointer whitespace-nowrap rounded-[11px] border border-[rgba(94,234,212,.3)] bg-[rgba(94,234,212,.07)] px-[15px] text-[12.5px] font-semibold text-accent"
+          className="h-full cursor-pointer whitespace-nowrap rounded-[11px] border border-[rgba(94,234,212,.3)] bg-[rgba(94,234,212,.07)] px-[15px] py-[10px] text-[12.5px] font-semibold text-accent"
         >
           Set B here
         </button>

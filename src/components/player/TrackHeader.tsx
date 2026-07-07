@@ -44,7 +44,7 @@ export function TrackHeader({ track }: { track: Track }) {
   };
 
   return (
-    <div className="flex flex-none items-center gap-4 px-[26px] pb-[14px] pt-5">
+    <div className="flex flex-none items-center gap-4 px-4 pb-[14px] pt-5 sm:px-[26px]">
       <div className="relative h-[66px] w-[66px] flex-none overflow-hidden rounded-[11px] border border-white/8 bg-field-2">
         {track.thumb ? (
           // eslint-disable-next-line @next/next/no-img-element

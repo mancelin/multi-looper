@@ -70,7 +70,8 @@ export const useUi = create<UiState>()((set) => ({
   setPlaying: (v) => set({ playing: v }),
   setRate: (v) => set({ rate: v }),
   toggleLoop: () => set((s) => ({ loopEnabled: !s.loopEnabled })),
-  setNarrow: (v) => set({ narrow: v }),
+  // entering narrow closes the drawer, leaving it restores the docked sidebar
+  setNarrow: (v) => set((s) => (s.narrow === v ? s : { narrow: v, sidebarOpen: !v })),
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
   setVideoWidth: (w) => set({ videoWidth: w }),
   toggleShortcuts: () => set((s) => ({ showShortcuts: !s.showShortcuts })),

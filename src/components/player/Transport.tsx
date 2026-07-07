@@ -43,7 +43,7 @@ export function Transport({ track }: { track: Track }) {
   };
 
   return (
-    <div className="mt-auto flex flex-wrap items-center gap-[18px] px-[26px] pb-[18px] pt-[14px]">
+    <div className="mt-auto flex flex-wrap items-center gap-3 px-4 pb-[18px] pt-[14px] sm:gap-[18px] sm:px-[26px]">
       <div className="flex items-center gap-[10px]">
         <button
           onClick={() => player.advance(-1)}
@@ -88,7 +88,7 @@ export function Transport({ track }: { track: Track }) {
         </button>
       </div>
 
-      <div className="flex min-w-[250px] max-w-[380px] flex-1 items-center gap-[10px] rounded-[11px] border border-white/8 bg-panel-2 px-[14px] py-2">
+      <div className="flex min-w-0 max-w-[380px] flex-1 basis-[240px] items-center gap-[10px] rounded-[11px] border border-white/8 bg-panel-2 px-[14px] py-2">
         <ClockIcon className="flex-none text-muted" />
         <span className="flex-none text-[9.5px] font-semibold tracking-[.1em] text-muted-3">SPEED</span>
         <input
@@ -98,7 +98,7 @@ export function Transport({ track }: { track: Track }) {
           step={0.05}
           value={rate}
           onChange={(e) => player.applyRate(parseFloat(e.target.value))}
-          className="h-1 flex-1 accent-accent"
+          className="h-1 min-w-0 flex-1 accent-accent"
         />
         <div className="flex flex-none items-baseline gap-[2px]">
           <input

@@ -11,7 +11,7 @@ export function LoopStrip({ track }: { track: Track }) {
   const renameLoop = useLibrary((s) => s.renameLoop);
 
   return (
-    <div className="flex items-center gap-3 px-[26px] pt-[15px]">
+    <div className="flex items-center gap-3 px-4 pt-[15px] sm:px-[26px]">
       <div className="flex flex-none flex-col gap-[1px]">
         <span className="text-[9.5px] font-semibold tracking-[.1em] text-muted-3">LOOPS</span>
         <span className="tno text-[10px] text-muted-5">
