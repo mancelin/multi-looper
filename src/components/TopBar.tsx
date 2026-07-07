@@ -33,7 +33,9 @@ export function TopBar() {
           <div className="flex h-[26px] w-[26px] items-center justify-center rounded-[7px] bg-gradient-to-br from-accent-2 to-accent-3 shadow-[0_2px_10px_rgba(45,212,191,.35)]">
             <EqIcon />
           </div>
-          <span className="hidden text-[14px] font-bold tracking-[.14em] min-[560px]:inline">multi-looper</span>
+          <span className="whitespace-nowrap text-[12px] font-bold tracking-[.06em] min-[480px]:text-[14px] min-[480px]:tracking-[.14em]">
+            multi-looper
+          </span>
         </div>
       </div>
 
