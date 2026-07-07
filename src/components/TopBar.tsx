@@ -41,11 +41,11 @@ export function TopBar() {
         <button
           onClick={() => setYtModalOpen(true)}
           title="Add a YouTube link"
-          className="flex h-[38px] w-[38px] flex-none cursor-pointer items-center justify-center rounded-[9px] border border-white/9 bg-field sm:hidden"
+          className="flex h-[38px] w-[38px] flex-none cursor-pointer items-center justify-center rounded-[9px] border border-white/9 bg-field min-[480px]:hidden"
         >
           <YoutubeIcon className="text-[#e11d48]" />
         </button>
-        <div className="hidden h-[38px] min-w-0 flex-1 items-center gap-2 rounded-[9px] border border-white/9 bg-field px-[11px] sm:flex">
+        <div className="hidden h-[38px] min-w-0 flex-1 items-center gap-2 rounded-[9px] border border-white/9 bg-field px-[11px] min-[480px]:flex">
           <YoutubeIcon className="flex-none text-[#e11d48]" />
           <input
             value={ytUrl}
