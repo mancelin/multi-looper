@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // PocketBase runtime data + JS migrations (not part of the app bundle)
+    "pb/**",
   ]),
 ]);
 

@@ -1,0 +1,10 @@
+services:
+  pocketbase:
+    build: ./pb
+    container_name: multilooper-pocketbase
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./pb/pb_data:/pb_data
+      - ./pb/pb_migrations:/pb_migrations
+    restart: unless-stopped

@@ -1,0 +1,396 @@
+"use client";
+
+import { activeLoop, type Track } from "@/lib/types";
+import { currentTrack, useLibrary } from "@/store/library";
+import { useUi } from "@/store/ui";
+
+/* Minimal YouTube IFrame API surface used by the controller. */
+interface YTPlayer {
+  playVideo(): void;
+  pauseVideo(): void;
+  stopVideo(): void;
+  seekTo(seconds: number, allowSeekAhead: boolean): void;
+  getCurrentTime(): number;
+  getDuration(): number;
+  setPlaybackRate(rate: number): void;
+  loadVideoById(videoId: string): void;
+  destroy(): void;
+}
+
+interface YTNamespace {
+  Player: new (
+    el: HTMLElement,
+    opts: {
+      width: string;
+      height: string;
+      videoId: string;
+      playerVars: Record<string, number>;
+      events: {
+        onReady: () => void;
+        onStateChange: (e: { data: number }) => void;
+      };
+    },
+  ) => YTPlayer;
+}
+
+declare global {
+  interface Window {
+    YT?: YTNamespace & { loaded?: number };
+    onYouTubeIframeAPIReady?: () => void;
+  }
+}
+
+export const YT_RATES = [0.25, 0.5, 0.75, 1, 1.25, 1.5];
+
+export function nearestYtRate(r: number): number {
+  return YT_RATES.reduce((a, b) => (Math.abs(b - r) < Math.abs(a - r) ? b : a), 1);
+}
+
+type TimeListener = (t: number, duration: number) => void;
+
+/**
+ * Single clock source per track (prototype approach): a rAF tick reads the
+ * current media time and enforces the A→B loop; the playhead / time readout
+ * update imperatively through registered listeners so React never re-renders
+ * at frame rate.
+ */
+class PlaybackController {
+  private videoEl: HTMLVideoElement | null = null;
+  private ytHost: HTMLElement | null = null;
+  private yt: YTPlayer | null = null;
+  private ytReady = false;
+  private ytPendingPlay = false;
+  private ytTrackId: string | null = null;
+
+  /** virtual time fallback while no media is ready */
+  private vt = 0;
+  private raf: number | null = null;
+  private listeners = new Set<TimeListener>();
+
+  // ---------- registration ----------
+
+  setVideoEl(el: HTMLVideoElement | null): void {
+    this.videoEl = el;
+  }
+
+  setYtHost(el: HTMLElement | null): void {
+    if (el === this.ytHost) return;
+    this.ytHost = el;
+    if (!el && this.yt) {
+      try {
+        this.yt.destroy();
+      } catch {}
+      this.yt = null;
+      this.ytReady = false;
+      this.ytTrackId = null;
+    }
+  }
+
+  onTime(fn: TimeListener): () => void {
+    this.listeners.add(fn);
+    return () => this.listeners.delete(fn);
+  }
+
+  // ---------- clock ----------
+
+  private track(): Track | undefined {
+    return currentTrack(useLibrary.getState());
+  }
+
+  private duration(): number {
+    return this.track()?.duration || 1;
+  }
+
+  getT(): number {
+    const c = this.track();
+    if (!c) return 0;
+    if (c.kind === "youtube" && this.yt && this.ytReady) {
+      try {
+        return this.yt.getCurrentTime() || 0;
+      } catch {
+        return this.vt;
+      }
+    }
+    if (c.kind === "file" && this.videoEl) return this.videoEl.currentTime || 0;
+    return this.vt;
+  }
+
+  setT(t: number): void {
+    const c = this.track();
+    t = Math.max(0, Math.min(this.duration(), t));
+    if (c?.kind === "youtube" && this.yt && this.ytReady) {
+      try {
+        this.yt.seekTo(t, true);
+      } catch {}
+    } else if (c?.kind === "file" && this.videoEl) {
+      this.videoEl.currentTime = t;
+    }
+    this.vt = t;
+    this.emit();
+  }
+
+  seekBy(delta: number): void {
+    this.setT(this.getT() + delta);
+  }
+
+  private emit(): void {
+    const t = this.getT();
+    const d = this.duration();
+    for (const fn of this.listeners) fn(t, d);
+  }
+
+  // ---------- tick ----------
+
+  private startTick(): void {
+    if (this.raf != null) return;
+    const step = () => {
+      this.frame();
+      this.raf = requestAnimationFrame(step);
+    };
+    this.raf = requestAnimationFrame(step);
+  }
+
+  private stopTick(): void {
+    if (this.raf != null) {
+      cancelAnimationFrame(this.raf);
+      this.raf = null;
+    }
+  }
+
+  private frame(): void {
+    const c = this.track();
+    if (!c) return;
+    const t = this.getT();
+    const d = this.duration();
+    const lp = activeLoop(c);
+    const { loopEnabled } = useUi.getState();
+    if (loopEnabled && t >= lp.b) {
+      this.setT(lp.a);
+      return;
+    }
+    if (!loopEnabled && t >= d) {
+      this.setT(0);
+      this.pause();
+      return;
+    }
+    this.emit();
+  }
+
+  // ---------- transport ----------
+
+  play(): void {
+    const c = this.track();
+    if (!c) return;
+    const lp = activeLoop(c);
+    const t = this.getT();
+    if (t >= lp.b - 0.01 || t < lp.a - 0.001) this.setT(lp.a);
+    const rate = useUi.getState().rate;
+    if (c.kind === "youtube") {
+      if (this.yt && this.ytReady) {
+        try {
+          this.yt.setPlaybackRate(nearestYtRate(rate));
+          this.yt.playVideo();
+        } catch {}
+      } else {
+        this.ytPendingPlay = true;
+        this.ensureYt(c);
+      }
+    } else if (c.kind === "file" && this.videoEl) {
+      this.videoEl.playbackRate = rate;
+      this.videoEl.preservesPitch = true;
+      void this.videoEl.play().catch(() => {});
+    }
+    useUi.getState().setPlaying(true);
+    this.startTick();
+  }
+
+  pause(): void {
+    const c = this.track();
+    if (c?.kind === "youtube" && this.yt && this.ytReady) {
+      try {
+        this.yt.pauseVideo();
+      } catch {}
+    }
+    if (c?.kind === "file") this.videoEl?.pause();
+    useUi.getState().setPlaying(false);
+    this.stopTick();
+    this.emit();
+  }
+
+  togglePlay(): void {
+    if (useUi.getState().playing) this.pause();
+    else this.play();
+  }
+
+  applyRate(r: number): void {
+    if (!isFinite(r)) return;
+    r = Math.max(0.25, Math.min(1.5, r));
+    useUi.getState().setRate(r);
+    const c = this.track();
+    if (c?.kind === "file" && this.videoEl) {
+      this.videoEl.playbackRate = r;
+      this.videoEl.preservesPitch = true;
+    }
+    if (c?.kind === "youtube" && this.yt && this.ytReady) {
+      try {
+        this.yt.setPlaybackRate(nearestYtRate(r));
+      } catch {}
+    }
+  }
+
+  bumpRate(delta: number): void {
+    this.applyRate(Math.round((useUi.getState().rate + delta) * 100) / 100);
+  }
+
+  // ---------- track switching ----------
+
+  private pendingAutoplay = false;
+
+  /**
+   * Wire the media layer to the (already selected) current track.
+   * Called by PlayerMain's effect once the media elements are mounted;
+   * autoplay carries over from advance() via the pending flag.
+   */
+  loadCurrent(): void {
+    const c = this.track();
+    if (!c) return;
+    const autoplay = this.pendingAutoplay;
+    this.pendingAutoplay = false;
+    this.vt = 0;
+    if (this.videoEl) {
+      if (c.kind === "file" && c.url) {
+        if (this.videoEl.getAttribute("src") !== c.url) this.videoEl.src = c.url;
+      } else {
+        this.videoEl.removeAttribute("src");
+        this.videoEl.load();
+      }
+    }
+    if (c.kind === "youtube") {
+      this.ytPendingPlay = autoplay;
+      this.ensureYt(c);
+    } else if (this.yt && this.ytReady) {
+      try {
+        this.yt.stopVideo();
+      } catch {}
+    }
+    const lp = activeLoop(c);
+    this.setT(lp.a);
+    if (autoplay && c.kind !== "youtube") this.play();
+  }
+
+  selectTrack(id: string): void {
+    const lib = useLibrary.getState();
+    if (id === lib.currentId) return;
+    this.pause();
+    this.pendingAutoplay = false;
+    lib.selectTrack(id);
+  }
+
+  advance(dir: 1 | -1): void {
+    const lib = useLibrary.getState();
+    const list = lib.tracks;
+    if (!list.length) return;
+    const autoplay = useUi.getState().playing;
+    const i = list.findIndex((t) => t.id === lib.currentId);
+    const next = list[(i + dir + list.length) % list.length];
+    this.pause();
+    this.pendingAutoplay = autoplay;
+    lib.selectTrack(next.id);
+  }
+
+  /** Called after removing the current track (store already reselected). */
+  afterRemoval(): void {
+    this.pause();
+    this.pendingAutoplay = false;
+  }
+
+  // ---------- YouTube ----------
+
+  static loadApi(): void {
+    if (typeof window === "undefined" || window.YT) return;
+    if (document.querySelector('script[src*="youtube.com/iframe_api"]')) return;
+    const s = document.createElement("script");
+    s.src = "https://www.youtube.com/iframe_api";
+    document.head.appendChild(s);
+  }
+
+  private ensureYt(c: Track): void {
+    if (!this.ytHost || !c.videoId) return;
+    PlaybackController.loadApi();
+    const boot = () => {
+      if (!window.YT?.Player) {
+        setTimeout(boot, 200);
+        return;
+      }
+      if (!this.yt) {
+        const mount = document.createElement("div");
+        this.ytHost!.innerHTML = "";
+        this.ytHost!.appendChild(mount);
+        this.ytTrackId = c.id;
+        this.yt = new window.YT.Player(mount, {
+          width: "100%",
+          height: "100%",
+          videoId: c.videoId!,
+          playerVars: { controls: 0, disablekb: 1, modestbranding: 1, rel: 0, playsinline: 1, fs: 0 },
+          events: {
+            onReady: () => {
+              this.ytReady = true;
+              this.patchYtDuration();
+              if (this.ytPendingPlay) {
+                this.ytPendingPlay = false;
+                this.play();
+              }
+            },
+            onStateChange: (e) => {
+              this.ytReady = true;
+              if (e.data === 1) this.patchYtDuration();
+            },
+          },
+        });
+      } else if (this.ytTrackId !== c.id) {
+        this.ytTrackId = c.id;
+        try {
+          this.yt.loadVideoById(c.videoId!);
+        } catch {}
+        if (this.ytPendingPlay) {
+          this.ytPendingPlay = false;
+          this.play();
+        } else {
+          // loadVideoById autostarts; hold it back when we're not meant to play
+          setTimeout(() => {
+            if (!useUi.getState().playing) {
+              try {
+                this.yt?.pauseVideo();
+              } catch {}
+            }
+          }, 300);
+        }
+      } else if (this.ytPendingPlay) {
+        this.ytPendingPlay = false;
+        this.play();
+      }
+    };
+    boot();
+  }
+
+  private patchYtDuration(): void {
+    const c = this.track();
+    if (!c || c.kind !== "youtube" || !this.yt) return;
+    try {
+      const d = this.yt.getDuration();
+      if (d > 0 && Math.abs(d - c.duration) > 0.5) useLibrary.getState().patchDuration(c.id, d);
+    } catch {}
+  }
+
+  /** <video> loadedmetadata — patches duration when decodeAudioData couldn't. */
+  onLoadedMetadata(): void {
+    const c = this.track();
+    if (!c || c.kind !== "file" || !this.videoEl) return;
+    const d = this.videoEl.duration;
+    if (isFinite(d) && d > 0 && Math.abs(d - c.duration) > 0.5) {
+      useLibrary.getState().patchDuration(c.id, d);
+    }
+  }
+}
+
+export const player = new PlaybackController();
