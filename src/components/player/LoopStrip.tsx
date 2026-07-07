@@ -37,10 +37,11 @@ export function LoopStrip({ track }: { track: Track }) {
               />
               <input
                 value={l.name}
+                readOnly={!active}
                 onChange={(e) => renameLoop(l.id, e.target.value)}
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => active && e.stopPropagation()}
                 title="Rename loop"
-                className="w-[92px] min-w-0 border-none bg-transparent text-[12.5px] font-semibold"
+                className={`w-[92px] min-w-0 border-none bg-transparent text-[12.5px] font-semibold ${active ? "" : "pointer-events-none"}`}
                 style={{ color: active ? "#ffffff" : "#b8bfca" }}
               />
               <span className="tno flex-none text-[10.5px] text-muted-2">

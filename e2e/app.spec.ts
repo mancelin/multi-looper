@@ -66,6 +66,18 @@ test("editing loop start via the trim field updates loop length", async ({ page 
   await expect(page.getByTestId("loop-len")).toHaveText("0:02.000");
 });
 
+test("clicking another loop chip selects it", async ({ page }) => {
+  await page.goto("/");
+  await uploadWav(page, 3);
+  await expect(page.getByTitle("Rename loop")).toHaveCount(1); // wait for decode
+  await page.locator("body").press("n"); // adds Loop 2 (2s long) and selects it
+
+  await expect(page.getByTestId("loop-len")).toHaveText("0:02.000");
+  // click lands on the chip; the name input is click-through while inactive
+  await page.getByTitle("Rename loop").first().locator("..").click(); // loops sorted by start; Loop 1 first
+  await expect(page.getByTestId("loop-len")).toHaveText("0:03.000");
+});
+
 test("keyboard shortcut N adds a second loop", async ({ page }) => {
   await page.goto("/");
   await uploadWav(page, 3);
