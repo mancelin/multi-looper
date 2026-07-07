@@ -9,10 +9,16 @@ const svg = (size: number | undefined, fallback: number, rest: SVGProps<SVGSVGEl
   ...rest,
 });
 
-export function MenuIcon({ size, ...rest }: P) {
+export function BookIcon({ size, ...rest }: P) {
   return (
     <svg viewBox="0 0 16 16" {...svg(size, 16, rest)}>
-      <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <path
+        d="M8 3.2C6.9 2.35 5.4 2 3.6 2c-.55 0-1.08.05-1.6.15v10.7c.52-.1 1.05-.15 1.6-.15 1.8 0 3.3.35 4.4 1.15 1.1-.8 2.6-1.15 4.4-1.15.55 0 1.08.05 1.6.15V2.15C13.48 2.05 12.95 2 12.4 2 10.6 2 9.1 2.35 8 3.2Z"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinejoin="round"
+      />
+      <path d="M8 3.4v10.1" stroke="currentColor" strokeWidth="1.3" />
     </svg>
   );
 }

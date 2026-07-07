@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { EqIcon, KeyboardIcon, MenuIcon, UploadIcon, YoutubeIcon } from "@/components/icons";
+import { BookIcon, EqIcon, KeyboardIcon, UploadIcon, YoutubeIcon } from "@/components/icons";
 import { addFiles, addYoutubeUrl } from "@/store/ingest";
 import { useUi } from "@/store/ui";
 import { AccountArea } from "./AccountMenu";
@@ -27,7 +27,7 @@ export function TopBar() {
           className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded-[8px] border border-white/10 bg-field-2 text-muted"
           title="Toggle library"
         >
-          <MenuIcon />
+          <BookIcon />
         </button>
         <div className="flex items-center gap-[9px]">
           <div className="flex h-[26px] w-[26px] items-center justify-center rounded-[7px] bg-gradient-to-br from-accent-2 to-accent-3 shadow-[0_2px_10px_rgba(45,212,191,.35)]">

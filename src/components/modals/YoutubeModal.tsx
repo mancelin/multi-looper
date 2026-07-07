@@ -1,27 +1,21 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { YoutubeIcon } from "@/components/icons";
 import { addYoutubeUrl } from "@/store/ingest";
 import { useUi } from "@/store/ui";
 
 export function YoutubeModal() {
   const open = useUi((s) => s.ytModalOpen);
+  if (!open) return null;
+  return <YoutubeModalContent />;
+}
+
+/** Mounted only while open, so url/error state starts fresh each time. */
+function YoutubeModalContent() {
   const setOpen = useUi((s) => s.setYtModalOpen);
   const [url, setUrl] = useState("");
   const [error, setError] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (open) {
-      setUrl("");
-      setError(false);
-      // autofocus once mounted
-      setTimeout(() => inputRef.current?.focus(), 0);
-    }
-  }, [open]);
-
-  if (!open) return null;
 
   const close = () => setOpen(false);
   const submit = () => {
@@ -58,7 +52,7 @@ export function YoutubeModal() {
         </div>
         <div className="flex h-10 items-center gap-2 rounded-[9px] border border-white/9 bg-field px-[11px]">
           <input
-            ref={inputRef}
+            autoFocus
             value={url}
             onChange={(e) => {
               setUrl(e.target.value);
