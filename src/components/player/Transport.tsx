@@ -53,6 +53,7 @@ export function Transport({ track }: { track: Track }) {
         </button>
         <button
           onClick={() => player.togglePlay()}
+          aria-label={playing ? "Pause" : "Play"}
           className="flex h-[54px] w-[54px] cursor-pointer items-center justify-center rounded-[14px] border-none bg-gradient-to-br from-accent-2 to-accent-3 text-on-accent-2 shadow-[0_4px_18px_rgba(45,212,191,.4)]"
         >
           {playing ? <PauseIcon /> : <PlayIcon />}

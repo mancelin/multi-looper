@@ -74,6 +74,7 @@ export function LoopTrim({ track }: { track: Track }) {
             </NudgeButton>
             <input
               ref={aRef}
+              data-testid="loop-a"
               defaultValue={fmt(lp.a)}
               onFocus={(e) => e.target.select()}
               onBlur={() => commit("a")}
@@ -94,6 +95,7 @@ export function LoopTrim({ track }: { track: Track }) {
             </NudgeButton>
             <input
               ref={bRef}
+              data-testid="loop-b"
               defaultValue={fmt(lp.b)}
               onFocus={(e) => e.target.select()}
               onBlur={() => commit("b")}
@@ -108,7 +110,7 @@ export function LoopTrim({ track }: { track: Track }) {
         <div className="w-px self-stretch bg-white/8" />
         <div className="flex flex-col gap-[2px]">
           <span className="text-[9.5px] font-semibold tracking-[.1em] text-muted-3">LENGTH</span>
-          <span className="tno text-[16px] font-semibold text-ink">{fmt(lp.b - lp.a)}</span>
+          <span data-testid="loop-len" className="tno text-[16px] font-semibold text-ink">{fmt(lp.b - lp.a)}</span>
         </div>
       </div>
 
