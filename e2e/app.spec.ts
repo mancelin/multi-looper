@@ -107,6 +107,25 @@ test.describe("mobile (360px)", () => {
     await page.getByRole("button", { name: "Play" }).click();
     await expect(page.getByTestId("time")).not.toHaveText("0:00.000", { timeout: 5000 });
   });
+
+  test("YouTube link is added through a modal", async ({ page }) => {
+    await blockYoutube(page);
+    await page.goto("/");
+
+    // inline URL field is hidden on small screens; icon button opens a modal
+    await expect(page.getByPlaceholder("Paste a YouTube link…")).toBeHidden();
+    await page.getByTitle("Add a YouTube link").click();
+
+    const input = page.getByPlaceholder("youtube.com/watch?v=…").last(); // modal's, not empty-state's
+    await input.fill("not a link");
+    await input.press("Enter");
+    await expect(page.getByText("That doesn't look like a YouTube link.")).toBeVisible();
+
+    await input.fill("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+    await input.press("Enter");
+    await expect(page.getByText("Add a YouTube link", { exact: true })).toBeHidden(); // modal closed
+    await expect(page.getByTestId("loop-b")).toHaveValue("3:30.000");
+  });
 });
 
 test("keyboard shortcut N adds a second loop", async ({ page }) => {

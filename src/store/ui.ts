@@ -17,6 +17,7 @@ export interface UiState {
   sidebarOpen: boolean;
   videoWidth: number;
   showShortcuts: boolean;
+  ytModalOpen: boolean;
 
   account: Account | null;
   accountMenuOpen: boolean;
@@ -36,6 +37,7 @@ export interface UiState {
   toggleSidebar: () => void;
   setVideoWidth: (w: number) => void;
   toggleShortcuts: () => void;
+  setYtModalOpen: (v: boolean) => void;
 
   setAccount: (a: Account | null) => void;
   setAccountMenuOpen: (v: boolean) => void;
@@ -56,6 +58,7 @@ export const useUi = create<UiState>()((set) => ({
   sidebarOpen: true,
   videoWidth: 620,
   showShortcuts: false,
+  ytModalOpen: false,
 
   account: null,
   accountMenuOpen: false,
@@ -75,6 +78,7 @@ export const useUi = create<UiState>()((set) => ({
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
   setVideoWidth: (w) => set({ videoWidth: w }),
   toggleShortcuts: () => set((s) => ({ showShortcuts: !s.showShortcuts })),
+  setYtModalOpen: (v) => set({ ytModalOpen: v }),
 
   setAccount: (a) => set({ account: a }),
   setAccountMenuOpen: (v) => set({ accountMenuOpen: v }),

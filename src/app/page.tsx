@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { AuthModal } from "@/components/modals/AuthModal";
 import { ImportModal } from "@/components/modals/ImportModal";
 import { ShortcutsModal } from "@/components/modals/ShortcutsModal";
+import { YoutubeModal } from "@/components/modals/YoutubeModal";
 import { EmptyState } from "@/components/EmptyState";
 import { PlayerMain } from "@/components/player/PlayerMain";
 import { ShortcutsProvider } from "@/components/ShortcutsProvider";
@@ -54,6 +55,7 @@ export default function Home() {
       )}
       <ShortcutsProvider />
       <ShortcutsModal />
+      <YoutubeModal />
       <AuthModal />
       <ImportModal />
     </div>

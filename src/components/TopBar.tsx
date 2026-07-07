@@ -9,6 +9,7 @@ import { AccountArea } from "./AccountMenu";
 export function TopBar() {
   const toggleSidebar = useUi((s) => s.toggleSidebar);
   const toggleShortcuts = useUi((s) => s.toggleShortcuts);
+  const setYtModalOpen = useUi((s) => s.setYtModalOpen);
   const [ytUrl, setYtUrl] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -37,7 +38,14 @@ export function TopBar() {
       </div>
 
       <div className="flex min-w-0 max-w-[640px] flex-1 items-center gap-2 sm:gap-[10px]">
-        <div className="flex h-[38px] min-w-0 flex-1 items-center gap-2 rounded-[9px] border border-white/9 bg-field px-[11px]">
+        <button
+          onClick={() => setYtModalOpen(true)}
+          title="Add a YouTube link"
+          className="flex h-[38px] w-[38px] flex-none cursor-pointer items-center justify-center rounded-[9px] border border-white/9 bg-field sm:hidden"
+        >
+          <YoutubeIcon className="text-[#e11d48]" />
+        </button>
+        <div className="hidden h-[38px] min-w-0 flex-1 items-center gap-2 rounded-[9px] border border-white/9 bg-field px-[11px] sm:flex">
           <YoutubeIcon className="flex-none text-[#e11d48]" />
           <input
             value={ytUrl}
