@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#0c0e12;color:#e7eaf0;font-family:'Space Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  a{color:#5eead4;text-decoration:none}
+  a:hover{color:#99f6e4}
+  input,button{font-family:inherit}
+  input:focus{outline:none}
+  ::selection{background:rgba(94,234,212,.3)}
+  .tno{font-family:'JetBrains Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+  .sk{background:linear-gradient(90deg,#161a21,#1c212b,#161a21);background-size:200% 100%;animation:sh 1.4s infinite}
+  @keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+  @keyframes eq{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#242a34;border-radius:6px;border:2px solid #0c0e12}
+  ::-webkit-scrollbar-thumb:hover{background:#2f3742}
+</style>
+</helmet>
+
+<div style="display:flex;flex-direction:column;height:100vh;overflow:hidden;background:#0c0e12">
+
+  <!-- TOP BAR -->
+  <header style="display:flex;align-items:center;gap:18px;padding:0 18px;height:58px;border-bottom:1px solid rgba(255,255,255,.07);background:#0e1116;flex:none;z-index:5">
+    <div style="display:flex;align-items:center;gap:11px">
+      <button onClick="{{ toggleSidebar }}" style="display:{{ hamburgerDisplay }};align-items:center;justify-content:center;width:34px;height:34px;border:1px solid rgba(255,255,255,.1);background:#161a21;border-radius:8px;color:#8a92a2;cursor:pointer">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
+      </button>
+      <div style="display:flex;align-items:center;gap:9px">
+        <div style="width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,#2dd4bf,#0ea5a4);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(45,212,191,.35)">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M4 3v10M8 1v14M12 5v6" stroke="#04231f" stroke-width="1.8" stroke-linecap="round"></path></svg>
+        </div>
+        <span style="font-weight:700;letter-spacing:.14em;font-size:14px" data-om-label="multi-looper">multi-looper</span>
+      </div>
+    </div>
+
+    <div style="flex:1;display:flex;align-items:center;gap:10px;max-width:640px">
+      <div style="flex:1;display:flex;align-items:center;gap:8px;background:#14171d;border:1px solid rgba(255,255,255,.09);border-radius:9px;padding:0 11px;height:38px">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style="flex:none;color:#e11d48"><path d="M22 12s0-3.6-.46-5.3a2.78 2.78 0 0 0-1.95-1.96C17.9 4.28 12 4.28 12 4.28s-5.9 0-7.6.46A2.78 2.78 0 0 0 2.46 6.7C2 8.4 2 12 2 12s0 3.6.46 5.3a2.78 2.78 0 0 0 1.95 1.96c1.7.46 7.6.46 7.6.46s5.9 0 7.6-.46a2.78 2.78 0 0 0 1.95-1.96C22 15.6 22 12 22 12Z" fill="currentColor"></path><path d="M10 15V9l5 3-5 3Z" fill="#0e1116"></path></svg>
+        <input value="{{ ytUrl }}" onInput="{{ onYtInput }}" onKeyDown="{{ onYtKey }}" placeholder="Paste a YouTube link…" style="flex:1;background:none;border:none;color:#e7eaf0;font-size:13px;min-width:0">
+        <button onClick="{{ addYoutube }}" style="flex:none;background:#5eead4;color:#052e2b;border:none;border-radius:6px;font-size:12px;font-weight:600;padding:6px 11px;cursor:pointer">Add</button>
+      </div>
+      <button onClick="{{ pickFile }}" style="flex:none;display:flex;align-items:center;gap:7px;height:38px;padding:0 13px;background:#14171d;border:1px solid rgba(255,255,255,.09);border-radius:9px;color:#e7eaf0;font-size:13px;font-weight:500;cursor:pointer">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M8 10.5V2.5M8 2.5 5 5.5M8 2.5l3 3M2.5 10v2.5A1 1 0 0 0 3.5 13.5h9a1 1 0 0 0 1-1V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        Upload file
+      </button>
+      <input ref="{{ fileRef }}" type="file" accept="audio/*,video/*" multiple="" onChange="{{ onFile }}" style="display:none">
+      <button onClick="{{ toggleShortcuts }}" title="Keyboard shortcuts" style="flex:none;display:flex;align-items:center;justify-content:center;width:38px;height:38px;background:#14171d;border:1px solid rgba(255,255,255,.09);border-radius:9px;color:#8a92a2;cursor:pointer;font-size:11px;font-weight:600">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><rect x="2.5" y="6" width="19" height="12" rx="2" stroke="currentColor" stroke-width="1.4"></rect><path d="M6 9.5h.01M9 9.5h.01M12 9.5h.01M15 9.5h.01M18 9.5h.01M7.5 13h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"></path></svg>
+      </button>
+    </div>
+
+    <!-- ACCOUNT (right-aligned) -->
+    <div style="margin-left:auto;flex:none;display:flex;align-items:center">
+    <sc-if value="{{ signedOut }}" hint-placeholder-val="{{ true }}">
+      <button onClick="{{ openSignIn }}" style="flex:none;display:flex;align-items:center;gap:7px;height:38px;padding:0 15px;background:#5eead4;border:none;border-radius:9px;color:#052e2b;font-size:13px;font-weight:600;cursor:pointer">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M20 21a8 8 0 1 0-16 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="1.8"></circle></svg>
+        Sign in
+      </button>
+    </sc-if>
+    <sc-if value="{{ signedIn }}" hint-placeholder-val="{{ false }}">
+      <div ref="{{ acctRef }}" style="position:relative;flex:none">
+        <button onClick="{{ toggleAccountMenu }}" title="{{ accountEmail }}" style="display:flex;align-items:center;gap:8px;height:38px;padding:0 6px 0 8px;background:#14171d;border:1px solid rgba(255,255,255,.09);border-radius:9px;cursor:pointer">
+          <span style="display:flex;align-items:center;gap:5px;font-size:10px;font-weight:600;letter-spacing:.04em;color:#5eead4">
+            <span style="width:6px;height:6px;border-radius:50%;background:#2dd4bf;box-shadow:0 0 6px rgba(45,212,191,.8)"></span>
+            SYNCED
+          </span>
+          <span style="width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,#2dd4bf,#0ea5a4);color:#04231f;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ accountInitials }}</span>
+        </button>
+        <sc-if value="{{ accountMenuOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;top:46px;right:0;width:230px;background:#12161d;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:6px;box-shadow:0 18px 50px rgba(0,0,0,.55);z-index:40">
+            <div style="padding:10px 10px 11px;display:flex;flex-direction:column;gap:2px;border-bottom:1px solid rgba(255,255,255,.06);margin-bottom:5px">
+              <span style="font-size:12.5px;font-weight:600;color:#e7eaf0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ accountEmail }}</span>
+              <span style="font-size:11px;color:#5eead4;display:flex;align-items:center;gap:5px"><span style="width:5px;height:5px;border-radius:50%;background:#2dd4bf"></span>{{ syncStatus }}</span>
+            </div>
+            <button onClick="{{ signOut }}" style="width:100%;display:flex;align-items:center;gap:9px;padding:9px 10px;background:none;border:none;border-radius:8px;color:#c3c9d4;font-size:13px;cursor:pointer;text-align:left" style-hover="background:rgba(255,255,255,.05)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style="color:#8a92a2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              Sign out
+            </button>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+    </div>
+  </header>
+
+  <sc-if value="{{ hasTracks }}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;flex:1;min-height:0">
+
+    <!-- LIBRARY SIDEBAR -->
+    <aside style="width:{{ sidebarWidth }};flex:none;display:{{ sidebarDisplay }};flex-direction:column;border-right:1px solid rgba(255,255,255,.07);background:#0e1116;min-height:0">
+      <div style="padding:14px 14px 10px;flex:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px">
+          <span style="font-size:11px;font-weight:600;letter-spacing:.13em;color:#6b7280">LIBRARY</span>
+          <span class="tno" style="font-size:11px;color:#4b5563">{{ trackCount }}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;background:#14171d;border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:0 10px;height:34px">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="color:#5b6472;flex:none"><circle cx="7" cy="7" r="4.3" stroke="currentColor" stroke-width="1.4"></circle><path d="m10.5 10.5 3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"></path></svg>
+          <input value="{{ search }}" onInput="{{ onSearch }}" placeholder="Search loops &amp; tags" style="flex:1;background:none;border:none;color:#e7eaf0;font-size:12.5px;min-width:0">
+        </div>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:2px 8px 14px">
+        <sc-for list="{{ visibleTracks }}" as="t" hint-placeholder-count="4">
+          <div onClick="{{ t.onSelect }}" style="position:relative;display:flex;gap:11px;padding:10px 10px;border-radius:10px;cursor:pointer;margin-bottom:3px;background:{{ t.rowBg }};border:1px solid {{ t.rowBorder }}">
+            <div style="position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:3px;background:{{ t.accentBar }}"></div>
+            <div style="width:44px;height:44px;flex:none;border-radius:7px;overflow:hidden;background:{{ t.artBg }};display:flex;align-items:center;justify-content:center;position:relative">
+              <sc-if value="{{ t.hasThumb }}" hint-placeholder-val="{{ false }}">
+                <img src="{{ t.thumb }}" style="width:100%;height:100%;object-fit:cover">
+              </sc-if>
+              <span style="display:{{ t.iconDisplay }};color:{{ t.dot }}">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M9 18V6l10-2v12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="6" cy="18" r="3" stroke="currentColor" stroke-width="1.7"></circle><circle cx="16" cy="16" r="3" stroke="currentColor" stroke-width="1.7"></circle></svg>
+              </span>
+            </div>
+            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;justify-content:center">
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-size:13px;font-weight:600;color:{{ t.titleColor }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.title }}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:7px;font-size:11px;color:#6b7280">
+                <span class="tno">{{ t.durLabel }}</span>
+                <span style="width:3px;height:3px;border-radius:50%;background:#3a4150"></span>
+                <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.artist }}</span>
+              </div>
+              <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:1px">
+                <sc-for list="{{ t.tags }}" as="tag" hint-placeholder-count="0">
+                  <span style="font-size:9.5px;letter-spacing:.03em;color:#7b8494;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.06);padding:1px 6px;border-radius:5px">{{ tag }}</span>
+                </sc-for>
+              </div>
+            </div>
+            <button onClick="{{ t.onDelete }}" title="Remove" style="align-self:flex-start;flex:none;width:22px;height:22px;border:none;background:none;color:#4b5563;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="color:#f87171;background:rgba(248,113,113,.1)">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg>
+            </button>
+          </div>
+        </sc-for>
+      </div>
+    </aside>
+
+    <!-- PLAYER MAIN -->
+    <main ref="{{ mainRef }}" style="flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;overflow-y:auto;background:radial-gradient(120% 80% at 50% -10%,#12161d 0%,#0c0e12 60%)">
+
+      <!-- track header -->
+      <div style="display:flex;align-items:center;gap:16px;padding:20px 26px 14px;flex:none">
+        <div style="width:66px;height:66px;flex:none;border-radius:11px;overflow:hidden;background:#161a21;border:1px solid rgba(255,255,255,.08);position:relative">
+          <sc-if value="{{ curHasThumb }}" hint-placeholder-val="{{ false }}">
+            <img src="{{ curThumb }}" style="width:100%;height:100%;object-fit:cover">
+          </sc-if>
+          <div style="display:{{ curIconDisplay }};width:100%;height:100%;align-items:center;justify-content:center;color:{{ curAccent }}">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M9 18V6l10-2v12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="6" cy="18" r="3" stroke="currentColor" stroke-width="1.6"></circle><circle cx="16" cy="16" r="3" stroke="currentColor" stroke-width="1.6"></circle></svg>
+          </div>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:9px;margin-bottom:4px">
+            <span style="font-size:10px;font-weight:600;letter-spacing:.1em;padding:2px 7px;border-radius:5px;color:{{ srcColor }};background:{{ srcBg }};border:1px solid {{ srcBorder }}">{{ srcLabel }}</span>
+            <h1 style="margin:0;font-size:21px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ curTitle }}</h1>
+          </div>
+          <div style="font-size:13px;color:#8a92a2">{{ curArtist }}</div>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:9px">
+            <sc-for list="{{ curTags }}" as="tg" hint-placeholder-count="0">
+              <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#b8bfca;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);padding:3px 4px 3px 9px;border-radius:6px">
+                {{ tg.name }}
+                <button onClick="{{ tg.onRemove }}" title="Remove tag" style="width:16px;height:16px;border:none;background:none;color:#6b7280;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0" style-hover="color:#f87171;background:rgba(248,113,113,.12)">
+                  <svg width="9" height="9" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>
+                </button>
+              </span>
+            </sc-for>
+            <input value="{{ newTag }}" onInput="{{ onNewTag }}" onKeyDown="{{ onNewTagKey }}" onBlur="{{ addTag }}" placeholder="+ tag" style="width:66px;background:#161a21;border:1px solid rgba(255,255,255,.09);border-radius:6px;color:#e7eaf0;font-size:11px;padding:4px 8px" style-focus="border-color:#5eead4;width:96px"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIDEO PANEL -->
+      <div style="display:{{ videoPanelDisplay }};align-items:center;justify-content:center;padding:6px 26px 4px;flex:none">
+        <div ref="{{ videoBoxRef }}" style="position:relative;width:{{ videoWidthPx }};max-width:100%;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.08);box-shadow:0 8px 30px rgba(0,0,0,.4)">
+          <div ref="{{ ytHostRef }}" style="position:absolute;inset:0;display:{{ ytHostDisplay }}"></div>
+          <video ref="{{ audioRef }}" playsinline="" onLoadedMetadata="{{ onLoadedMeta }}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:{{ videoElDisplay }};background:#000"></video>
+          <div onClick="{{ togglePlay }}" title="Click to play / pause" style="position:absolute;inset:0;z-index:4;cursor:pointer"></div>
+          <div onPointerDown="{{ onVideoResize }}" title="Drag to resize" style="position:absolute;right:0;bottom:0;width:24px;height:24px;cursor:nwse-resize;z-index:6;display:flex;align-items:flex-end;justify-content:flex-end;padding:4px;background:linear-gradient(135deg,transparent 45%,rgba(0,0,0,.55));border-bottom-right-radius:12px;color:rgba(255,255,255,.7)">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M14 6L6 14M14 11l-3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- waveform -->
+      <div style="display:flex;flex-direction:column;flex:none;padding:6px 26px 0">
+        <div ref="{{ wrapRef }}" onPointerDown="{{ onWavePointer }}" style="position:relative;height:132px;flex:none;border-radius:12px;background:#0f1319;border:1px solid rgba(255,255,255,.07);overflow:hidden;cursor:text">
+          <!-- loop region -->
+          <div style="position:absolute;top:0;bottom:0;left:{{ regionLeft }};width:{{ regionWidth }};background:rgba(94,234,212,.09);border-left:1.5px solid rgba(94,234,212,.55);border-right:1.5px solid rgba(94,234,212,.55);pointer-events:none;z-index:1"></div>
+          <!-- outside dim -->
+          <div style="position:absolute;top:0;bottom:0;left:0;width:{{ regionLeft }};background:rgba(6,8,11,.5);pointer-events:none;z-index:1"></div>
+          <div style="position:absolute;top:0;bottom:0;left:{{ regionRight }};right:0;background:rgba(6,8,11,.5);pointer-events:none;z-index:1"></div>
+          <!-- base wave -->
+          <canvas ref="{{ baseRef }}" style="position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none"></canvas>
+          <!-- A handle -->
+          <div onPointerDown="{{ onDragA }}" style="position:absolute;top:0;bottom:0;left:{{ regionLeft }};width:14px;transform:translateX(-50%);z-index:5;cursor:ew-resize;touch-action:none">
+            <div style="position:absolute;left:50%;top:0;bottom:0;width:2px;transform:translateX(-50%);background:#5eead4"></div>
+            <div style="position:absolute;left:50%;top:6px;transform:translateX(-50%);background:#5eead4;color:#052e2b;font-size:9px;font-weight:700;padding:2px 5px;border-radius:4px">A</div>
+          </div>
+          <!-- B handle -->
+          <div onPointerDown="{{ onDragB }}" style="position:absolute;top:0;bottom:0;left:{{ regionRight }};width:14px;transform:translateX(-50%);z-index:5;cursor:ew-resize;touch-action:none">
+            <div style="position:absolute;left:50%;top:0;bottom:0;width:2px;transform:translateX(-50%);background:#5eead4"></div>
+            <div style="position:absolute;left:50%;top:6px;transform:translateX(-50%);background:#5eead4;color:#052e2b;font-size:9px;font-weight:700;padding:2px 5px;border-radius:4px">B</div>
+          </div>
+          <!-- playhead -->
+          <div ref="{{ playheadRef }}" style="position:absolute;top:0;bottom:0;left:0;width:2px;background:#ffb454;box-shadow:0 0 8px rgba(255,180,84,.6);z-index:6;pointer-events:none">
+            <div style="position:absolute;top:-1px;left:50%;transform:translateX(-50%);width:9px;height:9px;border-radius:50%;background:#ffb454"></div>
+          </div>
+        </div>
+
+        <!-- ruler -->
+        <div style="position:relative;height:22px;flex:none;margin-top:5px">
+          <sc-for list="{{ ticks }}" as="tk" hint-placeholder-count="0">
+            <div style="position:absolute;top:0;left:{{ tk.left }};transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px">
+              <div style="width:1px;height:4px;background:rgba(255,255,255,.14)"></div>
+              <span class="tno" style="font-size:10px;color:#5b6472">{{ tk.label }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- LOOPS -->
+      <div style="display:flex;align-items:center;gap:12px;padding:15px 26px 0">
+        <div style="display:flex;flex-direction:column;gap:1px;flex:none">
+          <span style="font-size:9.5px;letter-spacing:.1em;color:#6b7280;font-weight:600">LOOPS</span>
+          <span class="tno" style="font-size:10px;color:#4b5563">{{ loopCountLabel }}</span>
+        </div>
+        <div style="display:flex;gap:8px;overflow-x:auto;flex:1;padding:2px 0 4px">
+          <sc-for list="{{ loopList }}" as="lp" hint-placeholder-count="2">
+            <div onClick="{{ lp.onSelect }}" style="display:flex;align-items:center;gap:8px;flex:none;height:40px;padding:0 7px 0 11px;border-radius:10px;cursor:pointer;background:{{ lp.bg }};border:1px solid {{ lp.border }}">
+              <span style="width:7px;height:7px;border-radius:50%;background:{{ lp.dot }};flex:none"></span>
+              <input value="{{ lp.name }}" onInput="{{ lp.onRename }}" title="Rename loop" style="width:92px;background:none;border:none;color:{{ lp.nameColor }};font-size:12.5px;font-weight:600;min-width:0"/>
+              <span class="tno" style="font-size:10.5px;color:#7b8494;flex:none">{{ lp.range }}</span>
+              <button onClick="{{ lp.onRemove }}" title="Remove loop" style="flex:none;width:22px;height:22px;border:none;background:none;color:#5b6472;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="color:#f87171;background:rgba(248,113,113,.12)">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg>
+              </button>
+            </div>
+          </sc-for>
+          <button onClick="{{ addLoop }}" title="Add a loop at the playhead (N)" style="flex:none;display:flex;align-items:center;gap:6px;height:40px;padding:0 13px;border-radius:10px;border:1px dashed rgba(94,234,212,.4);background:rgba(94,234,212,.05);color:#5eead4;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path></svg>
+            Add loop
+          </button>
+        </div>
+      </div>
+
+      <!-- LOOP READOUT + TRIM -->
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:stretch;padding:12px 26px 0">
+        <div style="display:flex;align-items:center;gap:14px;background:#0f1319;border:1px solid rgba(255,255,255,.08);border-radius:11px;padding:9px 15px">
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <span style="font-size:9.5px;letter-spacing:.1em;color:#5eead4;font-weight:600">LOOP START</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <button onClick="{{ nudgeAdown }}" style="width:22px;height:22px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:#161a21;color:#8a92a2;cursor:pointer;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center" title="−10ms">−</button>
+              <input ref="{{ aInputRef }}" class="tno" onFocus="{{ onFieldFocus }}" onBlur="{{ commitA }}" onKeyDown="{{ onAKey }}" style="font-size:16px;font-weight:600;width:82px;text-align:center;background:#161a21;border:1px solid rgba(255,255,255,.09);border-radius:7px;color:#e7eaf0;padding:3px 0" style-focus="border-color:#5eead4"/>
+              <button onClick="{{ nudgeAup }}" style="width:22px;height:22px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:#161a21;color:#8a92a2;cursor:pointer;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center" title="+10ms">+</button>
+            </div>
+          </div>
+          <div style="width:1px;align-self:stretch;background:rgba(255,255,255,.08)"></div>
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <span style="font-size:9.5px;letter-spacing:.1em;color:#5eead4;font-weight:600">LOOP END</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <button onClick="{{ nudgeBdown }}" style="width:22px;height:22px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:#161a21;color:#8a92a2;cursor:pointer;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center" title="−10ms">−</button>
+              <input ref="{{ bInputRef }}" class="tno" onFocus="{{ onFieldFocus }}" onBlur="{{ commitB }}" onKeyDown="{{ onBKey }}" style="font-size:16px;font-weight:600;width:82px;text-align:center;background:#161a21;border:1px solid rgba(255,255,255,.09);border-radius:7px;color:#e7eaf0;padding:3px 0" style-focus="border-color:#5eead4"/>
+              <button onClick="{{ nudgeBup }}" style="width:22px;height:22px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:#161a21;color:#8a92a2;cursor:pointer;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center" title="+10ms">+</button>
+            </div>
+          </div>
+          <div style="width:1px;align-self:stretch;background:rgba(255,255,255,.08)"></div>
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <span style="font-size:9.5px;letter-spacing:.1em;color:#6b7280;font-weight:600">LENGTH</span>
+            <span class="tno" style="font-size:16px;font-weight:600;color:#e7eaf0">{{ lenLabel }}</span>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;align-items:center">
+          <button onClick="{{ setA }}" style="height:100%;padding:0 15px;border-radius:11px;border:1px solid rgba(94,234,212,.3);background:rgba(94,234,212,.07);color:#5eead4;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap">Set A here</button>
+          <button onClick="{{ setB }}" style="height:100%;padding:0 15px;border-radius:11px;border:1px solid rgba(94,234,212,.3);background:rgba(94,234,212,.07);color:#5eead4;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap">Set B here</button>
+        </div>
+      </div>
+
+      <!-- TRANSPORT -->
+      <div style="display:flex;flex-wrap:wrap;gap:18px;align-items:center;padding:14px 26px 18px;margin-top:auto">
+        <div style="display:flex;align-items:center;gap:10px">
+          <button onClick="{{ prevTrack }}" style="width:40px;height:40px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:#14171d;color:#c3c9d4;cursor:pointer;display:flex;align-items:center;justify-content:center">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5v14h2V5H6Zm3 7 9 7V5l-9 7Z"></path></svg>
+          </button>
+          <button onClick="{{ togglePlay }}" style="width:54px;height:54px;border-radius:14px;border:none;background:linear-gradient(135deg,#2dd4bf,#0ea5a4);color:#04231f;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(45,212,191,.4)">
+            <span ref="{{ playIconRef }}">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7L8 5Z"></path></svg>
+            </span>
+          </button>
+          <button onClick="{{ nextTrack }}" style="width:40px;height:40px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:#14171d;color:#c3c9d4;cursor:pointer;display:flex;align-items:center;justify-content:center">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M16 5v14h2V5h-2ZM6 5v14l9-7-9-7Z"></path></svg>
+          </button>
+        </div>
+
+        <div style="display:flex;align-items:baseline;gap:8px;min-width:150px">
+          <span ref="{{ timeRef }}" class="tno" style="font-size:19px;font-weight:600;color:#e7eaf0">0:00.000</span>
+          <span class="tno" style="font-size:13px;color:#5b6472">/ {{ curDurLabel }}</span>
+        </div>
+
+        <!-- loop toggle -->
+        <div style="display:flex;align-items:center;gap:9px">
+          <button onClick="{{ toggleLoop }}" style="display:flex;align-items:center;gap:7px;height:40px;padding:0 14px;border-radius:10px;border:1px solid {{ loopBorder }};background:{{ loopBg }};color:{{ loopColor }};font-size:13px;font-weight:600;cursor:pointer">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M17 3l4 4-4 4M21 7H7a4 4 0 0 0-4 4v0M7 21l-4-4 4-4M3 17h14a4 4 0 0 0 4-4v0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            Loop
+          </button>
+        </div>
+
+        <!-- speed -->
+        <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:250px;max-width:380px;background:#0f1319;border:1px solid rgba(255,255,255,.08);border-radius:11px;padding:8px 14px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex:none;color:#8a92a2"><path d="M12 8v4l3 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.5 12a7.5 7.5 0 1 1 2.2 5.3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
+          <span style="font-size:9.5px;letter-spacing:.1em;color:#6b7280;font-weight:600;flex:none">SPEED</span>
+          <input type="range" min="0.25" max="1.5" step="0.05" value="{{ rate }}" onInput="{{ onSpeed }}" ref="{{ speedRef }}" style="flex:1;accent-color:#5eead4;height:4px">
+          <div style="display:flex;align-items:baseline;gap:2px;flex:none">
+            <input ref="{{ rateInputRef }}" onFocus="{{ onFieldFocus }}" onBlur="{{ commitRate }}" onKeyDown="{{ onRateKey }}" title="Type a speed from 0.25 to 1.50" class="tno" style="width:48px;background:#161a21;border:1px solid rgba(255,255,255,.09);border-radius:7px;color:#e7eaf0;font-size:15px;font-weight:600;text-align:center;padding:4px 0" style-focus="border-color:#5eead4"/>
+            <span class="tno" style="font-size:13px;color:#8a92a2">×</span>
+          </div>
+          <button onClick="{{ resetSpeed }}" title="Reset to 1.00×" style="flex:none;font-size:11px;color:#5eead4;background:none;border:none;cursor:pointer;font-weight:600">1×</button>
+        </div>
+      </div>
+
+    </main>
+  </div>
+  </sc-if>
+
+  <!-- INIT / EMPTY STATE -->
+  <sc-if value="{{ noTracks }}" hint-placeholder-val="{{ true }}">
+  <div style="flex:1;min-height:0;overflow-y:auto;display:flex;align-items:center;justify-content:center;padding:40px 24px;background:radial-gradient(120% 80% at 50% -10%,#12161d 0%,#0c0e12 60%)">
+    <div style="width:100%;max-width:720px;display:flex;flex-direction:column;align-items:center;text-align:center">
+
+      <!-- animated eq mark -->
+      <div style="position:relative;width:96px;height:96px;border-radius:24px;background:linear-gradient(135deg,#12303080,#0e1116);border:1px solid rgba(94,234,212,.22);display:flex;align-items:flex-end;justify-content:center;gap:7px;padding:26px 0;box-shadow:0 12px 44px rgba(45,212,191,.16)">
+        <span style="width:7px;border-radius:4px;background:#5eead4;height:22px;animation:eq 1.1s ease-in-out -0.2s infinite"></span>
+        <span style="width:7px;border-radius:4px;background:#2dd4bf;height:40px;animation:eq 1.1s ease-in-out -0.5s infinite"></span>
+        <span style="width:7px;border-radius:4px;background:#5eead4;height:30px;animation:eq 1.1s ease-in-out -0.8s infinite"></span>
+        <span style="width:7px;border-radius:4px;background:#0ea5a4;height:16px;animation:eq 1.1s ease-in-out -0.1s infinite"></span>
+      </div>
+
+      <h1 style="margin:26px 0 0;font-size:30px;font-weight:700;letter-spacing:-.01em;color:#fff">Loop anything. Master every bar.</h1>
+      <p style="margin:12px 0 0;font-size:15px;line-height:1.6;color:#8a92a2;max-width:460px">Drop in a track, mark an A–B section, and practice it on repeat — slowed down, pitch intact. Start with a YouTube link or your own audio.</p>
+
+      <!-- two entry cards -->
+      <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:34px;width:100%">
+        <!-- youtube card -->
+        <div style="flex:1;min-width:270px;max-width:340px;background:#0f1319;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:22px 20px;display:flex;flex-direction:column;align-items:flex-start;text-align:left">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+            <span style="width:38px;height:38px;border-radius:10px;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);display:flex;align-items:center;justify-content:center;color:#e11d48">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M22 12s0-3.6-.46-5.3a2.78 2.78 0 0 0-1.95-1.96C17.9 4.28 12 4.28 12 4.28s-5.9 0-7.6.46A2.78 2.78 0 0 0 2.46 6.7C2 8.4 2 12 2 12s0 3.6.46 5.3a2.78 2.78 0 0 0 1.95 1.96c1.7.46 7.6.46 7.6.46s5.9 0 7.6-.46a2.78 2.78 0 0 0 1.95-1.96C22 15.6 22 12 22 12Z" fill="currentColor"></path><path d="M10 15V9l5 3-5 3Z" fill="#0f1319"></path></svg>
+            </span>
+            <span style="font-size:15px;font-weight:600;color:#e7eaf0">Paste a link</span>
+          </div>
+          <p style="margin:0 0 14px;font-size:12.5px;line-height:1.5;color:#6b7280">Any YouTube video — backing tracks, solos, lessons.</p>
+          <div style="display:flex;align-items:center;gap:8px;width:100%;background:#14171d;border:1px solid rgba(255,255,255,.09);border-radius:9px;padding:0 11px;height:40px">
+            <input value="{{ ytUrl }}" onInput="{{ onYtInput }}" onKeyDown="{{ onYtKey }}" placeholder="youtube.com/watch?v=…" style="flex:1;background:none;border:none;color:#e7eaf0;font-size:13px;min-width:0"/>
+            <button onClick="{{ addYoutube }}" style="flex:none;background:#5eead4;color:#052e2b;border:none;border-radius:6px;font-size:12px;font-weight:600;padding:7px 12px;cursor:pointer">Add</button>
+          </div>
+        </div>
+
+        <!-- upload card -->
+        <div onClick="{{ pickFile }}" style="flex:1;min-width:270px;max-width:340px;background:#0f1319;border:1px dashed rgba(94,234,212,.35);border-radius:16px;padding:22px 20px;display:flex;flex-direction:column;align-items:flex-start;text-align:left;cursor:pointer" style-hover="border-color:rgba(94,234,212,.6);background:#111722">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+            <span style="width:38px;height:38px;border-radius:10px;background:rgba(147,197,253,.1);border:1px solid rgba(147,197,253,.25);display:flex;align-items:center;justify-content:center;color:#93c5fd">
+              <svg width="19" height="19" viewBox="0 0 16 16" fill="none"><path d="M8 10.5V2.5M8 2.5 5 5.5M8 2.5l3 3M2.5 10v2.5A1 1 0 0 0 3.5 13.5h9a1 1 0 0 0 1-1V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            </span>
+            <span style="font-size:15px;font-weight:600;color:#e7eaf0">Upload audio</span>
+          </div>
+          <p style="margin:0 0 14px;font-size:12.5px;line-height:1.5;color:#6b7280">MP3, WAV, or any audio file from your device.</p>
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:40px;background:rgba(94,234,212,.06);border:1px solid rgba(94,234,212,.25);border-radius:9px;color:#5eead4;font-size:13px;font-weight:600">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path></svg>
+            Choose files
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- SHORTCUTS OVERLAY -->
+  <sc-if value="{{ showShortcuts }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ toggleShortcuts }}" style="position:fixed;inset:0;background:rgba(6,8,11,.72);backdrop-filter:blur(3px);z-index:50;display:flex;align-items:center;justify-content:center;padding:24px">
+      <div onClick="{{ stop }}" style="width:min(560px,100%);background:#12161d;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:24px 26px;box-shadow:0 24px 70px rgba(0,0,0,.6)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+          <h2 style="margin:0;font-size:17px;font-weight:600">Keyboard shortcuts</h2>
+          <button onClick="{{ toggleShortcuts }}" style="width:30px;height:30px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:#161a21;color:#8a92a2;cursor:pointer">✕</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px 26px">
+          <sc-for list="{{ shortcuts }}" as="s" hint-placeholder-count="10">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+              <span style="font-size:13px;color:#b8bfca">{{ s.label }}</span>
+              <span class="tno" style="font-size:11px;font-weight:600;color:#e7eaf0;background:#0c0e12;border:1px solid rgba(255,255,255,.12);border-bottom-width:2px;padding:3px 8px;border-radius:6px;white-space:nowrap">{{ s.key }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- AUTH MODAL -->
+  <sc-if value="{{ authOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeAuth }}" style="position:fixed;inset:0;background:rgba(6,8,11,.72);backdrop-filter:blur(3px);z-index:60;display:flex;align-items:center;justify-content:center;padding:24px">
+      <div onClick="{{ stop }}" style="width:min(400px,100%);background:#12161d;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:26px;box-shadow:0 24px 70px rgba(0,0,0,.6)">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+          <div style="width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#2dd4bf,#0ea5a4);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(45,212,191,.35)">
+            <svg width="17" height="17" viewBox="0 0 16 16" fill="none"><path d="M4 3v10M8 1v14M12 5v6" stroke="#04231f" stroke-width="1.8" stroke-linecap="round"></path></svg>
+          </div>
+          <h2 style="margin:0;font-size:18px;font-weight:700">{{ authTitle }}</h2>
+        </div>
+        <p style="margin:0 0 18px;font-size:13px;line-height:1.5;color:#8a92a2">Save your loops and open them on any device. It's free.</p>
+
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <input value="{{ authEmail }}" onInput="{{ onAuthEmail }}" onKeyDown="{{ onAuthKey }}" type="email" placeholder="you@example.com" style="height:42px;background:#14171d;border:1px solid rgba(255,255,255,.1);border-radius:9px;color:#e7eaf0;font-size:13.5px;padding:0 13px" style-focus="border-color:#5eead4"/>
+          <input value="{{ authPass }}" onInput="{{ onAuthPass }}" onKeyDown="{{ onAuthKey }}" type="password" placeholder="Password" style="height:42px;background:#14171d;border:1px solid rgba(255,255,255,.1);border-radius:9px;color:#e7eaf0;font-size:13.5px;padding:0 13px" style-focus="border-color:#5eead4"/>
+          <sc-if value="{{ authError }}" hint-placeholder-val="{{ false }}">
+            <span style="font-size:12px;color:#fca5a5">{{ authError }}</span>
+          </sc-if>
+          <button onClick="{{ submitAuth }}" style="height:44px;margin-top:2px;background:#5eead4;border:none;border-radius:9px;color:#052e2b;font-size:14px;font-weight:600;cursor:pointer">{{ authCta }}</button>
+        </div>
+
+        <div style="margin-top:16px;text-align:center;font-size:12.5px;color:#6b7280">
+          {{ authSwitchLabel }}
+          <button onClick="{{ toggleAuthMode }}" style="background:none;border:none;color:#5eead4;font-size:12.5px;font-weight:600;cursor:pointer;padding:0 2px">{{ authSwitchCta }}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- IMPORT PROMPT -->
+  <sc-if value="{{ importOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;background:rgba(6,8,11,.72);backdrop-filter:blur(3px);z-index:70;display:flex;align-items:center;justify-content:center;padding:24px">
+      <div style="width:min(420px,100%);background:#12161d;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:26px;box-shadow:0 24px 70px rgba(0,0,0,.6)">
+        <div style="width:44px;height:44px;border-radius:12px;background:rgba(94,234,212,.1);border:1px solid rgba(94,234,212,.25);display:flex;align-items:center;justify-content:center;color:#5eead4;margin-bottom:14px">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        </div>
+        <h2 style="margin:0 0 8px;font-size:18px;font-weight:700">Import your loops?</h2>
+        <p style="margin:0 0 20px;font-size:13.5px;line-height:1.55;color:#8a92a2">You added <strong style="color:#e7eaf0">{{ guestCountLabel }}</strong> before signing in. Add {{ guestThem }} to your account to open {{ guestThem }} on any device?</p>
+        <div style="display:flex;gap:10px">
+          <button onClick="{{ skipImport }}" style="flex:1;height:44px;background:#14171d;border:1px solid rgba(255,255,255,.1);border-radius:9px;color:#c3c9d4;font-size:13.5px;font-weight:600;cursor:pointer">Don't import</button>
+          <button onClick="{{ importLoops }}" style="flex:1;height:44px;background:#5eead4;border:none;border-radius:9px;color:#052e2b;font-size:13.5px;font-weight:600;cursor:pointer">Import {{ guestCountShort }}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    this.state = {
+      tracks:[],
+      currentId:null, search:'', ytUrl:'',
+      playing:false, rate:1, loopEnabled:true, showShortcuts:false, newTag:'',
+      narrow:false, sidebarOpen:true,
+      account:null, accountMenuOpen:false,
+      authOpen:false, authMode:'signup', authEmail:'', authPass:'', authError:'',
+      importOpen:false,
+    };
+    this._pendingGuest=null; this._pendingSaved=null;
+    this._manualVideo=false;
+    this.state.videoWidth=620;
+    this.vt=0; this.loopsDone=0; this.drag=null; this.raf=null; this.lastFrame=0;
+    this.yt=null; this.ytReady=false; this.ytPendingPlay=false;
+  }
+
+  cur(){ return this.state.tracks.find(t=>t.id===this.state.currentId) || this.state.tracks[0]; }
+  dur(){ const c=this.cur(); return c? (c.duration||1):1; }
+
+  componentDidMount(){
+    this._key = e=>this.onKey(e);
+    window.addEventListener('keydown', this._key);
+    this._rz = ()=>{ this.setState({narrow: window.innerWidth<820}); this.draw(); this.fitVideo(); };
+    window.addEventListener('resize', this._rz);
+    this._out = (e)=>{ if(this.state.accountMenuOpen && this.acctRef && !this.acctRef.contains(e.target)) this.setState({accountMenuOpen:false}); };
+    window.addEventListener('pointerdown', this._out);
+    this.setState({narrow: window.innerWidth<820});
+    // restore account + saved library
+    try{ const raw=localStorage.getItem('looptree_account'); if(raw){ const account=JSON.parse(raw); const saved=this.loadLib(account.email); this.setState({account, tracks:saved, currentId: saved[0]?saved[0].id:null}); } }catch(e){}
+    // load YT api
+    if(!window.YT){ const s=document.createElement('script'); s.src='https://www.youtube.com/iframe_api'; document.head.appendChild(s); }
+    setTimeout(()=>this.draw(),60);
+    setTimeout(()=>{ this.draw(); this.fitVideo(); },300);
+    this.syncPlayhead(); this.syncFields(); this.syncSpeed();
+  }
+  componentWillUnmount(){ window.removeEventListener('keydown',this._key); window.removeEventListener('resize',this._rz); window.removeEventListener('pointerdown',this._out); this.stopTick(); }
+  componentDidUpdate(pp,ps){
+    if(ps && (ps.currentId!==this.state.currentId || (ps.tracks&&ps.tracks.length)!==this.state.tracks.length)){ this.draw(); setTimeout(()=>this.fitVideo(),0); }
+    if(this.state.account && ps && ps.tracks!==this.state.tracks){ this.saveLib(); }
+    this.syncFields(); this.syncSpeed();
+  }
+
+  // ---------- WAVEFORM ----------
+  draw(){
+    const wrap=this.wrapRef; const c=this.cur();
+    if(!wrap||!c) return;
+    const W=wrap.clientWidth, H=wrap.clientHeight;
+    if(W<2||H<2){ return; }
+    this.fullW=W;
+    const dpr=window.devicePixelRatio||1;
+    const lp=this.curLoop(); const d=c.duration||1;
+    const aX=(lp.a/d)*W, bX=(lp.b/d)*W; const accent=c.accent||'#5eead4';
+    const cv=this.baseRef; if(cv){ cv.width=W*dpr; cv.height=H*dpr; cv.style.width=W+'px'; cv.style.height=H+'px'; const g=cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H); const peaks=c.peaks; const n=peaks.length; const bw=W/n; const mid=H/2; for(let i=0;i<n;i++){ const h=Math.max(1.5,peaks[i]*(H*0.86)); const x=i*bw; const cx=x+bw*0.31; const inLoop=cx>=aX && cx<=bX; g.fillStyle=inLoop?accent:'#39414f'; g.fillRect(x, mid-h/2, Math.max(1,bw*0.62), h);} }
+    this.syncPlayhead();
+  }
+  syncPlayhead(){
+    const t=this.getT(); const d=this.dur(); const p=Math.max(0,Math.min(1,t/d));
+    if(this.playheadRef) this.playheadRef.style.left=(p*100)+'%';
+    if(this.timeRef) this.timeRef.textContent=this.fmt(t);
+  }
+
+  // ---------- TIME ----------
+  getT(){ const c=this.cur(); if(!c) return 0; if(c.kind==='youtube'&&this.yt&&this.ytReady){ try{return this.yt.getCurrentTime()||0;}catch(e){return this.vt;} } if(c.kind==='file'&&this.audioRef){ return this.audioRef.currentTime||0; } return this.vt; }
+  setT(t){ const c=this.cur(); const d=this.dur(); t=Math.max(0,Math.min(d,t)); if(c.kind==='youtube'&&this.yt&&this.ytReady){ try{this.yt.seekTo(t,true);}catch(e){} } else if(c.kind==='file'&&this.audioRef){ this.audioRef.currentTime=t; } this.vt=t; this.syncPlayhead(); }
+  fmt(t){ if(!isFinite(t)||t<0)t=0; const m=Math.floor(t/60),s=Math.floor(t%60),ms=Math.floor((t%1)*1000); return m+':'+String(s).padStart(2,'0')+'.'+String(ms).padStart(3,'0'); }
+  fmtS(t){ if(!isFinite(t)||t<0)t=0; const m=Math.floor(t/60),s=Math.floor(t%60); return m+':'+String(s).padStart(2,'0'); }
+
+  // ---------- TICK LOOP ----------
+  startTick(){ if(this.raf) return; this.lastFrame=performance.now(); const step=(now)=>{ const dt=(now-this.lastFrame)/1000; this.lastFrame=now; this.frame(dt); this.raf=requestAnimationFrame(step); }; this.raf=requestAnimationFrame(step); }
+  stopTick(){ if(this.raf){ cancelAnimationFrame(this.raf); this.raf=null; } }
+  frame(dt){
+    const c=this.cur(); if(!c) return;
+    let t=this.getT();
+    if(c.kind==='demo'){ this.vt += dt*this.state.rate; t=this.vt; }
+    const d=this.dur(); const lp=this.curLoop();
+    if(this.state.loopEnabled && t>=lp.b){
+      this.setT(lp.a);
+      t=lp.a;
+    } else if(!this.state.loopEnabled && t>=d){
+      this.setT(0); this.pause(); return;
+    }
+    this.syncPlayhead();
+  }
+
+  // ---------- PLAY ----------
+  setPlayIcon(playing){ if(!this.playIconRef) return; this.playIconRef.innerHTML = playing
+    ? '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>'
+    : '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7L8 5Z"/></svg>'; }
+  play(){
+    const c=this.cur(); if(!c) return;
+    const lp=this.curLoop(); if(this.getT()>=lp.b-0.01 || this.getT()<lp.a-0.001){ this.setT(lp.a); }
+    if(c.kind==='youtube'){ if(this.yt&&this.ytReady){ try{this.yt.setPlaybackRate(this.nearestRate(this.state.rate)); this.yt.playVideo();}catch(e){} } else { this.ytPendingPlay=true; this.ensureYt(c); } }
+    else if(c.kind==='file' && this.audioRef){ this.audioRef.playbackRate=this.state.rate; try{this.audioRef.preservesPitch=true;this.audioRef.mozPreservesPitch=true;this.audioRef.webkitPreservesPitch=true;}catch(e){} this.audioRef.play().catch(()=>{}); }
+    this.setState({playing:true}); this.setPlayIcon(true); this.startTick();
+  }
+  pause(){ const c=this.cur(); if(c&&c.kind==='youtube'&&this.yt&&this.ytReady){try{this.yt.pauseVideo();}catch(e){}} if(c&&c.kind==='file'&&this.audioRef){this.audioRef.pause();} this.setState({playing:false}); this.setPlayIcon(false); this.stopTick(); this.syncPlayhead(); }
+  togglePlay=()=>{ this.state.playing? this.pause() : this.play(); };
+
+  // ---------- YOUTUBE ----------
+  nearestRate(r){ const allow=[0.25,0.5,0.75,1,1.25,1.5]; return allow.reduce((a,b)=>Math.abs(b-r)<Math.abs(a-r)?b:a,1); }
+  ensureYt(c){
+    if(!this.ytHostRef) return;
+    const boot=()=>{
+      if(!window.YT||!window.YT.Player){ setTimeout(boot,200); return; }
+      if(!this.yt){
+        const mount=document.createElement('div'); this.ytHostRef.innerHTML=''; this.ytHostRef.appendChild(mount);
+        this.yt=new window.YT.Player(mount,{ width:'100%', height:'100%', videoId:c.videoId, playerVars:{controls:0,disablekb:1,modestbranding:1,rel:0,playsinline:1,fs:0},
+          events:{ onReady:()=>{ this.ytReady=true; try{const d=this.yt.getDuration(); if(d>0){ this.patchDuration(c.id,d); }}catch(e){} if(this.ytPendingPlay){ this.ytPendingPlay=false; try{this.yt.setPlaybackRate(this.nearestRate(this.state.rate));this.yt.playVideo();}catch(e){} } },
+                   onStateChange:(e)=>{ if(e.data===1){ try{const d=this.yt.getDuration(); if(d>0) this.patchDuration(c.id,d);}catch(er){} } } } });
+      } else { this.ytReady=false; this.yt.loadVideoById(c.videoId); }
+    };
+    boot();
+  }
+  patchDuration(id,d){ this.setState(s=>({tracks:s.tracks.map(t=>{ if(t.id!==id)return t; const loops=t.loops.map(l=>{ const a=Math.min(l.a,Math.max(0,d-0.1)); const b=Math.min(l.b>d?Math.min(d,a+8):l.b, d); return {...l,a,b}; }); return {...t,duration:d,loops}; })})); setTimeout(()=>this.draw(),30); }
+
+  // ---------- SELECT / ADD / REMOVE ----------
+  select(id){
+    if(id===this.state.currentId) return;
+    this.pause(); this.vt=0; this.loopsDone=0; if(this.loopCountRef)this.loopCountRef.textContent=0;
+    const c=this.state.tracks.find(t=>t.id===id);
+    this.setState({currentId:id,newTag:''},()=>{
+      if(this.audioRef){ if(c.kind==='file'){ this.audioRef.src=c.url; } else { this.audioRef.removeAttribute('src'); this.audioRef.load&&this.audioRef.load(); } }
+      if(c.kind==='youtube'){ this.ensureYt(c); } else if(this.yt&&this.ytReady){ try{this.yt.stopVideo();}catch(e){} }
+      setTimeout(()=>{ this.draw(); this.syncFields(); this.syncSpeed(); this.fitVideo(); },40);
+    });
+  }
+  remove(id){
+    const list=this.state.tracks.filter(t=>t.id!==id);
+    if(!list.length) return;
+    let cid=this.state.currentId;
+    if(id===cid){ this.pause(); cid=list[0].id; this.vt=0; }
+    const c0=list.find(t=>t.id===cid);
+    this.setState({tracks:list,currentId:cid},()=>{ if(c0&&c0.kind==='file'&&this.audioRef){this.audioRef.src=c0.url;} setTimeout(()=>this.draw(),40); });
+  }
+
+  pickFile=()=>{ this.fileRef&&this.fileRef.click(); };
+  fitVideo(){
+    if(this._manualVideo) return;
+    const box=this.videoBoxRef, main=this.mainRef; if(!box||!main) return;
+    const container=box.parentElement; if(!container) return;
+    const cw=container.clientWidth; if(cw<10) return;
+    let w=this.state.videoWidth||620;
+    for(let pass=0; pass<3; pass++){
+      const curH=box.getBoundingClientRect().height || (w*9/16);
+      const delta=main.clientHeight - main.scrollHeight; // >0 spare room, <0 overflow
+      let newH=Math.max(150, curH+delta);
+      w=Math.max(240, Math.min(cw, Math.floor(newH*16/9)));
+      box.style.width=w+'px'; // apply for next measurement pass
+    }
+    if(Math.abs(w-(this.state.videoWidth||0))>1) this.setState({videoWidth:w});
+  }
+  onVideoResize=(e)=>{
+    e.preventDefault(); e.stopPropagation();
+    const handle=e.currentTarget; try{ handle.setPointerCapture(e.pointerId); }catch(x){}
+    const parent=this.videoBoxRef&&this.videoBoxRef.parentElement; if(!parent) return;
+    const rect=parent.getBoundingClientRect(); const centerX=rect.left+rect.width/2;
+    const move=(ev)=>{ const w=Math.max(280, Math.min(rect.width, Math.round(2*(ev.clientX-centerX)))); this._manualVideo=true; this.setState({videoWidth:w}); };
+    const up=()=>{ try{ handle.releasePointerCapture(e.pointerId); }catch(x){} handle.removeEventListener('pointermove',move); handle.removeEventListener('pointerup',up); };
+    handle.addEventListener('pointermove',move); handle.addEventListener('pointerup',up);
+  };
+  onLoadedMeta=(e)=>{ const c=this.cur(); if(!c||c.kind!=='file')return; const d=e.target.duration; if(isFinite(d)&&d>0&&Math.abs(d-c.duration)>0.5){ this.patchDuration(c.id,d); } };
+  onFile=async(e)=>{
+    const files=[...(e.target.files||[])]; if(!files.length) return;
+    const AC=window.AudioContext||window.webkitAudioContext; const ac=new AC();
+    let firstId=null;
+    for(const f of files){
+      const id='f'+Date.now()+Math.floor(Math.random()*999);
+      if(!firstId)firstId=id;
+      const url=URL.createObjectURL(f);
+      const isVideo=(f.type||'').startsWith('video/');
+      let peaks=null,dur=0;
+      try{ const buf=await f.arrayBuffer(); const ab=await ac.decodeAudioData(buf); dur=ab.duration; const ch=ab.getChannelData(0); const n=600; peaks=[]; const block=Math.floor(ch.length/n); for(let i=0;i<n;i++){ let mx=0; for(let j=0;j<block;j++){ const v=Math.abs(ch[i*block+j]||0); if(v>mx)mx=v; } peaks.push(Math.max(0.04,Math.min(1,mx*1.25))); } }
+      catch(err){ dur=0; peaks=Array.from({length:600},(_,i)=>0.1+0.6*Math.abs(Math.sin(i/9))); }
+      const name=f.name.replace(/\.[^.]+$/,'');
+      const la=Math.min(4,(dur||120)*0.1), lb=Math.min(dur||120,(dur||120)*0.4||12); const lid='l'+Date.now()+Math.floor(Math.random()*99);
+      const track={id,kind:'file',hasVideo:isVideo,title:name,artist:isVideo?'Local video':'Local file',tags:[(f.name.split('.').pop()||'audio').toUpperCase()],duration:dur||120,loops:[{id:lid,name:'Loop 1',a:la,b:lb}],activeLoopId:lid,accent:isVideo?'#c4b5fd':'#93c5fd',peaks,url};
+      this.setState(s=>({tracks:[track,...s.tracks]}));
+    }
+    e.target.value='';
+    if(firstId) setTimeout(()=>this.select(firstId),50);
+  };
+  onYtInput=(e)=>this.setState({ytUrl:e.target.value});
+  onYtKey=(e)=>{ if(e.key==='Enter') this.addYoutube(); };
+  addYoutube=()=>{
+    const u=this.state.ytUrl.trim(); if(!u) return;
+    const m=u.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{11})/) || u.match(/^([A-Za-z0-9_-]{11})$/);
+    if(!m){ this.setState({ytUrl:''}); return; }
+    const vid=m[1]; const id='y'+Date.now(); const lid='l'+Date.now();
+    const track={id,kind:'youtube',videoId:vid,title:'YouTube loop',artist:'youtube.com',tags:['youtube'],duration:210,loops:[{id:lid,name:'Loop 1',a:20,b:40}],activeLoopId:lid,accent:'#fca5a5',thumb:'https://img.youtube.com/vi/'+vid+'/mqdefault.jpg',peaks:Array.from({length:600},(_,i)=>{const x=i/600;return Math.max(0.06,Math.min(1,(0.3+0.7*Math.abs(Math.sin(i/7+vid.length)))*Math.min(1,Math.sin(x*Math.PI)*1.3+0.2)));})};
+    this.setState(s=>({tracks:[track,...s.tracks],ytUrl:''}),()=>setTimeout(()=>this.select(id),40));
+  };
+
+  // ---------- LOOP EDIT ----------
+  clampA(v){ return Math.max(0,Math.min(v,this.curLoop().b-0.05)); }
+  clampB(v){ const c=this.cur(); return Math.max(this.curLoop().a+0.05,Math.min(v,c.duration)); }
+  patch(fields){ this.setState(s=>({tracks:s.tracks.map(t=>t.id===s.currentId?{...t,...fields}:t)})); }
+  curLoop(){ const c=this.cur(); if(!c||!c.loops||!c.loops.length) return {a:0,b:1,name:''}; return c.loops.find(l=>l.id===c.activeLoopId)||c.loops[0]; }
+  patchLoop(fields){ this.setState(s=>({tracks:s.tracks.map(t=>{ if(t.id!==s.currentId)return t; const loops=t.loops.map(l=>l.id===t.activeLoopId?{...l,...fields}:l); loops.sort((a,b)=>a.a-b.a); return {...t,loops}; })}),()=>this.draw()); }
+  selectLoop=(lid)=>{ this.setState(s=>({tracks:s.tracks.map(t=>t.id===s.currentId?{...t,activeLoopId:lid}:t)}),()=>{ const l=this.curLoop(); this.loopsDone=0; if(this.loopCountRef)this.loopCountRef.textContent=0; this.setT(l.a); this.syncFields(); this.draw(); }); };
+  addLoop=()=>{ const c=this.cur(); const a=Math.max(0,Math.min(this.getT(), c.duration-0.2)); const b=Math.min(c.duration, a+Math.max(2,Math.min(8,c.duration*0.12))); const id='l'+Date.now()+Math.floor(Math.random()*99); const name='Loop '+(c.loops.length+1); this.setState(s=>({tracks:s.tracks.map(t=>{ if(t.id!==s.currentId)return t; const loops=[...t.loops,{id,name,a,b}]; loops.sort((x,y)=>x.a-y.a); return {...t,loops,activeLoopId:id}; })}),()=>{ this.loopsDone=0; if(this.loopCountRef)this.loopCountRef.textContent=0; this.setT(a); this.syncFields(); this.draw(); }); };
+  removeLoop=(lid)=>{ const c=this.cur(); if(!c||c.loops.length<=1)return; this.setState(s=>({tracks:s.tracks.map(t=>{ if(t.id!==s.currentId)return t; const loops=t.loops.filter(l=>l.id!==lid); let aid=t.activeLoopId; if(aid===lid)aid=loops[0].id; return {...t,loops,activeLoopId:aid}; })}),()=>this.syncFields()); };
+  renameLoop=(lid,name)=>{ this.setState(s=>({tracks:s.tracks.map(t=>t.id===s.currentId?{...t,loops:t.loops.map(l=>l.id===lid?{...l,name}:l)}:t)})); };
+  cycleLoop(dir){ const c=this.cur(); if(!c||c.loops.length<2)return; const i=c.loops.findIndex(l=>l.id===c.activeLoopId); const ni=(i+dir+c.loops.length)%c.loops.length; this.selectLoop(c.loops[ni].id); }
+  parseTime(str){ if(str==null)return null; str=(''+str).trim(); if(!str)return null; let sec; if(str.indexOf(':')>=0){ const p=str.split(':'); const m=parseFloat(p[0]); const s=parseFloat(p[1]); if(!isFinite(m)||!isFinite(s))return null; sec=m*60+s; } else { sec=parseFloat(str); } return isFinite(sec)?sec:null; }
+  syncFields(){ const l=this.curLoop(); if(this.aInputRef&&document.activeElement!==this.aInputRef) this.aInputRef.value=this.fmt(l.a); if(this.bInputRef&&document.activeElement!==this.bInputRef) this.bInputRef.value=this.fmt(l.b); }
+  onFieldFocus=(e)=>{ e.target.select(); };
+  commitA=()=>{ const v=this.parseTime(this.aInputRef&&this.aInputRef.value); if(v!=null) this.patchLoop({a:this.clampA(v)}); setTimeout(()=>this.syncFields(),0); };
+  commitB=()=>{ const v=this.parseTime(this.bInputRef&&this.bInputRef.value); if(v!=null) this.patchLoop({b:this.clampB(v)}); setTimeout(()=>this.syncFields(),0); };
+  onAKey=(e)=>{ if(e.key==='Enter'){ e.preventDefault(); this.commitA(); this.aInputRef.blur(); } else if(e.key==='Escape'){ this.syncFields(); this.aInputRef.blur(); } };
+  onBKey=(e)=>{ if(e.key==='Enter'){ e.preventDefault(); this.commitB(); this.bInputRef.blur(); } else if(e.key==='Escape'){ this.syncFields(); this.bInputRef.blur(); } };
+  setA=()=>{ this.patchLoop({a:this.clampA(this.getT())}); };
+  setB=()=>{ this.patchLoop({b:this.clampB(this.getT())}); };
+  nudgeAdown=()=>this.patchLoop({a:this.clampA(this.curLoop().a-0.01)});
+  nudgeAup=()=>this.patchLoop({a:this.clampA(this.curLoop().a+0.01)});
+  nudgeBdown=()=>this.patchLoop({b:this.clampB(this.curLoop().b-0.01)});
+  nudgeBup=()=>this.patchLoop({b:this.clampB(this.curLoop().b+0.01)});
+
+  pctFromEvent(e){ const r=this.wrapRef.getBoundingClientRect(); return Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)); }
+  onWavePointer=(e)=>{ const t=this.pctFromEvent(e)*this.dur(); this.setT(t); };
+  onDragA=(e)=>{ e.stopPropagation(); this.startDrag('A',e); };
+  onDragB=(e)=>{ e.stopPropagation(); this.startDrag('B',e); };
+  startDrag(which,e){
+    e.preventDefault();
+    const move=(ev)=>{ const t=this.pctFromEvent(ev)*this.dur(); if(which==='A') this.patchLoop({a:this.clampA(t)}); else this.patchLoop({b:this.clampB(t)}); };
+    const up=()=>{ window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up); };
+    window.addEventListener('pointermove',move); window.addEventListener('pointerup',up);
+  }
+
+  // ---------- SPEED / LOOP ----------
+  applyRate(r){ if(!isFinite(r))return; r=Math.max(0.25,Math.min(1.5,r)); this.setState({rate:r}); if(this.speedRef)this.speedRef.value=r; const c=this.cur(); if(c.kind==='file'&&this.audioRef){this.audioRef.playbackRate=r;try{this.audioRef.preservesPitch=true;this.audioRef.mozPreservesPitch=true;this.audioRef.webkitPreservesPitch=true;}catch(x){}} if(c.kind==='youtube'&&this.yt&&this.ytReady){try{this.yt.setPlaybackRate(this.nearestRate(r));}catch(x){}} if(this.rateInputRef&&document.activeElement!==this.rateInputRef) this.rateInputRef.value=r.toFixed(2); }
+  onSpeed=(e)=>{ this.applyRate(parseFloat(e.target.value)); };
+  resetSpeed=()=>{ this.applyRate(1); };
+  bumpSpeed(d){ this.applyRate(Math.round((this.state.rate+d)*100)/100); }
+  syncSpeed(){ if(this.rateInputRef&&document.activeElement!==this.rateInputRef) this.rateInputRef.value=this.state.rate.toFixed(2); }
+  commitRate=()=>{ let v=this.parseTime(this.rateInputRef&&this.rateInputRef.value); if(v==null){ this.syncSpeed(); return; } this.applyRate(v); setTimeout(()=>this.syncSpeed(),0); };
+  onRateKey=(e)=>{ if(e.key==='Enter'){ e.preventDefault(); this.commitRate(); this.rateInputRef.blur(); } else if(e.key==='Escape'){ this.syncSpeed(); this.rateInputRef.blur(); } };
+  toggleLoop=()=>this.setState(s=>({loopEnabled:!s.loopEnabled}));
+
+  advance(dir,autoplay){
+    const list=this.state.tracks; const i=list.findIndex(t=>t.id===this.state.currentId);
+    const ni=(i+dir+list.length)%list.length; const nt=list[ni];
+    this.pause(); this.vt=0; this.loopsDone=0; if(this.loopCountRef)this.loopCountRef.textContent=0;
+    this.setState({currentId:nt.id},()=>{
+      if(this.audioRef){ if(nt.kind==='file'){this.audioRef.src=nt.url;} else {this.audioRef.removeAttribute('src');} }
+      if(nt.kind==='youtube'){ this.ytPendingPlay=!!autoplay; this.ensureYt(nt); }
+      setTimeout(()=>{ this.draw(); const nl=nt.loops.find(l=>l.id===nt.activeLoopId)||nt.loops[0]; this.setT(nl?nl.a:0); if(autoplay) this.play(); },60);
+    });
+  }
+  prevTrack=()=>this.advance(-1,this.state.playing);
+  nextTrack=()=>this.advance(1,this.state.playing);
+
+  onNewTag=(e)=>this.setState({newTag:e.target.value});
+  addTag=()=>{ let v=(this.state.newTag||'').trim().replace(/,/g,''); if(!v){ if(this.state.newTag) this.setState({newTag:''}); return; } this.setState(s=>({ newTag:'', tracks:s.tracks.map(t=>{ if(t.id!==s.currentId)return t; const tags=t.tags||[]; if(tags.some(x=>x.toLowerCase()===v.toLowerCase())) return t; return {...t,tags:[...tags,v]}; }) })); };
+  onNewTagKey=(e)=>{ if(e.key==='Enter'||e.key===','){ e.preventDefault(); this.addTag(); } else if(e.key==='Backspace' && !e.target.value){ const c=this.cur(); if(c&&c.tags&&c.tags.length) this.removeTag(c.tags[c.tags.length-1]); } };
+  removeTag=(tag)=>{ this.setState(s=>({tracks:s.tracks.map(t=>t.id===s.currentId?{...t,tags:(t.tags||[]).filter(x=>x!==tag)}:t)})); };
+  // ---------- ACCOUNT ----------
+  libKey(email){ return 'looptree_lib_'+(email||'').toLowerCase(); }
+  serialize(tracks){ try{ return JSON.stringify(tracks.map(t=>{ const {url,...rest}=t; return rest; })); }catch(e){ return '[]'; } }
+  saveLib(){ const a=this.state.account; if(!a)return; try{ localStorage.setItem(this.libKey(a.email), this.serialize(this.state.tracks)); }catch(e){} }
+  loadLib(email){ try{ const raw=localStorage.getItem(this.libKey(email)); return raw? JSON.parse(raw):[]; }catch(e){ return []; } }
+  initialsFor(email){ const n=(email||'').split('@')[0].replace(/[^a-zA-Z0-9]/g,''); return (n.slice(0,2)||'??').toUpperCase(); }
+  openSignIn=()=>this.setState({authOpen:true, authMode:'signup', authError:'', authPass:''});
+  closeAuth=()=>this.setState({authOpen:false, authError:''});
+  toggleAuthMode=()=>this.setState(s=>({authMode:s.authMode==='signup'?'signin':'signup', authError:''}));
+  onAuthEmail=(e)=>this.setState({authEmail:e.target.value});
+  onAuthPass=(e)=>this.setState({authPass:e.target.value});
+  onAuthKey=(e)=>{ if(e.key==='Enter'){ e.preventDefault(); this.submitAuth(); } };
+  toggleAccountMenu=()=>this.setState(s=>({accountMenuOpen:!s.accountMenuOpen}));
+  submitAuth=()=>{
+    const email=(this.state.authEmail||'').trim(); const pass=this.state.authPass||'';
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ this.setState({authError:'Enter a valid email address.'}); return; }
+    if(pass.length<4){ this.setState({authError:'Password must be at least 4 characters.'}); return; }
+    const account={email}; const saved=this.loadLib(email); const guest=this.state.tracks;
+    try{ localStorage.setItem('looptree_account', JSON.stringify(account)); }catch(e){}
+    if(guest.length>0){
+      this._pendingGuest=guest; this._pendingSaved=saved;
+      this.setState({account, authOpen:false, accountMenuOpen:false, authPass:'', authError:'', importOpen:true});
+    } else {
+      this.setState({account, authOpen:false, accountMenuOpen:false, authPass:'', authError:'', tracks:saved, currentId: saved[0]?saved[0].id:null},()=>{ this.saveLib(); setTimeout(()=>{ this.draw(); this.syncFields(); this.syncSpeed(); },50); });
+    }
+  };
+  importLoops=()=>{
+    const guest=this._pendingGuest||[]; const saved=this._pendingSaved||[];
+    const ids=new Set(guest.map(t=>t.id)); const merged=[...guest, ...saved.filter(t=>!ids.has(t.id))];
+    this._pendingGuest=this._pendingSaved=null;
+    this.setState({importOpen:false, tracks:merged, currentId: merged[0]?merged[0].id:null},()=>{ this.saveLib(); setTimeout(()=>{ this.draw(); this.syncFields(); this.syncSpeed(); },50); });
+  };
+  skipImport=()=>{
+    const saved=this._pendingSaved||[];
+    this._pendingGuest=this._pendingSaved=null;
+    this.setState({importOpen:false, tracks:saved, currentId: saved[0]?saved[0].id:null},()=>{ this.saveLib(); setTimeout(()=>{ this.draw(); this.syncFields(); this.syncSpeed(); },50); });
+  };
+  signOut=()=>{
+    this.pause();
+    try{ localStorage.removeItem('looptree_account'); }catch(e){}
+    this.setState({account:null, accountMenuOpen:false, tracks:[], currentId:null});
+  };
+  onSearch=(e)=>this.setState({search:e.target.value});
+  toggleShortcuts=()=>this.setState(s=>({showShortcuts:!s.showShortcuts}));
+  toggleSidebar=()=>this.setState(s=>({sidebarOpen:!s.sidebarOpen}));
+  stop=(e)=>e.stopPropagation();
+
+  onKey(e){
+    const tag=(e.target.tagName||'').toLowerCase();
+    if(tag==='input'||tag==='textarea') return;
+    const k=e.key;
+    if(k===' '){ e.preventDefault(); this.togglePlay(); }
+    else if(k==='l'||k==='L'){ this.toggleLoop(); }
+    else if(k==='a'||k==='A'){ this.setA(); }
+    else if(k==='b'||k==='B'){ this.setB(); }
+    else if(k==='q'||k==='Q'){ this.nudgeAdown(); }
+    else if(k==='w'||k==='W'){ this.nudgeAup(); }
+    else if(k==='o'||k==='O'){ this.nudgeBdown(); }
+    else if(k==='p'||k==='P'){ this.nudgeBup(); }
+    else if(k==='ArrowLeft'){ e.preventDefault(); this.setT(this.getT()-5); }
+    else if(k==='ArrowRight'){ e.preventDefault(); this.setT(this.getT()+5); }
+    else if(k==='ArrowUp'){ e.preventDefault(); this.bumpSpeed(0.05); }
+    else if(k==='ArrowDown'){ e.preventDefault(); this.bumpSpeed(-0.05); }
+    else if(k==='<'||(k===','&&e.shiftKey)){ this.prevTrack(); }
+    else if(k==='>'||(k==='.'&&e.shiftKey)){ this.nextTrack(); }
+    else if(k==='['){ e.preventDefault(); this.cycleLoop(-1); }
+    else if(k===']'){ e.preventDefault(); this.cycleLoop(1); }
+    else if(k==='n'||k==='N'){ this.addLoop(); }
+  }
+
+  renderVals(){
+    const s=this.state;
+    const BLANK='data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+    const EMPTY={kind:'demo',title:'',artist:'',tags:[],duration:1,loops:[{id:'_',name:'',a:0,b:1}],activeLoopId:'_',accent:'#5eead4',peaks:[]};
+    const hasTracks=s.tracks.length>0;
+    const c=this.cur()||EMPTY;
+    const lp=this.curLoop();
+    const d=c.duration||1; const aPct=(lp.a/d)*100; const bPct=(lp.b/d)*100;
+    const loopList=(c.loops||[]).map(l=>{ const active=l.id===c.activeLoopId; return { id:l.id, name:l.name, range:this.fmtS(l.a)+' – '+this.fmtS(l.b),
+      bg: active?'rgba(94,234,212,.12)':'#14171d', border: active?'rgba(94,234,212,.5)':'rgba(255,255,255,.08)', dot: active?(c.accent||'#5eead4'):'#4b5563', nameColor: active?'#ffffff':'#b8bfca',
+      onSelect:()=>this.selectLoop(l.id), onRemove:(e)=>{ e.stopPropagation(); this.removeLoop(l.id); }, onRename:(e)=>this.renameLoop(l.id,e.target.value) }; });
+    const loopCountLabel=(c.loops||[]).length+(((c.loops||[]).length===1)?' loop':' loops');
+    const q=s.search.trim().toLowerCase();
+    const filtered = s.tracks.filter(t=> !q || t.title.toLowerCase().includes(q) || (t.artist||'').toLowerCase().includes(q) || (t.tags||[]).some(x=>x.toLowerCase().includes(q)));
+    const srcMap={ youtube:{label:'YOUTUBE',color:'#fca5a5',bg:'rgba(248,113,113,.1)',border:'rgba(248,113,113,.3)'}, file:{label:'LOCAL FILE',color:'#93c5fd',bg:'rgba(147,197,253,.1)',border:'rgba(147,197,253,.3)'}, demo:{label:'DEMO',color:'#5eead4',bg:'rgba(94,234,212,.1)',border:'rgba(94,234,212,.3)'} };
+    const src=srcMap[c.kind]||srcMap.demo;
+
+    const visibleTracks = filtered.map(t=>{
+      const active=t.id===s.currentId;
+      const hasThumb=!!t.thumb;
+      return { ...t, active,
+        durLabel:this.fmtS(t.duration||0),
+        rowBg: active?'rgba(94,234,212,.08)':'transparent',
+        rowBorder: active?'rgba(94,234,212,.28)':'transparent',
+        accentBar: active?(t.accent||'#5eead4'):'transparent',
+        titleColor: active?'#ffffff':'#d5dae2',
+        artBg:'#161a21', dot:t.accent||'#5eead4',
+        thumb:t.thumb||BLANK, hasThumb, thumbDisplay: hasThumb?'block':'none', iconDisplay: hasThumb?'none':'flex',
+        tags:t.tags||[],
+        onSelect:()=>this.select(t.id),
+        onDelete:(e)=>{ e.stopPropagation(); this.remove(t.id); },
+      };
+    });
+
+    // ruler ticks
+    const nTicks=6; const ticks=[];
+    for(let i=0;i<=nTicks;i++){ const frac=i/nTicks; ticks.push({ left:(frac*100)+'%', label:this.fmtS(frac*d) }); }
+
+    const shortcuts=[
+      {key:'Space',label:'Play / pause'}, {key:'L',label:'Toggle loop'},
+      {key:'A',label:'Set loop start at playhead'}, {key:'B',label:'Set loop end at playhead'},
+      {key:'Q / W',label:'Trim start \u221210 / +10 ms'}, {key:'O / P',label:'Trim end \u221210 / +10 ms'},
+      {key:'\u2190 / \u2192',label:'Seek \u22125 / +5 s'}, {key:'\u2191 / \u2193',label:'Speed +5% / \u22125%'},
+      {key:'< / >',label:'Previous / next song'}, {key:'[ / ]',label:'Previous / next loop'},
+      {key:'N',label:'Add loop at playhead'}, {key:'1\u00d7',label:'Reset speed'},
+    ];
+
+    return {
+      visibleTracks, ticks, shortcuts,
+      hasTracks, noTracks:!hasTracks,
+      signedIn:!!s.account, signedOut:!s.account,
+      accountEmail: s.account?s.account.email:'', accountInitials: s.account?this.initialsFor(s.account.email):'',
+      accountMenuOpen:s.accountMenuOpen, toggleAccountMenu:this.toggleAccountMenu, signOut:this.signOut, acctRef:el=>this.acctRef=el,
+      syncStatus:'All loops synced', openSignIn:this.openSignIn, closeAuth:this.closeAuth,
+      authOpen:s.authOpen, authEmail:s.authEmail, authPass:s.authPass, authError:s.authError,
+      onAuthEmail:this.onAuthEmail, onAuthPass:this.onAuthPass, onAuthKey:this.onAuthKey, submitAuth:this.submitAuth, toggleAuthMode:this.toggleAuthMode,
+      authTitle: s.authMode==='signup'?'Create your account':'Welcome back',
+      authCta: s.authMode==='signup'?'Sign up':'Sign in',
+      authSwitchLabel: s.authMode==='signup'?'Already have an account?':'New to multi-looper?',
+      authSwitchCta: s.authMode==='signup'?'Sign in':'Create one',
+      importOpen:s.importOpen, importLoops:this.importLoops, skipImport:this.skipImport,
+      guestCountLabel: (this._pendingGuest?this._pendingGuest.length:0)+((this._pendingGuest&&this._pendingGuest.length===1)?' track':' tracks'),
+      guestCountShort: (this._pendingGuest?this._pendingGuest.length:0)===1?'1 track':((this._pendingGuest?this._pendingGuest.length:0)+' tracks'),
+      guestThem: (this._pendingGuest&&this._pendingGuest.length===1)?'it':'them',
+      guestThey: (this._pendingGuest&&this._pendingGuest.length===1)?'it':'they',
+      curTags:(c.tags||[]).map(name=>({name, onRemove:()=>this.removeTag(name)})),
+      newTag:s.newTag, onNewTag:this.onNewTag, onNewTagKey:this.onNewTagKey, addTag:this.addTag,
+      trackCount: s.tracks.length, trackCountLabel:String(s.tracks.length),
+      search:s.search, ytUrl:s.ytUrl,
+      curTitle:c.title, curArtist:c.artist, curDurLabel:this.fmtS(c.duration||0),
+      curThumb:c.thumb||BLANK, curHasThumb:!!c.thumb, curThumbDisplay:c.thumb?'block':'none',
+      curIconDisplay:c.thumb?'none':'flex',
+      ytHostDisplay: c.kind==='youtube'?'block':'none',
+      videoElDisplay: c.kind==='file'?'block':'none',
+      videoPanelDisplay: (c.kind==='youtube'||(c.kind==='file'&&c.hasVideo&&c.url))?'flex':'none',
+      videoWidthPx: (s.videoWidth||620)+'px', videoBoxRef:el=>this.videoBoxRef=el, onVideoResize:this.onVideoResize, mainRef:el=>this.mainRef=el,
+      onLoadedMeta:this.onLoadedMeta,
+      curAccent:c.accent||'#5eead4',
+      srcLabel:src.label, srcColor:src.color, srcBg:src.bg, srcBorder:src.border,
+      regionLeft:aPct+'%', regionRight:bPct+'%', regionWidth:(bPct-aPct)+'%',
+      aLabel:this.fmt(lp.a), bLabel:this.fmt(lp.b), lenLabel:this.fmt(lp.b-lp.a),
+      loopList, loopCountLabel, addLoop:this.addLoop,
+      rate:s.rate, rateLabel:s.rate.toFixed(2)+'\u00d7',
+      loopEnabled:s.loopEnabled,
+      loopColor: s.loopEnabled?'#052e2b':'#8a92a2', loopBg: s.loopEnabled?'#5eead4':'#14171d', loopBorder: s.loopEnabled?'#5eead4':'rgba(255,255,255,.1)',
+      showShortcuts:s.showShortcuts,
+      sidebarDisplay: s.sidebarOpen?'flex':'none',
+      sidebarWidth: s.narrow?'260px':'300px',
+      hamburgerDisplay: 'flex',
+      togglePlay:this.togglePlay, toggleLoop:this.toggleLoop, prevTrack:this.prevTrack, nextTrack:this.nextTrack,
+      onSpeed:this.onSpeed, resetSpeed:this.resetSpeed, onSearch:this.onSearch,
+      onYtInput:this.onYtInput, onYtKey:this.onYtKey, addYoutube:this.addYoutube, pickFile:this.pickFile, onFile:this.onFile,
+      setA:this.setA, setB:this.setB, nudgeAdown:this.nudgeAdown, nudgeAup:this.nudgeAup, nudgeBdown:this.nudgeBdown, nudgeBup:this.nudgeBup,
+      onWavePointer:this.onWavePointer, onDragA:this.onDragA, onDragB:this.onDragB,
+      toggleShortcuts:this.toggleShortcuts, toggleSidebar:this.toggleSidebar, stop:this.stop,
+      // refs
+      wrapRef:el=>this.wrapRef=el, baseRef:el=>this.baseRef=el,
+      playheadRef:el=>this.playheadRef=el, timeRef:el=>this.timeRef=el, loopCountRef:el=>this.loopCountRef=el,
+      audioRef:el=>this.audioRef=el, ytHostRef:el=>this.ytHostRef=el, fileRef:el=>this.fileRef=el,
+      speedRef:el=>this.speedRef=el, playIconRef:el=>this.playIconRef=el,
+      aInputRef:el=>this.aInputRef=el, bInputRef:el=>this.bInputRef=el, rateInputRef:el=>this.rateInputRef=el,
+      onFieldFocus:this.onFieldFocus, commitA:this.commitA, commitB:this.commitB, onAKey:this.onAKey, onBKey:this.onBKey,
+      commitRate:this.commitRate, onRateKey:this.onRateKey,
+    };
+  }
+}
+</script>
+</body>
+</html>
