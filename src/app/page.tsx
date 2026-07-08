@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { PlayerMain } from "@/components/player/PlayerMain";
 import { ShortcutsProvider } from "@/components/ShortcutsProvider";
 import { Sidebar } from "@/components/Sidebar";
+import { Toasts } from "@/components/Toasts";
 import { TopBar } from "@/components/TopBar";
 import { loadGuestLibrary, restoreFileMedia, startGuestPersistence } from "@/store/guestPersist";
 import { useCurrentTrack, useLibrary } from "@/store/library";
@@ -59,6 +60,7 @@ export default function Home() {
       <YoutubeModal />
       <AuthModal />
       <ImportModal />
+      <Toasts />
     </div>
   );
 }

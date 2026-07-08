@@ -9,6 +9,11 @@ export interface Account {
 
 export type AuthMode = "signup" | "signin";
 
+export interface Toast {
+  id: number;
+  message: string;
+}
+
 export interface UiState {
   playing: boolean;
   rate: number;
@@ -29,6 +34,7 @@ export interface UiState {
   /** number of guest tracks pending the import decision */
   importCount: number;
   syncBusy: boolean;
+  toasts: Toast[];
 
   setPlaying: (v: boolean) => void;
   setRate: (v: number) => void;
@@ -48,7 +54,12 @@ export interface UiState {
   setAuthBusy: (v: boolean) => void;
   setImport: (open: boolean, count?: number) => void;
   setSyncBusy: (v: boolean) => void;
+  pushToast: (message: string) => void;
+  dismissToast: (id: number) => void;
 }
+
+let toastSeq = 0;
+const TOAST_TTL = 6000;
 
 export const useUi = create<UiState>()((set) => ({
   playing: false,
@@ -69,6 +80,7 @@ export const useUi = create<UiState>()((set) => ({
   importOpen: false,
   importCount: 0,
   syncBusy: false,
+  toasts: [],
 
   setPlaying: (v) => set({ playing: v }),
   setRate: (v) => set({ rate: v }),
@@ -91,6 +103,14 @@ export const useUi = create<UiState>()((set) => ({
   setImport: (open, count) =>
     set((s) => ({ importOpen: open, importCount: count ?? s.importCount })),
   setSyncBusy: (v) => set({ syncBusy: v }),
+  pushToast: (message) =>
+    set((s) => {
+      if (s.toasts.some((t) => t.message === message)) return s; // no duplicate spam
+      const id = ++toastSeq;
+      setTimeout(() => useUi.getState().dismissToast(id), TOAST_TTL);
+      return { toasts: [...s.toasts, { id, message }] };
+    }),
+  dismissToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
 }));
 
 export function initialsFor(email: string): string {
