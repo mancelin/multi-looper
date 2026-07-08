@@ -5,7 +5,7 @@ import { getFile, releaseFile } from "@/lib/fileRegistry";
 import { pb } from "@/lib/pb";
 import { player } from "@/lib/player/controller";
 import type { Track } from "@/lib/types";
-import { loadGuestLibrary } from "./guestPersist";
+import { loadGuestLibrary, restoreFileMedia } from "./guestPersist";
 import { useLibrary } from "./library";
 import { useUi } from "./ui";
 
@@ -258,6 +258,7 @@ export async function signOut(): Promise<void> {
   synced.clear();
   pbIds.clear();
   const guest = loadGuestLibrary();
+  if (guest?.tracks.length) await restoreFileMedia(guest.tracks);
   player.pause();
   useLibrary.getState().setLibrary(guest?.tracks ?? [], guest?.currentId ?? null);
 }

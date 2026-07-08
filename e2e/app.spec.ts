@@ -45,6 +45,20 @@ test("uploading an audio file decodes duration and spans the loop across it", as
   await expect(page.getByTestId("loop-len")).toHaveText("0:03.000");
 });
 
+test("file track media survives reload and still plays", async ({ page }) => {
+  await page.goto("/");
+  await uploadWav(page, 3);
+  await expect(page.getByTestId("loop-b")).toHaveValue("0:03.000");
+
+  // media blob comes back from IndexedDB — the track plays without re-upload
+  await page.reload();
+  await expect(page.getByText("sample").first()).toBeVisible();
+  await expect(page.getByTestId("loop-b")).toHaveValue("0:03.000");
+  await page.getByRole("button", { name: "Play" }).click();
+  await expect(page.getByTestId("time")).not.toHaveText("0:00.000", { timeout: 5000 });
+  await page.getByRole("button", { name: "Pause" }).click();
+});
+
 test("play advances the time readout", async ({ page }) => {
   await page.goto("/");
   await uploadWav(page, 3);

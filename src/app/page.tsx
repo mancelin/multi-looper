@@ -10,7 +10,7 @@ import { PlayerMain } from "@/components/player/PlayerMain";
 import { ShortcutsProvider } from "@/components/ShortcutsProvider";
 import { Sidebar } from "@/components/Sidebar";
 import { TopBar } from "@/components/TopBar";
-import { loadGuestLibrary, startGuestPersistence } from "@/store/guestPersist";
+import { loadGuestLibrary, restoreFileMedia, startGuestPersistence } from "@/store/guestPersist";
 import { useCurrentTrack, useLibrary } from "@/store/library";
 import { bootAuth } from "@/store/sync";
 import { useUi } from "@/store/ui";
@@ -33,10 +33,11 @@ export default function Home() {
     if (booted) return;
     booted = true;
     startGuestPersistence();
-    void bootAuth().then((restored) => {
+    void bootAuth().then(async (restored) => {
       if (restored) return;
       const guest = loadGuestLibrary();
       if (guest?.tracks.length) {
+        await restoreFileMedia(guest.tracks);
         useLibrary.getState().setLibrary(guest.tracks, guest.currentId);
       }
     });

@@ -1,6 +1,7 @@
 "use client";
 
 import { registerFile } from "@/lib/fileRegistry";
+import { putMedia } from "@/lib/mediaStore";
 import { decodePeaks } from "@/lib/peaks";
 import { player } from "@/lib/player/controller";
 import { ACCENTS, uid, type Track } from "@/lib/types";
@@ -56,6 +57,7 @@ export async function addFiles(files: File[]): Promise<void> {
       url,
     };
     registerFile(id, f);
+    void putMedia(id, f); // survive reload (guest mode restores from IndexedDB)
     tracks.push(track);
   }
   player.pause();
