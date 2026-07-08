@@ -188,6 +188,52 @@ test("pasting an image sets the cover on a file track", async ({ page }) => {
   await expect(page.getByTestId("track-image")).toBeVisible();
 });
 
+test("cover image resizes via the grip, persists, and resets on window resize", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await uploadWav(page, 3);
+  await expect(page.getByTitle("Rename loop")).toHaveCount(1); // wait for decode
+
+  await page.evaluate((b64) => {
+    const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    const file = new File([bytes], "cover.png", { type: "image/png" });
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    document
+      .querySelector("main")!
+      .dispatchEvent(new DragEvent("drop", { dataTransfer: dt, bubbles: true, cancelable: true }));
+  }, TINY_PNG);
+
+  const img = page.getByTestId("track-image");
+  await expect(img).toBeVisible();
+  const fitted = (await img.boundingBox())!.height;
+
+  // drag the grip 100px up → image gets ~100px shorter, aspect kept
+  await img.hover(); // reveal the grip
+  const gb = (await page.getByTestId("image-resize-grip").boundingBox())!;
+  await page.mouse.move(gb.x + gb.width / 2, gb.y + gb.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(gb.x + gb.width / 2, gb.y + gb.height / 2 - 100, { steps: 5 });
+  await page.mouse.up();
+  const resized = (await img.boundingBox())!;
+  expect(resized.height).toBeLessThan(fitted - 50);
+  expect(Math.abs(resized.width - resized.height)).toBeLessThan(2); // 1x1 png stays square
+
+  // chosen size survives reload while the window size is unchanged
+  await page.reload();
+  await expect(img).toBeVisible();
+  expect(Math.abs((await img.boundingBox())!.height - resized.height)).toBeLessThan(2);
+
+  // a window resize resets the image back to auto-fit and forgets the size
+  const vp = page.viewportSize()!;
+  await page.setViewportSize({ width: vp.width, height: vp.height + 200 });
+  await expect
+    .poll(async () => (await img.boundingBox())!.height)
+    .toBeGreaterThan(resized.height + 20);
+  expect(await page.evaluate(() => localStorage.getItem("multilooper_image_heights"))).toBeNull();
+});
+
 test("keyboard shortcut N adds a second loop", async ({ page }) => {
   await page.goto("/");
   await uploadWav(page, 3);
