@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { ClockIcon, LoopIcon, NextIcon, PauseIcon, PlayIcon, PrevIcon } from "@/components/icons";
+import { ClockIcon, LoopIcon, PauseIcon, PlayIcon } from "@/components/icons";
 import { player } from "@/lib/player/controller";
 import { fmt, fmtS, parseTime } from "@/lib/time";
 import type { Track } from "@/lib/types";
@@ -44,27 +44,13 @@ export function Transport({ track }: { track: Track }) {
 
   return (
     <div className="mt-auto flex flex-wrap items-center gap-3 px-4 pb-[18px] pt-[14px] sm:gap-[18px] sm:px-[26px]">
-      <div className="flex items-center gap-[10px]">
-        <button
-          onClick={() => player.advance(-1)}
-          className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-[10px] border border-white/10 bg-field text-ink-2"
-        >
-          <PrevIcon />
-        </button>
-        <button
-          onClick={() => player.togglePlay()}
-          aria-label={playing ? "Pause" : "Play"}
-          className="flex h-[54px] w-[54px] cursor-pointer items-center justify-center rounded-[14px] border-none bg-gradient-to-br from-accent-2 to-accent-3 text-on-accent-2 shadow-[0_4px_18px_rgba(45,212,191,.4)]"
-        >
-          {playing ? <PauseIcon /> : <PlayIcon />}
-        </button>
-        <button
-          onClick={() => player.advance(1)}
-          className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-[10px] border border-white/10 bg-field text-ink-2"
-        >
-          <NextIcon />
-        </button>
-      </div>
+      <button
+        onClick={() => player.togglePlay()}
+        aria-label={playing ? "Pause" : "Play"}
+        className="flex h-[54px] w-[54px] cursor-pointer items-center justify-center rounded-[14px] border-none bg-gradient-to-br from-accent-2 to-accent-3 text-on-accent-2 shadow-[0_4px_18px_rgba(45,212,191,.4)]"
+      >
+        {playing ? <PauseIcon /> : <PlayIcon />}
+      </button>
 
       <div className="flex min-w-[150px] items-baseline gap-2">
         <span ref={timeRef} data-testid="time" className="tno text-[19px] font-semibold text-ink">
