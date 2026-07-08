@@ -12,13 +12,13 @@ export function LoopStrip({ track }: { track: Track }) {
 
   return (
     <div className="flex items-center gap-3 px-4 pt-[15px] sm:px-[26px]">
-      <div className="flex flex-none flex-col gap-[1px]">
+      <div className="hidden flex-none flex-col gap-[1px] min-[480px]:flex">
         <span className="text-[9.5px] font-semibold tracking-[.1em] text-muted-3">LOOPS</span>
         <span className="tno text-[10px] text-muted-5">
           {track.loops.length} {track.loops.length === 1 ? "loop" : "loops"}
         </span>
       </div>
-      <div className="flex flex-1 gap-2 overflow-x-auto pb-1 pt-[2px]">
+      <div className="flex flex-1 flex-wrap gap-2 pb-1 pt-[2px]">
         {track.loops.map((l) => {
           const active = l.id === track.activeLoopId;
           return (
@@ -35,18 +35,20 @@ export function LoopStrip({ track }: { track: Track }) {
                 className="h-[7px] w-[7px] flex-none rounded-full"
                 style={{ background: active ? track.accent : "#4b5563" }}
               />
-              <input
-                value={l.name}
-                readOnly={!active}
-                onChange={(e) => renameLoop(l.id, e.target.value)}
-                onClick={(e) => active && e.stopPropagation()}
-                title="Rename loop"
-                className={`w-[92px] min-w-0 border-none bg-transparent text-[12.5px] font-semibold ${active ? "" : "pointer-events-none"}`}
-                style={{ color: active ? "#ffffff" : "#b8bfca" }}
-              />
-              <span className="tno flex-none text-[10.5px] text-muted-2">
-                {fmtS(l.a)} – {fmtS(l.b)}
-              </span>
+              <div className="flex min-w-0 flex-col min-[480px]:flex-row min-[480px]:items-center min-[480px]:gap-2">
+                <input
+                  value={l.name}
+                  readOnly={!active}
+                  onChange={(e) => renameLoop(l.id, e.target.value)}
+                  onClick={(e) => active && e.stopPropagation()}
+                  title="Rename loop"
+                  className={`w-[72px] min-w-0 border-none bg-transparent text-[12.5px] font-semibold min-[480px]:w-[92px] ${active ? "" : "pointer-events-none"}`}
+                  style={{ color: active ? "#ffffff" : "#b8bfca" }}
+                />
+                <span className="tno flex-none text-[10.5px] leading-[13px] text-muted-2 min-[480px]:leading-normal">
+                  {fmtS(l.a)} – {fmtS(l.b)}
+                </span>
+              </div>
               {track.loops.length > 1 && (
                 <button
                   onClick={(e) => {
@@ -68,7 +70,7 @@ export function LoopStrip({ track }: { track: Track }) {
           className="flex h-10 flex-none cursor-pointer items-center gap-[6px] whitespace-nowrap rounded-[10px] border border-dashed border-[rgba(94,234,212,.4)] bg-[rgba(94,234,212,.05)] px-[13px] text-[12.5px] font-semibold text-accent"
         >
           <PlusIcon />
-          Add loop
+          <span className="hidden min-[480px]:inline">Add loop</span>
         </button>
       </div>
     </div>
