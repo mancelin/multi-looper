@@ -1,5 +1,8 @@
 # multi-looper tasks — run `just` to list
 
+# Android builds need JDK 17+; prefer a ~/.jdks install over a possibly stale shell JAVA_HOME
+export JAVA_HOME := `ls -d ~/.jdks/jdk-21* 2>/dev/null | head -1 || echo "${JAVA_HOME:-}"`
+
 default:
     @just --list
 
@@ -37,6 +40,23 @@ e2e-one pattern:
 
 # Lint + typecheck + e2e
 ci: lint check e2e
+
+# Build web assets and sync them into the Android project
+android-sync:
+    bun run build
+    bunx cap sync android
+
+# Debug APK → android/app/build/outputs/apk/debug/app-debug.apk
+android-apk: android-sync
+    cd android && ./gradlew assembleDebug
+
+# Build + install + launch on connected device/emulator
+android-run: android-sync
+    bunx cap run android
+
+# Open the Android project in Android Studio
+android-open:
+    bunx cap open android
 
 # Start PocketBase (auth + sync backend, optional)
 pb-up:
