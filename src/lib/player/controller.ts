@@ -64,6 +64,8 @@ class PlaybackController {
 
   /** virtual time fallback while no media is ready */
   private vt = 0;
+  /** when the last seek was issued — backends apply seeks asynchronously */
+  private seekIssuedAt = 0;
   private raf: number | null = null;
   private listeners = new Set<TimeListener>();
 
@@ -126,15 +128,24 @@ class PlaybackController {
       this.videoEl.currentTime = t;
     }
     this.vt = t;
-    this.emit();
+    this.seekIssuedAt = performance.now();
+    // Emit the requested target, not getT(): the backend applies the seek
+    // asynchronously and would still report the pre-seek time here. While
+    // paused no tick runs, so a stale emit would stick until the next seek.
+    this.emit(t);
   }
 
   seekBy(delta: number): void {
-    this.setT(this.getT() + delta);
+    // getT() can still report the pre-seek media time right after setT()
+    // (YouTube's seekTo is async). While paused the media time only changes
+    // through setT(), so vt is authoritative; while playing, fall back to vt
+    // only for rapid consecutive seeks.
+    const paused = !useUi.getState().playing;
+    const recent = performance.now() - this.seekIssuedAt < 400;
+    this.setT((paused || recent ? this.vt : this.getT()) + delta);
   }
 
-  private emit(): void {
-    const t = this.getT();
+  private emit(t = this.getT()): void {
     const d = this.duration();
     for (const fn of this.listeners) fn(t, d);
   }
@@ -214,7 +225,9 @@ class PlaybackController {
     if (c?.kind === "file") this.videoEl?.pause();
     useUi.getState().setPlaying(false);
     this.stopTick();
-    this.emit();
+    // sync vt so paused seeks (which trust vt) start from where playback stopped
+    this.vt = this.getT();
+    this.emit(this.vt);
   }
 
   togglePlay(): void {

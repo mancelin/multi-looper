@@ -32,10 +32,10 @@ export function ShortcutsProvider() {
       else if (k === "p" || k === "P") nudgeB(0.01);
       else if (k === "ArrowLeft") {
         e.preventDefault();
-        player.seekBy(-5);
+        player.seekBy(-1);
       } else if (k === "ArrowRight") {
         e.preventDefault();
-        player.seekBy(5);
+        player.seekBy(1);
       } else if (k === "ArrowUp") {
         e.preventDefault();
         player.bumpRate(0.05);
