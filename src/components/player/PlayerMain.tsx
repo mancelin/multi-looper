@@ -26,9 +26,9 @@ export function PlayerMain({ track }: { track: Track }) {
       <TrackHeader track={track} />
       <VideoPanel track={track} mainRef={mainRef} />
       <Waveform track={track} />
+      <Transport track={track} />
       <LoopStrip track={track} />
       <LoopTrim track={track} />
-      <Transport track={track} />
     </main>
   );
 }
