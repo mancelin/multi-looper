@@ -29,6 +29,7 @@ function recordToTrack(r: RecordModel): Track {
     accent: (r.accent as string) || "#5eead4",
     peaks: (r.peaks as number[]) ?? undefined,
     thumb: (r.thumb as string) || undefined,
+    image: (r.image as string) || undefined,
     videoId: (r.videoId as string) || undefined,
     url: media ? pb.files.getURL(r, media) : undefined,
   };
@@ -48,6 +49,7 @@ function trackPayload(t: Track): Record<string, unknown> {
     accent: t.accent,
     peaks: t.peaks ?? [],
     thumb: t.thumb ?? "",
+    image: t.image ?? "",
     videoId: t.videoId ?? "",
   };
 }

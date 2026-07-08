@@ -104,7 +104,8 @@ test.describe("mobile (360px)", () => {
     });
     expect(overflow).toBe(0);
 
-    await page.getByRole("button", { name: "Play" }).click();
+    // exact — otherwise "Add a loop at the playhead (N)" also matches
+    await page.getByRole("button", { name: "Play", exact: true }).click();
     await expect(page.getByTestId("time")).not.toHaveText("0:00.000", { timeout: 5000 });
   });
 
@@ -137,6 +138,54 @@ test("removing the last track returns to the empty state", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "Loop anything. Master every bar." }),
   ).toBeVisible();
+});
+
+// 1x1 red PNG, base64
+const TINY_PNG =
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+
+test("dropping an image onto a file track shows it and survives reload", async ({ page }) => {
+  await page.goto("/");
+  await uploadWav(page, 3);
+  await expect(page.getByTitle("Rename loop")).toHaveCount(1); // wait for decode
+
+  await page.evaluate((b64) => {
+    const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    const file = new File([bytes], "cover.png", { type: "image/png" });
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    document
+      .querySelector("main")!
+      .dispatchEvent(new DragEvent("drop", { dataTransfer: dt, bubbles: true, cancelable: true }));
+  }, TINY_PNG);
+
+  await expect(page.getByTestId("track-image")).toBeVisible();
+
+  // image is a data URL, so it survives the guest localStorage round-trip
+  await page.reload();
+  await expect(page.getByTestId("track-image")).toBeVisible();
+
+  // remove button clears it
+  await page.getByTitle("Remove image").click();
+  await expect(page.getByTestId("track-image")).toHaveCount(0);
+});
+
+test("pasting an image sets the cover on a file track", async ({ page }) => {
+  await page.goto("/");
+  await uploadWav(page, 3);
+  await expect(page.getByTitle("Rename loop")).toHaveCount(1);
+
+  await page.evaluate((b64) => {
+    const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    const file = new File([bytes], "cover.png", { type: "image/png" });
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    document
+      .querySelector("main")!
+      .dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true }));
+  }, TINY_PNG);
+
+  await expect(page.getByTestId("track-image")).toBeVisible();
 });
 
 test("keyboard shortcut N adds a second loop", async ({ page }) => {
