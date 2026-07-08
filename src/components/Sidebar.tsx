@@ -16,7 +16,7 @@ export function Sidebar() {
   const sidebarOpen = useUi((s) => s.sidebarOpen);
   const toggleSidebar = useUi((s) => s.toggleSidebar);
 
-  if (!sidebarOpen) return null;
+  if (!sidebarOpen || tracks.length === 0) return null;
 
   const q = search.trim().toLowerCase();
   const filtered = tracks.filter(

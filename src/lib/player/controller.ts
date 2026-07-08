@@ -365,10 +365,12 @@ class PlaybackController {
             }
           }, 300);
         }
-      } else if (this.ytPendingPlay) {
+      } else if (this.ytPendingPlay && this.ytReady) {
         this.ytPendingPlay = false;
         this.play();
       }
+      // else: player exists but onReady hasn't fired yet — leave ytPendingPlay
+      // set; onReady consumes it. Calling play() here would recurse forever.
     };
     boot();
   }

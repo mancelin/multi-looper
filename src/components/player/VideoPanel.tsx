@@ -9,6 +9,12 @@ import { useUi } from "@/store/ui";
 /** Once the user resizes manually, auto-fit stays off until reload (prototype behavior). */
 let manualVideo = false;
 
+// Stable ref callbacks: an inline `(el) => player.setYtHost(el)` gets a new
+// identity every render, so React detaches (null) and re-attaches the ref on
+// each re-render — and setYtHost(null) destroys the live YouTube player.
+const ytHostRef = (el: HTMLDivElement | null) => player.setYtHost(el);
+const videoElRef = (el: HTMLVideoElement | null) => player.setVideoEl(el);
+
 export function VideoPanel({
   track,
   mainRef,
@@ -102,12 +108,12 @@ export function VideoPanel({
         style={{ width: videoWidth }}
       >
         <div
-          ref={(el) => player.setYtHost(el)}
+          ref={ytHostRef}
           className="absolute inset-0"
           style={{ display: track.kind === "youtube" ? "block" : "none" }}
         />
         <video
-          ref={(el) => player.setVideoEl(el)}
+          ref={videoElRef}
           playsInline
           onLoadedMetadata={() => player.onLoadedMetadata()}
           className="absolute inset-0 h-full w-full bg-black object-contain"

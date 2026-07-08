@@ -3,11 +3,13 @@
 import { useRef, useState } from "react";
 import { BookIcon, EqIcon, KeyboardIcon, UploadIcon, YoutubeIcon } from "@/components/icons";
 import { addFiles, addYoutubeUrl } from "@/store/ingest";
+import { useLibrary } from "@/store/library";
 import { useUi } from "@/store/ui";
 import { AccountArea } from "./AccountMenu";
 
 export function TopBar() {
   const toggleSidebar = useUi((s) => s.toggleSidebar);
+  const hasTracks = useLibrary((s) => s.tracks.length > 0);
   const toggleShortcuts = useUi((s) => s.toggleShortcuts);
   const setYtModalOpen = useUi((s) => s.setYtModalOpen);
   const [ytUrl, setYtUrl] = useState("");
@@ -22,13 +24,15 @@ export function TopBar() {
   return (
     <header className="z-5 flex h-[58px] flex-none items-center gap-3 border-b border-white/7 bg-panel px-3 sm:gap-[18px] sm:px-[18px]">
       <div className="flex items-center gap-[11px]">
-        <button
-          onClick={toggleSidebar}
-          className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded-[8px] border border-white/10 bg-field-2 text-muted"
-          title="Toggle library"
-        >
-          <BookIcon />
-        </button>
+        {hasTracks && (
+          <button
+            onClick={toggleSidebar}
+            className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded-[8px] border border-white/10 bg-field-2 text-muted"
+            title="Toggle library"
+          >
+            <BookIcon />
+          </button>
+        )}
         <div className="flex items-center gap-[9px]">
           <div className="flex h-[26px] w-[26px] items-center justify-center rounded-[7px] bg-gradient-to-br from-accent-2 to-accent-3 shadow-[0_2px_10px_rgba(45,212,191,.35)]">
             <EqIcon />
