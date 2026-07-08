@@ -194,8 +194,12 @@ class PlaybackController {
     if (!c) return;
     const lp = activeLoop(c);
     const t = this.getT();
-    if (t >= lp.b - 0.01 || t < lp.a - 0.001) this.setT(lp.a);
-    const rate = useUi.getState().rate;
+    const { rate, loopEnabled } = useUi.getState();
+    if (loopEnabled) {
+      if (t >= lp.b - 0.01 || t < lp.a - 0.001) this.setT(lp.a);
+    } else if (t >= this.duration() - 0.01) {
+      this.setT(0);
+    }
     if (c.kind === "youtube") {
       if (this.yt && this.ytReady) {
         try {
