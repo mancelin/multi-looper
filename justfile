@@ -3,13 +3,13 @@
 default:
     @just --list
 
+# PocketBase (docker) + dev server at http://localhost:3000
+dev: pb-up
+    bun dev
+
 # Install dependencies
 install:
     bun install
-
-# Dev server at http://localhost:3000
-dev:
-    bun dev
 
 # Production build
 build:
