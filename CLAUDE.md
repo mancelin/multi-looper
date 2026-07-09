@@ -6,3 +6,4 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 @.claude/rules/state-and-persistence.md
 @.claude/rules/playback-and-ui.md
 @.claude/rules/git.md
+@.claude/rules/testing.md
