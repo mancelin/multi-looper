@@ -268,6 +268,38 @@ test("cover image resizes via the grip, persists, and resets on window resize", 
   expect(await page.evaluate(() => localStorage.getItem("multilooper_image_heights"))).toBeNull();
 });
 
+test("track number in the URL: selection updates it, deep links and invalid paths resolve", async ({
+  page,
+}) => {
+  // no tracks: a track URL falls back to the home page
+  await page.goto("/5");
+  await expect(page.getByRole("heading", { name: "Loop anything. Master every bar." })).toBeVisible();
+  await expect(page).toHaveURL(/^https?:\/\/[^/]+\/$/);
+
+  await uploadWav(page, 3, "first.wav");
+  await expect(page.getByTestId("loop-b")).toHaveValue("0:03.000");
+  await expect(page).toHaveURL(/\/1$/);
+
+  // new tracks are prepended: "second" becomes #1, "first" shifts to #2
+  await uploadWav(page, 2, "second.wav");
+  await expect(page.getByTestId("loop-b")).toHaveValue("0:02.000");
+  await expect(page).toHaveURL(/\/1$/);
+
+  // picking a track in the sidebar mirrors its number into the URL
+  await page.getByText("first").first().click();
+  await expect(page.getByTestId("loop-b")).toHaveValue("0:03.000");
+  await expect(page).toHaveURL(/\/2$/);
+
+  // deep link loads the track by number
+  await page.goto("/1");
+  await expect(page.getByTestId("loop-b")).toHaveValue("0:02.000");
+
+  // out-of-range number falls back to the first track and rewrites the URL
+  await page.goto("/99");
+  await expect(page.getByTestId("loop-b")).toHaveValue("0:02.000");
+  await expect(page).toHaveURL(/\/1$/);
+});
+
 test("keyboard shortcut N adds a second loop", async ({ page }) => {
   await page.goto("/");
   await uploadWav(page, 3);

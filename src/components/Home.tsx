@@ -15,10 +15,11 @@ import { loadGuestLibrary, restoreFileMedia, startGuestPersistence } from "@/sto
 import { useCurrentTrack, useLibrary } from "@/store/library";
 import { bootAuth } from "@/store/sync";
 import { useUi } from "@/store/ui";
+import { applyTrackFromUrl, startUrlSync } from "@/store/urlSync";
 
 let booted = false;
 
-export default function Home() {
+export function Home() {
   const hasTracks = useLibrary((s) => s.tracks.length > 0);
   const track = useCurrentTrack();
   const setNarrow = useUi((s) => s.setNarrow);
@@ -35,12 +36,15 @@ export default function Home() {
     booted = true;
     startGuestPersistence();
     void bootAuth().then(async (restored) => {
-      if (restored) return;
-      const guest = loadGuestLibrary();
-      if (guest?.tracks.length) {
-        await restoreFileMedia(guest.tracks);
-        useLibrary.getState().setLibrary(guest.tracks, guest.currentId);
+      if (!restored) {
+        const guest = loadGuestLibrary();
+        if (guest?.tracks.length) {
+          await restoreFileMedia(guest.tracks);
+          useLibrary.getState().setLibrary(guest.tracks, guest.currentId);
+        }
       }
+      applyTrackFromUrl();
+      startUrlSync();
     });
   }, []);
 
