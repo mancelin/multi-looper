@@ -1,11 +1,13 @@
 "use client";
 
 import { ClientResponseError, type RecordModel } from "pocketbase";
-import { getFile, releaseFile } from "@/lib/fileRegistry";
+import { clearFiles, getFile, releaseFile } from "@/lib/fileRegistry";
+import { clearImageHeights } from "@/lib/imageSize";
+import { clearAllMedia } from "@/lib/mediaStore";
 import { pb } from "@/lib/pb";
 import { player } from "@/lib/player/controller";
 import type { Track } from "@/lib/types";
-import { loadGuestLibrary, restoreFileMedia } from "./guestPersist";
+import { clearGuestLibrary } from "./guestPersist";
 import { useLibrary } from "./library";
 import { useUi } from "./ui";
 
@@ -249,6 +251,7 @@ export function skipImport(): void {
   applyLibrary(saved);
 }
 
+/** Sign out and wipe all local data — the app restarts as new. */
 export async function signOut(): Promise<void> {
   if (timer) clearTimeout(timer);
   await flush().catch(() => {});
@@ -257,10 +260,12 @@ export async function signOut(): Promise<void> {
   useUi.getState().setAccountMenuOpen(false);
   synced.clear();
   pbIds.clear();
-  const guest = loadGuestLibrary();
-  if (guest?.tracks.length) await restoreFileMedia(guest.tracks);
   player.pause();
-  useLibrary.getState().setLibrary(guest?.tracks ?? [], guest?.currentId ?? null);
+  useLibrary.getState().setLibrary([], null);
+  clearFiles();
+  clearGuestLibrary();
+  clearImageHeights();
+  await clearAllMedia();
 }
 
 /** Restore a persisted PocketBase session on app boot. */

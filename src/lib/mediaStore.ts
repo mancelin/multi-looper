@@ -70,6 +70,15 @@ export async function deleteMedia(trackId: string): Promise<void> {
   }
 }
 
+/** Remove every stored media blob (used by the sign-out wipe). */
+export async function clearAllMedia(): Promise<void> {
+  try {
+    await inStore("readwrite", (s) => s.clear());
+  } catch (e) {
+    reportError("Clearing stored track media failed", e);
+  }
+}
+
 /** Drop blobs whose track no longer exists in the guest library. */
 export async function pruneMedia(keepIds: ReadonlySet<string>): Promise<void> {
   try {

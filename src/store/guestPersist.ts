@@ -35,6 +35,14 @@ export function loadGuestLibrary(): GuestLib | null {
   }
 }
 
+export function clearGuestLibrary(): void {
+  try {
+    localStorage.removeItem(KEY);
+  } catch {
+    // storage unavailable — nothing to clear
+  }
+}
+
 export function saveGuestLibrary(tracks: Track[], currentId: string | null): void {
   try {
     localStorage.setItem(KEY, JSON.stringify({ tracks: serializable(tracks), currentId }));

@@ -16,3 +16,7 @@ export function getFile(trackId: string): File | undefined {
 export function releaseFile(trackId: string): void {
   files.delete(trackId);
 }
+
+export function clearFiles(): void {
+  files.clear();
+}
