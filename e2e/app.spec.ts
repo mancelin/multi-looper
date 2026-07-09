@@ -59,6 +59,26 @@ test("file track media survives reload and still plays", async ({ page }) => {
   await page.getByRole("button", { name: "Pause" }).click();
 });
 
+test("IndexedDB failure while saving media surfaces as a toast", async ({ page }) => {
+  await page.addInitScript(() => {
+    const broken = {
+      open: () => {
+        throw new Error("quota exceeded");
+      },
+    };
+    Object.defineProperty(window, "indexedDB", { get: () => broken, configurable: true });
+  });
+  await page.goto("/");
+  await uploadWav(page, 3);
+
+  // the write and the prune both fail -> one toast each (deduped by message)
+  const toast = page.getByTestId("toast").filter({ hasText: "Saving track media failed" });
+  await expect(toast).toContainText("quota exceeded");
+
+  await toast.getByTitle("Dismiss").click();
+  await expect(toast).toHaveCount(0);
+});
+
 test("play advances the time readout", async ({ page }) => {
   await page.goto("/");
   await uploadWav(page, 3);
