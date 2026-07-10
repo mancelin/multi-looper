@@ -35,6 +35,114 @@ test("adding a YouTube link creates a track with a full-track loop", async ({ pa
   await expect(page.getByTestId("loop-b")).toHaveValue("3:30.000");
 });
 
+// Fake YouTube IFrame API, faithful to the autostart quirks the controller
+// must work around: loadVideoById always autostarts, and seekTo on a cued
+// video starts playback. Records calls on window.__yt for assertions.
+async function fakeYoutubeApi(page: Page) {
+  await page.addInitScript(() => {
+    type Events = { onReady: () => void; onStateChange: (e: { data: number }) => void };
+    const calls: string[] = [];
+    class FakePlayer {
+      state = -1; // unstarted
+      private events: Events;
+      constructor(_el: HTMLElement, opts: { videoId: string; events: Events }) {
+        this.events = opts.events;
+        (window as unknown as { __yt?: { calls: string[]; player: FakePlayer } }).__yt = {
+          calls,
+          player: this,
+        };
+        setTimeout(() => {
+          this.state = 5; // video cued
+          this.events.onReady();
+        }, 0);
+      }
+      private setState(s: number): void {
+        this.state = s;
+        this.events.onStateChange({ data: s });
+      }
+      playVideo(): void {
+        calls.push("playVideo");
+        this.setState(1);
+      }
+      pauseVideo(): void {
+        calls.push("pauseVideo");
+        if (this.state === 1) this.setState(2);
+      }
+      stopVideo(): void {
+        calls.push("stopVideo");
+        this.state = -1;
+      }
+      seekTo(): void {
+        calls.push("seekTo");
+        if (this.state === 5 || this.state === -1) this.setState(1); // autostart quirk
+      }
+      loadVideoById(id: string): void {
+        calls.push(`loadVideoById:${id}`);
+        this.setState(1); // always autostarts
+      }
+      cueVideoById(id: string): void {
+        calls.push(`cueVideoById:${id}`);
+        this.state = 5;
+      }
+      getCurrentTime(): number {
+        return 0;
+      }
+      getDuration(): number {
+        return 300;
+      }
+      getPlayerState(): number {
+        return this.state;
+      }
+      setPlaybackRate(): void {}
+      destroy(): void {}
+    }
+    (window as unknown as { YT?: unknown }).YT = { Player: FakePlayer, loaded: 1 };
+  });
+}
+
+test("switching to a YouTube track while paused does not autoplay", async ({ page }) => {
+  await blockYoutube(page);
+  await fakeYoutubeApi(page);
+  await page.goto("/");
+
+  const url = page.getByPlaceholder("youtube.com/watch?v=…");
+  await url.fill("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+  await url.press("Enter");
+  // the fake player reports a 300s duration once ready — proves API wiring
+  await expect(page.getByTestId("loop-b")).toHaveValue("5:00.000");
+
+  const topbarUrl = page.getByPlaceholder("Paste a YouTube link…");
+  await topbarUrl.fill("https://www.youtube.com/watch?v=oHg5SJYRHA0");
+  await topbarUrl.press("Enter");
+  // second track keeps the 210s placeholder: it was cued, never played
+  await expect(page.getByTestId("loop-b")).toHaveValue("3:30.000");
+
+  const ytState = () =>
+    page.evaluate(() => {
+      const yt = (window as unknown as { __yt: { calls: string[]; player: { state: number } } })
+        .__yt;
+      return { calls: yt.calls, state: yt.player.state };
+    });
+
+  // switching tracks cues the new video instead of load+autoplay
+  await expect.poll(async () => (await ytState()).calls).toContain("cueVideoById:oHg5SJYRHA0");
+  expect((await ytState()).state).not.toBe(1);
+  await expect(page.getByRole("button", { name: "Play", exact: true })).toBeVisible();
+
+  // back to the first track via the sidebar — still no autoplay
+  await page.getByText("YouTube loop").nth(1).click();
+  await expect(page.getByTestId("loop-b")).toHaveValue("5:00.000");
+  await expect.poll(async () => (await ytState()).calls).toContain("cueVideoById:dQw4w9WgXcQ");
+  const after = await ytState();
+  expect(after.state).not.toBe(1);
+  expect(after.calls.filter((c) => c.startsWith("loadVideoById") || c === "playVideo")).toEqual([]);
+
+  // play still works on a cued video
+  await page.getByRole("button", { name: "Play", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Pause", exact: true })).toBeVisible();
+  expect((await ytState()).state).toBe(1);
+});
+
 test("uploading an audio file decodes duration and spans the loop across it", async ({ page }) => {
   await page.goto("/");
   await uploadWav(page, 3);

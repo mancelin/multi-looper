@@ -14,6 +14,8 @@ interface YTPlayer {
   getDuration(): number;
   setPlaybackRate(rate: number): void;
   loadVideoById(videoId: string): void;
+  cueVideoById(videoId: string, startSeconds?: number): void;
+  getPlayerState(): number;
   destroy(): void;
 }
 
@@ -122,7 +124,15 @@ class PlaybackController {
     t = Math.max(0, Math.min(this.duration(), t));
     if (c?.kind === "youtube" && this.yt && this.ytReady) {
       try {
-        this.yt.seekTo(t, true);
+        // seekTo on a cued/unstarted video autostarts playback (IFrame API
+        // behavior); while the transport is paused, re-cue at the target
+        // instead so the video stays stopped.
+        const s = this.yt.getPlayerState();
+        if (!useUi.getState().playing && (s === 5 || s === -1)) {
+          this.yt.cueVideoById(c.videoId!, t);
+        } else {
+          this.yt.seekTo(t, true);
+        }
       } catch {}
     } else if (c?.kind === "file" && this.videoEl) {
       this.videoEl.currentTime = t;
@@ -195,6 +205,9 @@ class PlaybackController {
     const lp = activeLoop(c);
     const t = this.getT();
     const { rate, loopEnabled } = useUi.getState();
+    // flip the transport state first: the YouTube state-change guard pauses
+    // any playback that starts while the transport says paused
+    useUi.getState().setPlaying(true);
     if (loopEnabled) {
       if (t >= lp.b - 0.01 || t < lp.a - 0.001) this.setT(lp.a);
     } else if (t >= this.duration() - 0.01) {
@@ -215,7 +228,6 @@ class PlaybackController {
       this.videoEl.preservesPitch = true;
       void this.videoEl.play().catch(() => {});
     }
-    useUi.getState().setPlaying(true);
     this.startTick();
   }
 
@@ -360,27 +372,30 @@ class PlaybackController {
             },
             onStateChange: (e) => {
               this.ytReady = true;
-              if (e.data === 1) this.patchYtDuration();
+              if (e.data === 1) {
+                this.patchYtDuration();
+                // last-resort guard: the IFrame API autostarts in flows we
+                // can't fully suppress; if the transport says paused, stop it
+                if (!useUi.getState().playing && !this.ytPendingPlay) {
+                  try {
+                    this.yt?.pauseVideo();
+                  } catch {}
+                }
+              }
             },
           },
         });
       } else if (this.ytTrackId !== c.id) {
         this.ytTrackId = c.id;
         try {
-          this.yt.loadVideoById(c.videoId!);
+          // loadVideoById always autostarts; when we're not meant to play,
+          // cue instead — it loads the video without starting playback.
+          if (this.ytPendingPlay) this.yt.loadVideoById(c.videoId!);
+          else this.yt.cueVideoById(c.videoId!, activeLoop(c).a);
         } catch {}
         if (this.ytPendingPlay) {
           this.ytPendingPlay = false;
           this.play();
-        } else {
-          // loadVideoById autostarts; hold it back when we're not meant to play
-          setTimeout(() => {
-            if (!useUi.getState().playing) {
-              try {
-                this.yt?.pauseVideo();
-              } catch {}
-            }
-          }, 300);
         }
       } else if (this.ytPendingPlay && this.ytReady) {
         this.ytPendingPlay = false;
