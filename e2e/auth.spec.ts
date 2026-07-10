@@ -18,7 +18,7 @@ test("auth modal offers Google sign-in", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Continue with Google" })).toBeVisible();
 });
 
-test("sign-up sends a verification email and confirms it with a toast", async ({ page }) => {
+test("sign-up requires the verification email before signing in", async ({ page }) => {
   test.skip(!(await pbAvailable()), "PocketBase not running (just pb-up)");
 
   const email = `verify${Date.now()}@example.com`;
@@ -29,6 +29,13 @@ test("sign-up sends a verification email and confirms it with a toast", async ({
   await page.getByPlaceholder("Password").fill("password123");
   await page.getByRole("button", { name: "Sign up" }).click();
 
-  await expect(page.getByText(`Verification email sent to ${email}.`)).toBeVisible();
-  await expect(page.getByText("SYNCED")).toBeVisible();
+  // account created but not signed in — modal flips to sign-in mode
+  await expect(
+    page.getByText(`Verification email sent to ${email}. Verify, then sign in.`),
+  ).toBeVisible();
+  await expect(page.getByText("Welcome back")).toBeVisible();
+
+  // signing in before clicking the verification link is rejected
+  await page.getByPlaceholder("Password").press("Enter");
+  await expect(page.getByText("Please verify your email before signing in.")).toBeVisible();
 });

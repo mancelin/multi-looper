@@ -200,6 +200,8 @@ function authErrorMessage(e: unknown, mode: "signup" | "signin"): string {
         ? "Invalid email or password."
         : "Could not create the account. Is the email already registered?";
     }
+    // authRule "verified = true" fails -> 403
+    if (e.status === 403) return "Please verify your email before signing in.";
     if (e.status === 0) return "Cannot reach the sync server.";
   }
   return "Something went wrong. Please try again.";
@@ -223,13 +225,14 @@ export async function submitAuth(email: string, password: string): Promise<void>
       await pb.collection("users").create({ email, password, passwordConfirm: password });
       // fire-and-forget: PB queues the email and always answers 204
       void pb.collection("users").requestVerification(email).catch(() => {});
+      // authRule ("verified = true") rejects sign-in until the email is confirmed
+      useUi.getState().pushToast(`Verification email sent to ${email}. Verify, then sign in.`);
+      useUi.getState().toggleAuthMode();
+      return;
     }
     await pb.collection("users").authWithPassword(email, password);
     useUi.getState().closeAuth();
     useUi.getState().setAccountMenuOpen(false);
-    if (ui.authMode === "signup") {
-      useUi.getState().pushToast(`Verification email sent to ${email}.`);
-    }
     await handleAuthed();
   } catch (e) {
     ui.setAuthError(authErrorMessage(e, ui.authMode));
