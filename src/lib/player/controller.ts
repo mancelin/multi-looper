@@ -68,6 +68,8 @@ class PlaybackController {
   private vt = 0;
   /** when the last seek was issued — backends apply seeks asynchronously */
   private seekIssuedAt = 0;
+  /** true from seek issue until the media time lands near the target */
+  private seekPending = false;
   private raf: number | null = null;
   private listeners = new Set<TimeListener>();
 
@@ -127,7 +129,7 @@ class PlaybackController {
         // seekTo on a cued/unstarted video autostarts playback (IFrame API
         // behavior); while the transport is paused, re-cue at the target
         // instead so the video stays stopped.
-        const s = this.yt.getPlayerState();
+        const s = this.ytState();
         if (!useUi.getState().playing && (s === 5 || s === -1)) {
           this.yt.cueVideoById(c.videoId!, t);
         } else {
@@ -139,6 +141,7 @@ class PlaybackController {
     }
     this.vt = t;
     this.seekIssuedAt = performance.now();
+    this.seekPending = true;
     // Emit the requested target, not getT(): the backend applies the seek
     // asynchronously and would still report the pre-seek time here. While
     // paused no tick runs, so a stale emit would stick until the next seek.
@@ -148,11 +151,20 @@ class PlaybackController {
   seekBy(delta: number): void {
     // getT() can still report the pre-seek media time right after setT()
     // (YouTube's seekTo is async). While paused the media time only changes
-    // through setT(), so vt is authoritative; while playing, fall back to vt
-    // only for rapid consecutive seeks.
+    // through setT(), so vt is authoritative; same while a seek is in
+    // flight (covers rapid consecutive seeks).
     const paused = !useUi.getState().playing;
-    const recent = performance.now() - this.seekIssuedAt < 400;
-    this.setT((paused || recent ? this.vt : this.getT()) + delta);
+    this.setT((paused || this.seekPending ? this.vt : this.getT()) + delta);
+  }
+
+  /** Current IFrame player state, or -2 when unavailable. */
+  private ytState(): number {
+    if (!this.yt || !this.ytReady) return -2;
+    try {
+      return this.yt.getPlayerState();
+    } catch {
+      return -2;
+    }
   }
 
   private emit(t = this.getT()): void {
@@ -181,7 +193,22 @@ class PlaybackController {
   private frame(): void {
     const c = this.track();
     if (!c) return;
-    const t = this.getT();
+    const raw = this.getT();
+    // Backends apply seeks asynchronously: until the media time lands near
+    // the seek target the backend still reports the pre-seek time (a cued
+    // YouTube video even needs to load/buffer first, which can take a
+    // while). Report the target (vt) meanwhile so the playhead doesn't
+    // flash the stale position; a time cap guards against a seek that
+    // silently never lands.
+    if (this.seekPending) {
+      const near = Math.abs(raw - this.vt) <= 0.5;
+      // YouTube: a cued video reports its cue point (then transiently 0
+      // while loading) before playback truly starts — only trust the media
+      // time once the player is actually playing.
+      const landed = c.kind === "youtube" ? near && this.ytState() === 1 : near;
+      if (landed || performance.now() - this.seekIssuedAt > 5000) this.seekPending = false;
+    }
+    const t = this.seekPending ? this.vt : raw;
     const d = this.duration();
     const lp = activeLoop(c);
     const { loopEnabled } = useUi.getState();
@@ -194,7 +221,7 @@ class PlaybackController {
       this.pause();
       return;
     }
-    this.emit();
+    this.emit(t);
   }
 
   // ---------- transport ----------
@@ -203,7 +230,8 @@ class PlaybackController {
     const c = this.track();
     if (!c) return;
     const lp = activeLoop(c);
-    const t = this.getT();
+    // while a seek is in flight the media still reports the pre-seek time
+    const t = this.seekPending ? this.vt : this.getT();
     const { rate, loopEnabled } = useUi.getState();
     // flip the transport state first: the YouTube state-change guard pauses
     // any playback that starts while the transport says paused
@@ -241,8 +269,10 @@ class PlaybackController {
     if (c?.kind === "file") this.videoEl?.pause();
     useUi.getState().setPlaying(false);
     this.stopTick();
-    // sync vt so paused seeks (which trust vt) start from where playback stopped
-    this.vt = this.getT();
+    // sync vt so paused seeks (which trust vt) start from where playback
+    // stopped — unless a seek is still in flight, then vt (the target) is
+    // the truth and the media still reports the stale pre-seek time
+    if (!this.seekPending) this.vt = this.getT();
     this.emit(this.vt);
   }
 
