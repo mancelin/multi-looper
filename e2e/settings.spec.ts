@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import { expect, test, type Page } from "@playwright/test";
 import { makeWav } from "./wav";
 
@@ -55,6 +56,35 @@ test("settings modal shows app info, privacy policy and terms of service", async
 
   await page.getByRole("button", { name: "✕" }).click();
   await expect(page.getByRole("heading", { name: "Settings" })).toBeHidden();
+});
+
+test("download my data exports the library as JSON", async ({ page }) => {
+  await page.goto("/");
+  await page.setInputFiles('input[type="file"]', {
+    name: "exportme.wav",
+    mimeType: "audio/wav",
+    buffer: makeWav(3),
+  });
+  await expect(page.getByTestId("loop-b")).toHaveValue("0:03.000");
+
+  await page.getByTitle("Settings").click();
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download my data" }).click();
+  const download = await downloadPromise;
+
+  expect(download.suggestedFilename()).toMatch(/^multi-looper-data-\d{4}-\d{2}-\d{2}\.json$/);
+  const path = await download.path();
+  const data = JSON.parse(await readFile(path, "utf8"));
+  expect(data.account).toBeNull(); // guest
+  expect(data.tracks).toHaveLength(1);
+  expect(data.tracks[0].title).toBe("exportme");
+  expect(data.tracks[0].loops).toHaveLength(1);
+  expect(data.tracks[0].url).toBeUndefined(); // object URL stripped
+
+  // exporting must not close the modal or touch the library
+  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await page.getByRole("button", { name: "✕" }).click();
+  await expect(page.getByText("exportme").first()).toBeVisible();
 });
 
 test("delete all data wipes the guest library after a confirmation", async ({ page }) => {

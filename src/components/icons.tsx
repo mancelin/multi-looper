@@ -57,6 +57,20 @@ export function UploadIcon({ size, ...rest }: P) {
   );
 }
 
+export function DownloadIcon({ size, ...rest }: P) {
+  return (
+    <svg viewBox="0 0 16 16" {...svg(size, 15, rest)}>
+      <path
+        d="M8 2.5v8M8 10.5 5 7.5M8 10.5l3-3M2.5 10v2.5A1 1 0 0 0 3.5 13.5h9a1 1 0 0 0 1-1V10"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function KeyboardIcon({ size, ...rest }: P) {
   return (
     <svg viewBox="0 0 24 24" {...svg(size, 17, rest)}>

@@ -5,6 +5,7 @@ import {
   BackIcon,
   ChevronRightIcon,
   DocIcon,
+  DownloadIcon,
   InfoIcon,
   KeyIcon,
   ShieldIcon,
@@ -12,6 +13,8 @@ import {
   UserIcon,
 } from "@/components/icons";
 import { APP_NAME, APP_VERSION, AUTHOR_NAME, AUTHOR_URL, CONTACT_EMAIL } from "@/lib/appInfo";
+import { buildDataExport, downloadDataExport } from "@/lib/exportData";
+import { useLibrary } from "@/store/library";
 import { changePassword, deleteAccount, deleteAllData } from "@/store/sync";
 import { useUi, type SettingsView } from "@/store/ui";
 
@@ -208,10 +211,12 @@ function PrivacyView() {
         No analytics, no ads, no tracking cookies. Your data is never sold or shared with third
         parties.
       </p>
-      <h3 className="mb-1 mt-3 text-[13px] font-semibold text-ink">Deleting your data</h3>
+      <h3 className="mb-1 mt-3 text-[13px] font-semibold text-ink">Your data, your control</h3>
       <p className="m-0 mb-2">
-        Settings → &quot;Delete all data&quot; removes every track (local and synced).
-        &quot;Delete account&quot; permanently removes your account and everything stored with it.
+        Settings → &quot;Download my data&quot; exports everything we store about you (account
+        email, library, loop positions) as a JSON file. &quot;Delete all data&quot; removes every
+        track (local and synced). &quot;Delete account&quot; permanently removes your account and
+        everything stored with it.
       </p>
       <p className="m-0 text-muted">
         Questions: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
@@ -335,6 +340,14 @@ export function SettingsModal() {
                 onClick={() => setView("password")}
               />
             )}
+            <MenuItem
+              icon={<DownloadIcon />}
+              label="Download my data"
+              onClick={() => {
+                downloadDataExport(buildDataExport(useLibrary.getState().tracks, account));
+                useUi.getState().pushToast("Data exported.");
+              }}
+            />
             {confirm === "data" ? (
               <ConfirmRow
                 message={
