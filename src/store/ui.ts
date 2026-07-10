@@ -38,6 +38,8 @@ export interface UiState {
   settingsOpen: boolean;
   settingsView: SettingsView;
   syncBusy: boolean;
+  /** bytes of PB media storage in use; null until fetched */
+  storageUsed: number | null;
   toasts: Toast[];
 
   setPlaying: (v: boolean) => void;
@@ -61,6 +63,7 @@ export interface UiState {
   closeSettings: () => void;
   setSettingsView: (v: SettingsView) => void;
   setSyncBusy: (v: boolean) => void;
+  setStorageUsed: (v: number | null) => void;
   pushToast: (message: string) => void;
   dismissToast: (id: number) => void;
 }
@@ -89,6 +92,7 @@ export const useUi = create<UiState>()((set) => ({
   settingsOpen: false,
   settingsView: "menu",
   syncBusy: false,
+  storageUsed: null,
   toasts: [],
 
   setPlaying: (v) => set({ playing: v }),
@@ -101,7 +105,7 @@ export const useUi = create<UiState>()((set) => ({
   toggleShortcuts: () => set((s) => ({ showShortcuts: !s.showShortcuts })),
   setYtModalOpen: (v) => set({ ytModalOpen: v }),
 
-  setAccount: (a) => set({ account: a }),
+  setAccount: (a) => set(a ? { account: a } : { account: null, storageUsed: null }),
   setAccountMenuOpen: (v) => set({ accountMenuOpen: v }),
   openAuth: () => set({ authOpen: true, authMode: "signup", authError: "" }),
   closeAuth: () => set({ authOpen: false, authError: "" }),
@@ -115,6 +119,7 @@ export const useUi = create<UiState>()((set) => ({
   closeSettings: () => set({ settingsOpen: false }),
   setSettingsView: (v) => set({ settingsView: v }),
   setSyncBusy: (v) => set({ syncBusy: v }),
+  setStorageUsed: (v) => set({ storageUsed: v }),
   pushToast: (message) =>
     set((s) => {
       if (s.toasts.some((t) => t.message === message)) return s; // no duplicate spam

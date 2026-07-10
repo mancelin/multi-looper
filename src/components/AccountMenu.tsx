@@ -2,7 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import { GearIcon, SignOutIcon, UserIcon } from "@/components/icons";
-import { signOut } from "@/store/sync";
+import { formatMB, MAX_USER_DATA_BYTES } from "@/lib/quota";
+import { refreshStorageUsed, signOut } from "@/store/sync";
 import { initialsFor, useUi } from "@/store/ui";
 
 export function AccountArea() {
@@ -11,7 +12,12 @@ export function AccountArea() {
   const openSettings = useUi((s) => s.openSettings);
   const menuOpen = useUi((s) => s.accountMenuOpen);
   const setMenuOpen = useUi((s) => s.setAccountMenuOpen);
+  const storageUsed = useUi((s) => s.storageUsed);
   const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (menuOpen) void refreshStorageUsed();
+  }, [menuOpen]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -60,6 +66,27 @@ export function AccountArea() {
               <span className="h-[5px] w-[5px] rounded-full bg-accent-2" />
               All loops synced
             </span>
+          </div>
+          <div
+            data-testid="storage-usage"
+            className="mb-[5px] border-b border-white/6 px-[10px] pb-[11px] pt-[4px]"
+          >
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="text-muted">Storage</span>
+              <span className="text-ink-2">
+                {storageUsed === null
+                  ? "…"
+                  : `${formatMB(storageUsed)} / ${formatMB(MAX_USER_DATA_BYTES)} MB`}
+              </span>
+            </div>
+            <div className="mt-[6px] h-[4px] overflow-hidden rounded-full bg-white/10">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-accent-2 to-accent-3 transition-[width] duration-300"
+                style={{
+                  width: `${Math.min(100, ((storageUsed ?? 0) / MAX_USER_DATA_BYTES) * 100)}%`,
+                }}
+              />
+            </div>
           </div>
           <button
             onClick={openSettings}

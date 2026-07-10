@@ -161,6 +161,21 @@ async function flush(): Promise<void> {
   }
 }
 
+/**
+ * Refresh the account's media storage usage (bytes) from the server — the
+ * server-owned mediaSize field is the source of truth across devices.
+ */
+export async function refreshStorageUsed(): Promise<void> {
+  if (!useUi.getState().account || !pb.authStore.isValid) return;
+  try {
+    const records = await pb.collection(COLLECTION).getFullList({ fields: "mediaSize" });
+    const used = records.reduce((sum, r) => sum + ((r.mediaSize as number) || 0), 0);
+    useUi.getState().setStorageUsed(used);
+  } catch {
+    // offline — keep whatever value we last showed
+  }
+}
+
 export function startSync(): void {
   if (subscribed) return;
   subscribed = true;

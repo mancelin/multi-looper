@@ -44,4 +44,8 @@ test("uploads stop syncing once the 20 MB account quota is hit", async ({ page }
   await expect(page.getByText("SYNCED")).toBeVisible();
   await expect(page.getByText("tiny-fits").first()).toBeVisible();
   await expect(page.getByText("way-too-big")).toHaveCount(0);
+
+  // account menu shows the server-side usage (3 s WAV ≈ 0.25 MB → "0.3")
+  await page.getByText("SYNCED").click();
+  await expect(page.getByTestId("storage-usage")).toContainText("0.3 / 20 MB");
 });
