@@ -279,13 +279,8 @@ export function skipImport(): void {
   applyLibrary(saved);
 }
 
-/** Sign out and wipe all local data — the app restarts as new. */
-export async function signOut(): Promise<void> {
-  if (timer) clearTimeout(timer);
-  await flush().catch(() => {});
-  pb.authStore.clear();
-  useUi.getState().setAccount(null);
-  useUi.getState().setAccountMenuOpen(false);
+/** Wipe every locally held copy of the library (store, files, caches). */
+async function wipeLocalData(): Promise<void> {
   synced.clear();
   pbIds.clear();
   player.pause();
@@ -294,6 +289,89 @@ export async function signOut(): Promise<void> {
   clearGuestLibrary();
   clearImageHeights();
   await clearAllMedia();
+}
+
+/** Sign out and wipe all local data — the app restarts as new. */
+export async function signOut(): Promise<void> {
+  if (timer) clearTimeout(timer);
+  await flush().catch(() => {});
+  pb.authStore.clear();
+  useUi.getState().setAccount(null);
+  useUi.getState().setAccountMenuOpen(false);
+  await wipeLocalData();
+}
+
+/**
+ * Change the signed-in user's password. PocketBase invalidates every auth
+ * token on a password change, so re-authenticate right after.
+ * Returns an error message, or null on success.
+ */
+export async function changePassword(oldPassword: string, password: string): Promise<string | null> {
+  const record = pb.authStore.record;
+  if (!record) return "Not signed in.";
+  try {
+    await pb
+      .collection("users")
+      .update(record.id, { oldPassword, password, passwordConfirm: password });
+    await pb.collection("users").authWithPassword(record.email as string, password);
+    useUi.getState().pushToast("Password changed.");
+    return null;
+  } catch (e) {
+    if (e instanceof ClientResponseError) {
+      const data = e.response?.data as Record<string, { message?: string }> | undefined;
+      if (data?.oldPassword) return "Current password is incorrect.";
+      const field = data && Object.values(data)[0]?.message;
+      if (field) return field;
+      if (e.status === 0) return "Cannot reach the sync server.";
+    }
+    return "Could not change the password.";
+  }
+}
+
+/**
+ * Delete every track — synced records and local data. The account (if any)
+ * stays. Returns an error message, or null on success.
+ */
+export async function deleteAllData(): Promise<string | null> {
+  if (timer) clearTimeout(timer);
+  const ui = useUi.getState();
+  if (ui.account && pb.authStore.isValid) {
+    ui.setSyncBusy(true);
+    try {
+      const records = await pb.collection(COLLECTION).getFullList({ fields: "id" });
+      for (const r of records) await pb.collection(COLLECTION).delete(r.id);
+    } catch (e) {
+      console.error("[sync] delete all data failed", e);
+      return "Could not delete the synced data. Check the connection and try again.";
+    } finally {
+      ui.setSyncBusy(false);
+    }
+  }
+  await wipeLocalData();
+  useUi.getState().pushToast("All data deleted.");
+  return null;
+}
+
+/**
+ * Permanently delete the account; the tracks collection cascade-deletes with
+ * it. Local data is wiped too. Returns an error message, or null on success.
+ */
+export async function deleteAccount(): Promise<string | null> {
+  const record = pb.authStore.record;
+  if (!record) return "Not signed in.";
+  if (timer) clearTimeout(timer);
+  try {
+    await pb.collection("users").delete(record.id);
+  } catch (e) {
+    if (e instanceof ClientResponseError && e.status === 0) return "Cannot reach the sync server.";
+    return "Could not delete the account.";
+  }
+  pb.authStore.clear();
+  useUi.getState().setAccount(null);
+  useUi.getState().setAccountMenuOpen(false);
+  await wipeLocalData();
+  useUi.getState().pushToast("Account deleted.");
+  return null;
 }
 
 /** Restore a persisted PocketBase session on app boot. */

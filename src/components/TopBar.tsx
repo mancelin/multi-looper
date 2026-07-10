@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { BookIcon, EqIcon, KeyboardIcon, UploadIcon, YoutubeIcon } from "@/components/icons";
+import { BookIcon, EqIcon, GearIcon, KeyboardIcon, UploadIcon, YoutubeIcon } from "@/components/icons";
 import { addFiles, addYoutubeUrl } from "@/store/ingest";
 import { useLibrary } from "@/store/library";
 import { useUi } from "@/store/ui";
@@ -11,6 +11,7 @@ export function TopBar() {
   const toggleSidebar = useUi((s) => s.toggleSidebar);
   const hasTracks = useLibrary((s) => s.tracks.length > 0);
   const toggleShortcuts = useUi((s) => s.toggleShortcuts);
+  const openSettings = useUi((s) => s.openSettings);
   const setYtModalOpen = useUi((s) => s.setYtModalOpen);
   const [ytUrl, setYtUrl] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -95,7 +96,14 @@ export function TopBar() {
         </button>
       </div>
 
-      <div className="ml-auto flex flex-none items-center">
+      <div className="ml-auto flex flex-none items-center gap-2">
+        <button
+          onClick={openSettings}
+          title="Settings"
+          className="flex h-[38px] w-[38px] flex-none cursor-pointer items-center justify-center rounded-[9px] border border-white/9 bg-field text-muted"
+        >
+          <GearIcon />
+        </button>
         <AccountArea />
       </div>
     </header>

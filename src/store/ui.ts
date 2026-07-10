@@ -9,6 +9,8 @@ export interface Account {
 
 export type AuthMode = "signup" | "signin";
 
+export type SettingsView = "menu" | "password" | "info" | "privacy" | "terms";
+
 export interface Toast {
   id: number;
   message: string;
@@ -33,6 +35,8 @@ export interface UiState {
   importOpen: boolean;
   /** number of guest tracks pending the import decision */
   importCount: number;
+  settingsOpen: boolean;
+  settingsView: SettingsView;
   syncBusy: boolean;
   toasts: Toast[];
 
@@ -53,6 +57,9 @@ export interface UiState {
   setAuthError: (msg: string) => void;
   setAuthBusy: (v: boolean) => void;
   setImport: (open: boolean, count?: number) => void;
+  openSettings: () => void;
+  closeSettings: () => void;
+  setSettingsView: (v: SettingsView) => void;
   setSyncBusy: (v: boolean) => void;
   pushToast: (message: string) => void;
   dismissToast: (id: number) => void;
@@ -79,6 +86,8 @@ export const useUi = create<UiState>()((set) => ({
   authBusy: false,
   importOpen: false,
   importCount: 0,
+  settingsOpen: false,
+  settingsView: "menu",
   syncBusy: false,
   toasts: [],
 
@@ -102,6 +111,9 @@ export const useUi = create<UiState>()((set) => ({
   setAuthBusy: (v) => set({ authBusy: v }),
   setImport: (open, count) =>
     set((s) => ({ importOpen: open, importCount: count ?? s.importCount })),
+  openSettings: () => set({ settingsOpen: true, settingsView: "menu", accountMenuOpen: false }),
+  closeSettings: () => set({ settingsOpen: false }),
+  setSettingsView: (v) => set({ settingsView: v }),
   setSyncBusy: (v) => set({ syncBusy: v }),
   pushToast: (message) =>
     set((s) => {

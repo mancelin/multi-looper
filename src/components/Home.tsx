@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { AuthModal } from "@/components/modals/AuthModal";
 import { ImportModal } from "@/components/modals/ImportModal";
+import { SettingsModal } from "@/components/modals/SettingsModal";
 import { ShortcutsModal } from "@/components/modals/ShortcutsModal";
 import { YoutubeModal } from "@/components/modals/YoutubeModal";
 import { EmptyState } from "@/components/EmptyState";
@@ -64,6 +65,7 @@ export function Home() {
       <YoutubeModal />
       <AuthModal />
       <ImportModal />
+      <SettingsModal />
       <Toasts />
     </div>
   );

@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { SignOutIcon, UserIcon } from "@/components/icons";
+import { GearIcon, SignOutIcon, UserIcon } from "@/components/icons";
 import { signOut } from "@/store/sync";
 import { initialsFor, useUi } from "@/store/ui";
 
 export function AccountArea() {
   const account = useUi((s) => s.account);
   const openAuth = useUi((s) => s.openAuth);
+  const openSettings = useUi((s) => s.openSettings);
   const menuOpen = useUi((s) => s.accountMenuOpen);
   const setMenuOpen = useUi((s) => s.setAccountMenuOpen);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -60,6 +61,13 @@ export function AccountArea() {
               All loops synced
             </span>
           </div>
+          <button
+            onClick={openSettings}
+            className="flex w-full cursor-pointer items-center gap-[9px] rounded-[8px] px-[10px] py-[9px] text-left text-[13px] text-ink-2 hover:bg-white/5"
+          >
+            <GearIcon className="text-muted" />
+            Settings
+          </button>
           <button
             onClick={() => void signOut()}
             className="flex w-full cursor-pointer items-center gap-[9px] rounded-[8px] px-[10px] py-[9px] text-left text-[13px] text-ink-2 hover:bg-white/5"

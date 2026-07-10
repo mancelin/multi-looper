@@ -204,6 +204,101 @@ export function ImportIcon({ size, ...rest }: P) {
   );
 }
 
+export function GearIcon({ size, ...rest }: P) {
+  return (
+    <svg viewBox="0 0 24 24" {...svg(size, 16, rest)}>
+      <circle cx="12" cy="12" r="3.2" stroke="currentColor" strokeWidth="1.6" />
+      <path
+        d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.12-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.65 8.84a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.08a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.08a1.7 1.7 0 0 0 1.56 1.03H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.56 1.03Z"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function KeyIcon({ size, ...rest }: P) {
+  return (
+    <svg viewBox="0 0 24 24" {...svg(size, 15, rest)}>
+      <circle cx="7.5" cy="15.5" r="4" stroke="currentColor" strokeWidth="1.7" />
+      <path
+        d="m10.5 12.5 8-8M15 7.5l2.5 2.5M18 4.5 20.5 7"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+export function TrashIcon({ size, ...rest }: P) {
+  return (
+    <svg viewBox="0 0 24 24" {...svg(size, 15, rest)}>
+      <path
+        d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M5 6l1 14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-14M10 11v6M14 11v6"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function InfoIcon({ size, ...rest }: P) {
+  return (
+    <svg viewBox="0 0 24 24" {...svg(size, 15, rest)}>
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M12 11v5M12 8h.01" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function ShieldIcon({ size, ...rest }: P) {
+  return (
+    <svg viewBox="0 0 24 24" {...svg(size, 15, rest)}>
+      <path
+        d="M12 3 5 6v5c0 4.4 3 8.4 7 10 4-1.6 7-5.6 7-10V6l-7-3Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function DocIcon({ size, ...rest }: P) {
+  return (
+    <svg viewBox="0 0 24 24" {...svg(size, 15, rest)}>
+      <path
+        d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+      <path d="M14 3v5h5M9 13h6M9 17h6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function ChevronRightIcon({ size, ...rest }: P) {
+  return (
+    <svg viewBox="0 0 16 16" {...svg(size, 13, rest)}>
+      <path d="m6 3.5 4.5 4.5L6 12.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function BackIcon({ size, ...rest }: P) {
+  return (
+    <svg viewBox="0 0 16 16" {...svg(size, 13, rest)}>
+      <path d="M10 3.5 5.5 8l4.5 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function ResizeIcon({ size, ...rest }: P) {
   return (
     <svg viewBox="0 0 16 16" {...svg(size, 12, rest)}>
