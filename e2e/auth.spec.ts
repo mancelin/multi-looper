@@ -1,15 +1,5 @@
 import { expect, test } from "@playwright/test";
-
-const PB_URL = "http://127.0.0.1:8090";
-
-async function pbAvailable(): Promise<boolean> {
-  try {
-    const res = await fetch(`${PB_URL}/api/health`, { signal: AbortSignal.timeout(2000) });
-    return res.ok;
-  } catch {
-    return false;
-  }
-}
+import { pbAvailable } from "./pb";
 
 test("auth modal offers Google sign-in", async ({ page }) => {
   await page.goto("/");

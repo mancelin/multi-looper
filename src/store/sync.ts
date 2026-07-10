@@ -13,6 +13,18 @@ import { useUi } from "./ui";
 
 const COLLECTION = "tracks";
 
+// server quota rejection (pb_hooks/quota.pb.js) — matched by message prefix
+const QUOTA_PREFIX = "Storage limit reached";
+
+function isQuotaError(e: unknown): e is ClientResponseError {
+  return (
+    e instanceof ClientResponseError &&
+    e.status === 400 &&
+    typeof e.response?.message === "string" &&
+    (e.response.message as string).startsWith(QUOTA_PREFIX)
+  );
+}
+
 // ---------- record mapping ----------
 
 function recordToTrack(r: RecordModel): Track {
@@ -69,6 +81,7 @@ function fingerprint(t: Track): string {
 
 const synced = new Map<string, string>(); // local track id -> fingerprint
 const pbIds = new Map<string, string>(); // local track id -> PB record id
+const quotaBlocked = new Set<string>(); // local ids refused by the server quota; retried after deletes
 let timer: ReturnType<typeof setTimeout> | null = null;
 let flushing = false;
 let subscribed = false;
@@ -90,6 +103,7 @@ async function flush(): Promise<void> {
     const tracks = useLibrary.getState().tracks;
     const liveIds = new Set(tracks.map((t) => t.id));
 
+    let freedSpace = false;
     for (const [localId, recId] of [...pbIds]) {
       if (liveIds.has(localId)) continue;
       try {
@@ -99,7 +113,9 @@ async function flush(): Promise<void> {
       }
       pbIds.delete(localId);
       synced.delete(localId);
+      freedSpace = true;
     }
+    if (freedSpace) quotaBlocked.clear(); // deletions free quota — retry refused uploads
 
     for (const t of tracks) {
       const fp = fingerprint(t);
@@ -108,20 +124,30 @@ async function flush(): Promise<void> {
       if (recId) {
         await pb.collection(COLLECTION).update(recId, trackPayload(t));
       } else {
+        if (quotaBlocked.has(t.id)) continue; // stays local until quota frees up
         const payload = trackPayload(t);
         const file = t.kind === "file" ? getFile(t.id) : undefined;
         let rec: RecordModel;
-        if (file) {
-          const fd = new FormData();
-          for (const [k, v] of Object.entries(payload)) {
-            fd.append(k, typeof v === "object" ? JSON.stringify(v) : String(v));
+        try {
+          if (file) {
+            const fd = new FormData();
+            for (const [k, v] of Object.entries(payload)) {
+              fd.append(k, typeof v === "object" ? JSON.stringify(v) : String(v));
+            }
+            fd.append("media", file);
+            rec = await pb.collection(COLLECTION).create(fd);
+          } else {
+            rec = await pb.collection(COLLECTION).create(payload);
           }
-          fd.append("media", file);
-          rec = await pb.collection(COLLECTION).create(fd);
-          releaseFile(t.id);
-        } else {
-          rec = await pb.collection(COLLECTION).create(payload);
+        } catch (e) {
+          if (isQuotaError(e)) {
+            quotaBlocked.add(t.id);
+            useUi.getState().pushToast(`"${t.title}" was not synced — ${e.response.message}`);
+            continue;
+          }
+          throw e;
         }
+        if (file) releaseFile(t.id);
         pbIds.set(t.id, rec.id);
         useLibrary.getState().patchTrack(t.id, { pbId: rec.id });
       }
@@ -149,6 +175,7 @@ export function startSync(): void {
 function seedSyncState(tracks: Track[]): void {
   synced.clear();
   pbIds.clear();
+  quotaBlocked.clear();
   for (const t of tracks) {
     if (t.pbId) {
       pbIds.set(t.id, t.pbId);
@@ -283,6 +310,7 @@ export function skipImport(): void {
 async function wipeLocalData(): Promise<void> {
   synced.clear();
   pbIds.clear();
+  quotaBlocked.clear();
   player.pause();
   useLibrary.getState().setLibrary([], null);
   clearFiles();

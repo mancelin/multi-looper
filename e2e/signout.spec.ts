@@ -1,16 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
+import { pbAvailable, verifyUser } from "./pb";
 import { makeWav } from "./wav";
-
-const PB_URL = "http://127.0.0.1:8090";
-
-async function pbAvailable(): Promise<boolean> {
-  try {
-    const res = await fetch(`${PB_URL}/api/health`, { signal: AbortSignal.timeout(2000) });
-    return res.ok;
-  } catch {
-    return false;
-  }
-}
 
 /** Number of media blobs in the guest IndexedDB store. */
 function mediaCount(page: Page): Promise<number> {
@@ -63,6 +53,13 @@ test("sign out wipes localStorage and IndexedDB and returns to the empty state",
   await page.getByPlaceholder("you@example.com").fill(email);
   await page.getByPlaceholder("Password").fill("password123");
   await page.getByRole("button", { name: "Sign up" }).click();
+
+  // no mail server in dev — mark the account verified and sign in
+  await expect(
+    page.getByText(`Verification email sent to ${email}. Verify, then sign in.`),
+  ).toBeVisible();
+  verifyUser(email);
+  await page.getByPlaceholder("Password").press("Enter");
 
   // import the guest track so the account library is non-empty
   await page.getByRole("button", { name: /Import/ }).click();
