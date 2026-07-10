@@ -221,13 +221,38 @@ export async function submitAuth(email: string, password: string): Promise<void>
   try {
     if (ui.authMode === "signup") {
       await pb.collection("users").create({ email, password, passwordConfirm: password });
+      // fire-and-forget: PB queues the email and always answers 204
+      void pb.collection("users").requestVerification(email).catch(() => {});
     }
     await pb.collection("users").authWithPassword(email, password);
     useUi.getState().closeAuth();
     useUi.getState().setAccountMenuOpen(false);
+    if (ui.authMode === "signup") {
+      useUi.getState().pushToast(`Verification email sent to ${email}.`);
+    }
     await handleAuthed();
   } catch (e) {
     ui.setAuthError(authErrorMessage(e, ui.authMode));
+  } finally {
+    useUi.getState().setAuthBusy(false);
+  }
+}
+
+export async function signInWithGoogle(): Promise<void> {
+  const ui = useUi.getState();
+  ui.setAuthError("");
+  ui.setAuthBusy(true);
+  try {
+    await pb.collection("users").authWithOAuth2({ provider: "google" });
+    useUi.getState().closeAuth();
+    useUi.getState().setAccountMenuOpen(false);
+    await handleAuthed();
+  } catch (e) {
+    if (e instanceof ClientResponseError && e.status === 0) {
+      ui.setAuthError("Cannot reach the sync server.");
+    } else {
+      ui.setAuthError("Google sign-in was cancelled or failed.");
+    }
   } finally {
     useUi.getState().setAuthBusy(false);
   }
