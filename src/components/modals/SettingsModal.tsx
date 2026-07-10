@@ -11,7 +11,7 @@ import {
   TrashIcon,
   UserIcon,
 } from "@/components/icons";
-import { APP_NAME, APP_VERSION, CONTACT_EMAIL } from "@/lib/appInfo";
+import { APP_NAME, APP_VERSION, AUTHOR_NAME, AUTHOR_URL, CONTACT_EMAIL } from "@/lib/appInfo";
 import { changePassword, deleteAccount, deleteAllData } from "@/store/sync";
 import { useUi, type SettingsView } from "@/store/ui";
 
@@ -168,8 +168,14 @@ function InfoView() {
         Works fully offline as a guest; an optional free account syncs your library across
         devices.
       </p>
-      <p className="m-0 text-muted">
+      <p className="m-0 mb-2 text-muted">
         Contact: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+      </p>
+      <p className="m-0 text-muted">
+        App by{" "}
+        <a href={AUTHOR_URL} target="_blank" rel="noopener noreferrer">
+          {AUTHOR_NAME}
+        </a>
       </p>
     </div>
   );
