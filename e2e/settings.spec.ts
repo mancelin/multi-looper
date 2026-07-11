@@ -42,6 +42,7 @@ test("settings modal shows app info, privacy policy and terms of service", async
   await expect(page.getByRole("link", { name: "multilooper@gmail.com" })).toBeVisible();
   const author = page.getByRole("link", { name: "Maxime Ancelin" });
   await expect(author).toHaveAttribute("href", "https://maxime-ancelin.com");
+  await expect(page.getByText(/^© \d{4} Maxime Ancelin\. All rights reserved\.$/)).toBeVisible();
 
   await page.getByTitle("Back").click();
   await page.getByRole("button", { name: "Privacy policy" }).click();

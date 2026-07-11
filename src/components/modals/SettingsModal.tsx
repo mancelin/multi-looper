@@ -171,11 +171,14 @@ function InfoView() {
       <p className="m-0 mb-2 text-muted">
         Contact: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
       </p>
-      <p className="m-0 text-muted">
+      <p className="m-0 mb-2 text-muted">
         App by{" "}
         <a href={AUTHOR_URL} target="_blank" rel="noopener noreferrer">
           {AUTHOR_NAME}
         </a>
+      </p>
+      <p className="m-0 text-[11.5px] text-muted-3">
+        © {new Date().getFullYear()} {AUTHOR_NAME}. All rights reserved.
       </p>
     </div>
   );
