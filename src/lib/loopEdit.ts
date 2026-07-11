@@ -3,6 +3,7 @@
 import { player } from "@/lib/player/controller";
 import { activeLoop } from "@/lib/types";
 import { currentTrack, useLibrary } from "@/store/library";
+import { useUi } from "@/store/ui";
 
 /** Shared clamped loop-edit operations (UI buttons + keyboard shortcuts). */
 
@@ -23,6 +24,8 @@ export function setLoopB(v: number): void {
   const c = ctx();
   if (!c) return;
   c.s.patchActiveLoop({ b: Math.max(c.loop.a + 0.05, Math.min(v, c.track.duration)) });
+  // committing a loop end means the user wants looping on
+  useUi.setState({ loopEnabled: true });
 }
 
 export function nudgeA(delta: number): void {

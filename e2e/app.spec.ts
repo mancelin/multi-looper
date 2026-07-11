@@ -208,6 +208,36 @@ test("editing loop start via the trim field updates loop length", async ({ page 
   await expect(page.getByTestId("loop-len")).toHaveText("0:02.000");
 });
 
+test("setting loop B re-enables loop mode", async ({ page }) => {
+  await page.goto("/");
+  await uploadWav(page, 3);
+  await expect(page.getByTestId("loop-b")).toHaveValue("0:03.000"); // wait for decode
+
+  const loopBtn = page.getByRole("button", { name: "Loop", exact: true });
+  await expect(loopBtn).toHaveAttribute("aria-pressed", "true");
+
+  // pressing B re-enables looping
+  await loopBtn.click();
+  await expect(loopBtn).toHaveAttribute("aria-pressed", "false");
+  await page.locator("body").press("b");
+  await expect(loopBtn).toHaveAttribute("aria-pressed", "true");
+
+  // so does the "Set B here" button
+  await loopBtn.click();
+  await page.getByRole("button", { name: "Set B here" }).click();
+  await expect(loopBtn).toHaveAttribute("aria-pressed", "true");
+
+  // and dragging the B handle in the waveform
+  await loopBtn.click();
+  const handle = page.locator(".cursor-ew-resize").filter({ hasText: "B" });
+  const box = (await handle.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2 + 40, box.y + box.height / 2, { steps: 3 });
+  await page.mouse.up();
+  await expect(loopBtn).toHaveAttribute("aria-pressed", "true");
+});
+
 test("clicking another loop chip selects it", async ({ page }) => {
   await page.goto("/");
   await uploadWav(page, 3);

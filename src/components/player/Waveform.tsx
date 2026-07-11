@@ -5,6 +5,7 @@ import { player } from "@/lib/player/controller";
 import { fmtS } from "@/lib/time";
 import { activeLoop, type Track } from "@/lib/types";
 import { useLibrary } from "@/store/library";
+import { useUi } from "@/store/ui";
 
 export function Waveform({ track }: { track: Track }) {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -79,6 +80,8 @@ export function Waveform({ track }: { track: Track }) {
   const startDrag = (which: "A" | "B", e: React.PointerEvent) => {
     e.stopPropagation();
     e.preventDefault();
+    // dragging the loop end means the user wants looping on
+    if (which === "B") useUi.setState({ loopEnabled: true });
     const move = (ev: PointerEvent) => {
       const t = pctFromEvent(ev) * d;
       // read the freshest loop bounds for clamping while dragging

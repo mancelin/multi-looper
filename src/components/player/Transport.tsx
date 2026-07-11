@@ -62,6 +62,7 @@ export function Transport({ track }: { track: Track }) {
       <div className="flex items-center gap-[9px]">
         <button
           onClick={toggleLoop}
+          aria-pressed={loopEnabled}
           className="flex h-10 cursor-pointer items-center gap-[7px] rounded-[10px] border px-[14px] text-[13px] font-semibold"
           style={{
             borderColor: loopEnabled ? "#5eead4" : "rgba(255,255,255,.1)",
