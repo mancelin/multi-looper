@@ -85,7 +85,7 @@ test("delete all data wipes the guest library after a confirmation", async ({ pa
 
   await expect(page.getByRole("heading", { name: "Settings" })).toBeHidden();
   await expect(
-    page.getByRole("heading", { name: "Loop anything. Master every bar." }),
+    page.getByRole("heading", { name: "Loop anything" }),
   ).toBeVisible();
   await expect
     .poll(() => page.evaluate(() => localStorage.getItem("multilooper_guest_lib")))
@@ -95,6 +95,6 @@ test("delete all data wipes the guest library after a confirmation", async ({ pa
   // reload: still empty, nothing restored
   await page.reload();
   await expect(
-    page.getByRole("heading", { name: "Loop anything. Master every bar." }),
+    page.getByRole("heading", { name: "Loop anything" }),
   ).toBeVisible();
 });

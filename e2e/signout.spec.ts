@@ -71,7 +71,7 @@ test("sign out wipes localStorage and IndexedDB and returns to the empty state",
 
   // app is back to the pristine empty state, signed out
   await expect(
-    page.getByRole("heading", { name: "Loop anything. Master every bar." }),
+    page.getByRole("heading", { name: "Loop anything" }),
   ).toBeVisible();
   await expect(page.getByTitle("Sign in")).toBeVisible();
 
@@ -87,7 +87,7 @@ test("sign out wipes localStorage and IndexedDB and returns to the empty state",
   // reload: still a fresh app, nothing restored
   await page.reload();
   await expect(
-    page.getByRole("heading", { name: "Loop anything. Master every bar." }),
+    page.getByRole("heading", { name: "Loop anything" }),
   ).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem("multilooper_guest_lib"))).toBeNull();
 

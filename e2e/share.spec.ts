@@ -38,7 +38,7 @@ test("invalid share link (loop end before start) is ignored", async ({ page }) =
   await blockYoutube(page);
   await page.goto(`/?share=${VIDEO}&a=30&b=20`);
   await expect(
-    page.getByRole("heading", { name: "Loop anything. Master every bar." }),
+    page.getByRole("heading", { name: "Loop anything" }),
   ).toBeVisible();
 });
 

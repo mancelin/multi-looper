@@ -17,7 +17,7 @@ async function uploadWav(page: Page, seconds: number, name = "sample.wav") {
 
 test("empty state renders with both ingest paths", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Loop anything. Master every bar." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Loop anything" })).toBeVisible();
   await expect(page.getByPlaceholder("youtube.com/watch?v=…")).toBeVisible();
   await expect(page.getByText("Choose files")).toBeVisible();
 });
@@ -278,7 +278,7 @@ test("removing the last track returns to the empty state", async ({ page }) => {
 
   await page.getByTitle("Remove", { exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Loop anything. Master every bar." }),
+    page.getByRole("heading", { name: "Loop anything" }),
   ).toBeVisible();
 });
 
@@ -381,7 +381,7 @@ test("track number in the URL: selection updates it, deep links and invalid path
 }) => {
   // no tracks: a track URL falls back to the home page
   await page.goto("/5");
-  await expect(page.getByRole("heading", { name: "Loop anything. Master every bar." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Loop anything" })).toBeVisible();
   await expect(page).toHaveURL(/^https?:\/\/[^/]+\/$/);
 
   await uploadWav(page, 3, "first.wav");

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { PlusIcon, UploadIcon, YoutubeIcon } from "@/components/icons";
+import { LoopIcon, PlusIcon, UploadIcon, YoutubeIcon } from "@/components/icons";
 import { addFiles, addYoutubeUrl } from "@/store/ingest";
 
 export function EmptyState() {
@@ -24,8 +24,9 @@ export function EmptyState() {
           <span className="h-4 w-[7px] rounded-[4px] bg-accent-3 [animation:eq_1.1s_ease-in-out_-0.1s_infinite]" />
         </div>
 
-        <h1 className="mb-0 mt-[26px] text-[30px] font-bold tracking-[-.01em] text-white">
-          Loop anything. Master every bar.
+        <h1 className="mb-0 mt-[26px] flex items-center gap-3 text-[30px] font-bold tracking-[-.01em] text-white">
+          Loop anything
+          <LoopIcon size={26} aria-hidden className="text-accent" />
         </h1>
         <p className="mb-0 mt-3 max-w-[460px] text-[15px] leading-[1.6] text-muted">
           Drop in a track, mark an A–B section, and practice it on repeat — slowed down, pitch

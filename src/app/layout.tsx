@@ -17,7 +17,7 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "multi-looper",
   description:
-    "Loop anything. Master every bar. Practice music by looping A–B sections of YouTube videos or your own audio, slowed down with pitch intact.",
+    "Loop anything. Practice music by looping A–B sections of YouTube videos or your own audio, slowed down with pitch intact.",
 };
 
 export default function RootLayout({
