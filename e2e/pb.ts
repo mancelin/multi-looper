@@ -28,3 +28,30 @@ export function verifyUser(email: string): void {
   ].join("\n");
   execFileSync("python3", ["-c", script, db, email]);
 }
+
+/**
+ * Flags a user as premium (1 GB quota) straight in SQLite — stands in for an
+ * admin flipping the field in the PB dashboard.
+ */
+export function setPremium(email: string): void {
+  const db = path.resolve(__dirname, "../pb/pb_data/data.db");
+  const script = [
+    "import sqlite3, sys",
+    "con = sqlite3.connect(sys.argv[1])",
+    'con.execute("UPDATE users SET premium = 1 WHERE email = ?", (sys.argv[2],))',
+    "con.commit()",
+  ].join("\n");
+  execFileSync("python3", ["-c", script, db, email]);
+}
+
+/** Total synced media bytes for a user, read straight from SQLite. */
+export function userMediaSize(email: string): number {
+  const db = path.resolve(__dirname, "../pb/pb_data/data.db");
+  const script = [
+    "import sqlite3, sys",
+    "con = sqlite3.connect(sys.argv[1])",
+    'row = con.execute("SELECT COALESCE(SUM(t.mediaSize), 0) FROM tracks t JOIN users u ON t.user = u.id WHERE u.email = ?", (sys.argv[2],)).fetchone()',
+    "print(row[0])",
+  ].join("\n");
+  return Number(execFileSync("python3", ["-c", script, db, email]).toString().trim());
+}

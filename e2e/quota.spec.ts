@@ -1,13 +1,9 @@
-import { expect, test } from "@playwright/test";
-import { pbAvailable, verifyUser } from "./pb";
+import { expect, type Page, test } from "@playwright/test";
+import { pbAvailable, setPremium, userMediaSize, verifyUser } from "./pb";
 import { makeWav } from "./wav";
 
-test("uploads stop syncing once the 20 MB account quota is hit", async ({ page }) => {
-  test.skip(!(await pbAvailable()), "PocketBase not running (just pb-up)");
-  test.setTimeout(120_000);
-
-  // fresh verified account with an empty library
-  const email = `quota${Date.now()}@example.com`;
+/** Signs up a fresh verified account and signs it in. */
+async function signUpAndIn(page: Page, email: string): Promise<void> {
   await page.goto("/");
   await page.getByTitle("Sign in").click();
   await expect(page.getByText("Create your account")).toBeVisible();
@@ -20,6 +16,15 @@ test("uploads stop syncing once the 20 MB account quota is hit", async ({ page }
   verifyUser(email);
   await page.getByPlaceholder("Password").press("Enter");
   await expect(page.getByText("SYNCED")).toBeVisible();
+}
+
+test("uploads stop syncing once the 20 MB account quota is hit", async ({ page }) => {
+  test.skip(!(await pbAvailable()), "PocketBase not running (just pb-up)");
+  test.setTimeout(120_000);
+
+  // fresh verified account with an empty library
+  const email = `quota${Date.now()}@example.com`;
+  await signUpAndIn(page, email);
 
   // a small file fits the quota and syncs
   await page.setInputFiles('input[type="file"]', {
@@ -48,4 +53,37 @@ test("uploads stop syncing once the 20 MB account quota is hit", async ({ page }
   // account menu shows the server-side usage (3 s WAV ≈ 0.25 MB → "0.3")
   await page.getByText("SYNCED").click();
   await expect(page.getByTestId("storage-usage")).toContainText("0.3 / 20 MB");
+});
+
+test("premium accounts get a 1 GB quota", async ({ page }) => {
+  test.skip(!(await pbAvailable()), "PocketBase not running (just pb-up)");
+  test.setTimeout(180_000);
+
+  const email = `premium${Date.now()}@example.com`;
+  await signUpAndIn(page, email);
+  // admin flips the flag in the PB dashboard — here straight in SQLite
+  setPremium(email);
+
+  // 240 s WAV ≈ 20.2 MB — over the free 20 MB limit, fits the premium 1 GB
+  await page.setInputFiles('input[type="file"]', {
+    name: "premium-big.wav",
+    mimeType: "audio/wav",
+    buffer: makeWav(240),
+  });
+  await expect(page.getByTestId("loop-b")).toHaveValue("4:00.000");
+
+  // the upload syncs instead of being refused
+  await expect
+    .poll(() => userMediaSize(email), { timeout: 90_000 })
+    .toBeGreaterThan(20 * 1024 * 1024);
+  await expect(page.getByText(/Storage limit reached/)).toHaveCount(0);
+
+  // the account menu picks up the premium quota and server-side usage
+  await page.getByText("SYNCED").click();
+  await expect(page.getByTestId("storage-usage")).toContainText("20 / 1 GB");
+
+  // survives a reload — the track really lives in PB
+  await page.reload();
+  await expect(page.getByText("SYNCED")).toBeVisible();
+  await expect(page.getByText("premium-big").first()).toBeVisible();
 });

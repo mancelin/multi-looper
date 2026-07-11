@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { GearIcon, SignOutIcon, UserIcon } from "@/components/icons";
-import { formatMB, MAX_USER_DATA_BYTES } from "@/lib/quota";
+import { formatLimit, formatMB, quotaFor } from "@/lib/quota";
 import { refreshStorageUsed, signOut } from "@/store/sync";
 import { initialsFor, useUi } from "@/store/ui";
 
@@ -41,6 +41,8 @@ export function AccountArea() {
     );
   }
 
+  const quota = quotaFor(account.premium);
+
   return (
     <div ref={wrapRef} className="relative flex-none">
       <button
@@ -76,14 +78,14 @@ export function AccountArea() {
               <span className="text-ink-2">
                 {storageUsed === null
                   ? "…"
-                  : `${formatMB(storageUsed)} / ${formatMB(MAX_USER_DATA_BYTES)} MB`}
+                  : `${formatMB(storageUsed)} / ${formatLimit(quota)}`}
               </span>
             </div>
             <div className="mt-[6px] h-[4px] overflow-hidden rounded-full bg-white/10">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-accent-2 to-accent-3 transition-[width] duration-300"
                 style={{
-                  width: `${Math.min(100, ((storageUsed ?? 0) / MAX_USER_DATA_BYTES) * 100)}%`,
+                  width: `${Math.min(100, ((storageUsed ?? 0) / quota) * 100)}%`,
                 }}
               />
             </div>

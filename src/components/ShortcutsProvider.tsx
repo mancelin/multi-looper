@@ -4,8 +4,6 @@ import { useEffect } from "react";
 import {
   addLoopAtPlayhead,
   cycleLoop,
-  nudgeA,
-  nudgeB,
   setLoopA,
   setLoopB,
 } from "@/lib/loopEdit";
@@ -26,10 +24,6 @@ export function ShortcutsProvider() {
       } else if (k === "l" || k === "L") useUi.getState().toggleLoop();
       else if (k === "a" || k === "A") setLoopA(player.getT());
       else if (k === "b" || k === "B") setLoopB(player.getT());
-      else if (k === "q" || k === "Q") nudgeA(-0.01);
-      else if (k === "w" || k === "W") nudgeA(0.01);
-      else if (k === "o" || k === "O") nudgeB(-0.01);
-      else if (k === "p" || k === "P") nudgeB(0.01);
       else if (k === "ArrowLeft") {
         e.preventDefault();
         player.seekBy(-0.25);
@@ -51,6 +45,8 @@ export function ShortcutsProvider() {
         e.preventDefault();
         cycleLoop(1);
       } else if (k === "n" || k === "N") addLoopAtPlayhead();
+      else if (k === "r" || k === "R") player.applyRate(1);
+      else if (k === "s" || k === "S") useUi.getState().toggleShortcuts();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);

@@ -7,14 +7,13 @@ const SHORTCUTS: Array<{ key: string; label: string }> = [
   { key: "L", label: "Toggle loop" },
   { key: "A", label: "Set loop start at playhead" },
   { key: "B", label: "Set loop end at playhead" },
-  { key: "Q / W", label: "Trim start −10 / +10 ms" },
-  { key: "O / P", label: "Trim end −10 / +10 ms" },
-  { key: "← / →", label: "Seek −5 / +5 s" },
+  { key: "← / →", label: "Seek −0.25 / +0.25 s" },
   { key: "↑ / ↓", label: "Speed +5% / −5%" },
   { key: "< / >", label: "Previous / next song" },
   { key: "[ / ]", label: "Previous / next loop" },
   { key: "N", label: "Add loop at playhead" },
-  { key: "1×", label: "Reset speed" },
+  { key: "R", label: "Reset speed" },
+  { key: "S", label: "Show / hide shortcuts" },
 ];
 
 export function ShortcutsModal() {

@@ -166,8 +166,19 @@ async function flush(): Promise<void> {
  * server-owned mediaSize field is the source of truth across devices.
  */
 export async function refreshStorageUsed(): Promise<void> {
-  if (!useUi.getState().account || !pb.authStore.isValid) return;
+  const account = useUi.getState().account;
+  if (!account || !pb.authStore.isValid) return;
   try {
+    // premium can be toggled from the PB dashboard at any time — re-read it
+    const auth = await pb.collection("users").authRefresh();
+    const premium = !!auth.record.premium;
+    if (premium !== account.premium) {
+      useUi.getState().setAccount({ ...account, premium });
+      if (premium) {
+        quotaBlocked.clear(); // bigger quota — retry refused uploads
+        scheduleFlush();
+      }
+    }
     const records = await pb.collection(COLLECTION).getFullList({ fields: "mediaSize" });
     const used = records.reduce((sum, r) => sum + ((r.mediaSize as number) || 0), 0);
     useUi.getState().setStorageUsed(used);
@@ -219,7 +230,7 @@ async function handleAuthed(): Promise<void> {
   const record = pb.authStore.record;
   if (!record) return;
   const ui = useUi.getState();
-  ui.setAccount({ id: record.id, email: record.email as string });
+  ui.setAccount({ id: record.id, email: record.email as string, premium: !!record.premium });
   const saved = await fetchAccountTracks();
   const guest = useLibrary.getState().tracks;
   if (guest.length > 0) {
@@ -430,7 +441,9 @@ export async function bootAuth(): Promise<boolean> {
     // server unreachable — keep the cached session and try to work offline
   }
   const record = pb.authStore.record;
-  useUi.getState().setAccount({ id: record.id, email: record.email as string });
+  useUi
+    .getState()
+    .setAccount({ id: record.id, email: record.email as string, premium: !!record.premium });
   try {
     const saved = await fetchAccountTracks();
     applyLibrary(saved);

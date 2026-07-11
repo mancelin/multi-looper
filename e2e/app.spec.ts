@@ -416,3 +416,26 @@ test("keyboard shortcut N adds a second loop", async ({ page }) => {
   await page.locator("body").press("n");
   await expect(page.getByTitle("Rename loop")).toHaveCount(2);
 });
+
+test("keyboard shortcut S toggles the shortcuts modal", async ({ page }) => {
+  await page.goto("/");
+  await uploadWav(page, 3);
+
+  const heading = page.getByRole("heading", { name: "Keyboard shortcuts" });
+  await expect(heading).not.toBeVisible();
+  await page.locator("body").press("s");
+  await expect(heading).toBeVisible();
+  await page.locator("body").press("s");
+  await expect(heading).not.toBeVisible();
+});
+
+test("keyboard shortcut R resets speed to 1.00", async ({ page }) => {
+  await page.goto("/");
+  await uploadWav(page, 3);
+
+  const rate = page.getByTitle("Type a speed from 0.25 to 1.50");
+  await page.locator("body").press("ArrowDown");
+  await expect(rate).toHaveValue("0.95");
+  await page.locator("body").press("r");
+  await expect(rate).toHaveValue("1.00");
+});

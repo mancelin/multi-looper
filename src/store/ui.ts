@@ -5,6 +5,8 @@ import { create } from "zustand";
 export interface Account {
   id: string;
   email: string;
+  /** bigger media quota; set from the PocketBase dashboard */
+  premium: boolean;
 }
 
 export type AuthMode = "signup" | "signin";
