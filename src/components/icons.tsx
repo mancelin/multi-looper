@@ -104,6 +104,17 @@ export function CloseIcon({ size, strokeWidth = 1.5, ...rest }: P & { strokeWidt
   );
 }
 
+export function ShareIcon({ size, ...rest }: P) {
+  return (
+    <svg viewBox="0 0 16 16" {...svg(size, 14, rest)}>
+      <circle cx="12" cy="3.5" r="2" stroke="currentColor" strokeWidth="1.4" />
+      <circle cx="4" cy="8" r="2" stroke="currentColor" strokeWidth="1.4" />
+      <circle cx="12" cy="12.5" r="2" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M5.8 7 10.2 4.5M5.8 9l4.4 2.5" stroke="currentColor" strokeWidth="1.4" />
+    </svg>
+  );
+}
+
 export function PlusIcon({ size, ...rest }: P) {
   return (
     <svg viewBox="0 0 16 16" {...svg(size, 14, rest)}>

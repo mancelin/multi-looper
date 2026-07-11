@@ -12,6 +12,7 @@ import { ShortcutsProvider } from "@/components/ShortcutsProvider";
 import { Sidebar } from "@/components/Sidebar";
 import { Toasts } from "@/components/Toasts";
 import { TopBar } from "@/components/TopBar";
+import { consumeShareLink } from "@/lib/share";
 import { loadGuestLibrary, restoreFileMedia, startGuestPersistence } from "@/store/guestPersist";
 import { useCurrentTrack, useLibrary } from "@/store/library";
 import { bootAuth } from "@/store/sync";
@@ -44,6 +45,7 @@ export function Home() {
           useLibrary.getState().setLibrary(guest.tracks, guest.currentId);
         }
       }
+      consumeShareLink();
       applyTrackFromUrl();
       startUrlSync();
     });

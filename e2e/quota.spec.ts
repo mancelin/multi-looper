@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { pbAvailable, setPremium, userMediaSize, verifyUser } from "./pb";
+import { e2eEmail, pbAvailable, setPremium, userMediaSize, verifyUser } from "./pb";
 import { makeWav } from "./wav";
 
 /** Signs up a fresh verified account and signs it in. */
@@ -23,7 +23,7 @@ test("uploads stop syncing once the 20 MB account quota is hit", async ({ page }
   test.setTimeout(120_000);
 
   // fresh verified account with an empty library
-  const email = `quota${Date.now()}@example.com`;
+  const email = e2eEmail("quota");
   await signUpAndIn(page, email);
 
   // a small file fits the quota and syncs
@@ -59,7 +59,7 @@ test("premium accounts get a 1 GB quota", async ({ page }) => {
   test.skip(!(await pbAvailable()), "PocketBase not running (just pb-up)");
   test.setTimeout(180_000);
 
-  const email = `premium${Date.now()}@example.com`;
+  const email = e2eEmail("premium");
   await signUpAndIn(page, email);
   // admin flips the flag in the PB dashboard — here straight in SQLite
   setPremium(email);

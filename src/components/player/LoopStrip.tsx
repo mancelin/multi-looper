@@ -1,14 +1,28 @@
 "use client";
 
-import { CloseIcon, PlusIcon } from "@/components/icons";
+import { CloseIcon, PlusIcon, ShareIcon } from "@/components/icons";
 import { addLoopAtPlayhead, selectLoopAndSeek } from "@/lib/loopEdit";
+import { buildShareUrl } from "@/lib/share";
 import { fmtS } from "@/lib/time";
-import type { Track } from "@/lib/types";
+import { activeLoop, type Track } from "@/lib/types";
 import { useLibrary } from "@/store/library";
+import { useUi } from "@/store/ui";
 
 export function LoopStrip({ track }: { track: Track }) {
   const removeLoop = useLibrary((s) => s.removeLoop);
   const renameLoop = useLibrary((s) => s.renameLoop);
+  const pushToast = useUi((s) => s.pushToast);
+
+  const shareActiveLoop = async () => {
+    const url = buildShareUrl(window.location.origin, track, activeLoop(track));
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      pushToast("Share link copied");
+    } catch {
+      pushToast("Copying the share link failed");
+    }
+  };
 
   return (
     <div className="flex items-center gap-3 px-4 pt-[15px] sm:px-[26px]">
@@ -72,6 +86,16 @@ export function LoopStrip({ track }: { track: Track }) {
           <PlusIcon />
           <span className="hidden min-[480px]:inline">Add loop</span>
         </button>
+        {track.kind === "youtube" && (
+          <button
+            onClick={shareActiveLoop}
+            title="Copy a share link for the active loop"
+            className="flex h-10 flex-none cursor-pointer items-center gap-[6px] whitespace-nowrap rounded-[10px] border border-white/9 bg-white/5 px-[13px] text-[12.5px] font-semibold text-ink-3 hover:border-accent hover:text-accent"
+          >
+            <ShareIcon />
+            <span className="hidden min-[480px]:inline">Share</span>
+          </button>
+        )}
       </div>
     </div>
   );

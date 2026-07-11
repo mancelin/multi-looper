@@ -3,6 +3,14 @@ import path from "node:path";
 
 export const PB_URL = "http://127.0.0.1:8090";
 
+/**
+ * Email for a throwaway e2e account. The `e2e-` prefix is what
+ * `teardown.ts` matches on when it deletes the accounts after the run.
+ */
+export function e2eEmail(prefix: string): string {
+  return `e2e-${prefix}-${Date.now()}@example.com`;
+}
+
 /** True when the optional PocketBase backend is up (`just pb-up`). */
 export async function pbAvailable(): Promise<boolean> {
   try {

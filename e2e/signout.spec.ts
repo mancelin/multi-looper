@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { pbAvailable, verifyUser } from "./pb";
+import { e2eEmail, pbAvailable, verifyUser } from "./pb";
 import { makeWav } from "./wav";
 
 /** Number of media blobs in the guest IndexedDB store. */
@@ -47,7 +47,7 @@ test("sign out wipes localStorage and IndexedDB and returns to the empty state",
   await expect.poll(() => mediaCount(page)).toBeGreaterThan(0);
 
   // sign up a fresh account (openAuth starts in signup mode)
-  const email = `wipe${Date.now()}@example.com`;
+  const email = e2eEmail("wipe");
   await page.getByTitle("Sign in").click();
   await expect(page.getByText("Create your account")).toBeVisible();
   await page.getByPlaceholder("you@example.com").fill(email);

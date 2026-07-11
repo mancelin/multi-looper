@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { pbAvailable } from "./pb";
+import { e2eEmail, pbAvailable } from "./pb";
 
 test("auth modal offers Google sign-in", async ({ page }) => {
   await page.goto("/");
@@ -11,7 +11,7 @@ test("auth modal offers Google sign-in", async ({ page }) => {
 test("sign-up requires the verification email before signing in", async ({ page }) => {
   test.skip(!(await pbAvailable()), "PocketBase not running (just pb-up)");
 
-  const email = `verify${Date.now()}@example.com`;
+  const email = e2eEmail("verify");
   await page.goto("/");
   await page.getByTitle("Sign in").click();
   await expect(page.getByText("Create your account")).toBeVisible();
