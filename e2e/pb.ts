@@ -53,6 +53,30 @@ export function verifyUser(email: string): void {
 }
 
 /**
+ * Mints a verification token exactly like PB does (HS256 JWT over
+ * {type, id, collectionId, email} signed with the user's tokenKey + the
+ * collection's verification secret), reading both straight from SQLite.
+ * Dev has no mail server, so this stands in for the token in the emailed link.
+ */
+export function verificationToken(email: string): string {
+  const db = path.resolve(__dirname, "../pb/pb_data/data.db");
+  const script = [
+    "import base64, hashlib, hmac, json, sqlite3, sys, time",
+    "con = sqlite3.connect(sys.argv[1])",
+    'uid, key = con.execute("SELECT id, tokenKey FROM users WHERE email = ?", (sys.argv[2],)).fetchone()',
+    "cid, opts = con.execute(\"SELECT id, options FROM _collections WHERE name = 'users'\").fetchone()",
+    "secret = json.loads(opts)['verificationToken']['secret']",
+    "b64 = lambda b: base64.urlsafe_b64encode(b).rstrip(b'=')",
+    "enc = lambda o: b64(json.dumps(o, separators=(',', ':')).encode())",
+    "head = enc({'alg': 'HS256', 'typ': 'JWT'})",
+    "claims = enc({'collectionId': cid, 'email': sys.argv[2], 'exp': int(time.time()) + 3600, 'id': uid, 'type': 'verification'})",
+    "sig = b64(hmac.new((key + secret).encode(), head + b'.' + claims, hashlib.sha256).digest())",
+    "print((head + b'.' + claims + b'.' + sig).decode())",
+  ].join("\n");
+  return execFileSync("python3", ["-c", script, db, email]).toString().trim();
+}
+
+/**
  * Flags a user as premium (1 GB quota) straight in SQLite — stands in for an
  * admin flipping the field in the PB dashboard.
  */

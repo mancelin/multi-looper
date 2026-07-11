@@ -294,6 +294,28 @@ export async function submitAuth(email: string, password: string): Promise<void>
   }
 }
 
+/**
+ * Consume a `?verify=<token>` link at boot. The PB verification email points
+ * here instead of PB's own confirm page (see DEPLOY.md) so the flow ends in
+ * the app: confirm the token, then open sign-in. The token is stripped from
+ * the URL either way so reloads don't re-submit it.
+ */
+export async function consumeVerificationLink(): Promise<void> {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get("verify");
+  if (!token) return;
+  params.delete("verify");
+  const query = params.toString();
+  window.history.replaceState(null, "", window.location.pathname + (query ? `?${query}` : ""));
+  try {
+    await pb.collection("users").confirmVerification(token);
+    useUi.getState().openAuth("signin");
+    useUi.getState().pushToast("Email verified — sign in to continue.");
+  } catch {
+    useUi.getState().pushToast("Verification link is invalid or expired.");
+  }
+}
+
 export async function signInWithGoogle(): Promise<void> {
   const ui = useUi.getState();
   ui.setAuthError("");

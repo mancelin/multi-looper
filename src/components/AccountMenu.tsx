@@ -31,7 +31,7 @@ export function AccountArea() {
   if (!account) {
     return (
       <button
-        onClick={openAuth}
+        onClick={() => openAuth()}
         title="Sign in"
         className="flex h-[38px] flex-none cursor-pointer items-center gap-[7px] rounded-[9px] bg-accent px-[11px] text-[13px] font-semibold text-on-accent min-[420px]:px-[15px]"
       >

@@ -55,7 +55,7 @@ export interface UiState {
 
   setAccount: (a: Account | null) => void;
   setAccountMenuOpen: (v: boolean) => void;
-  openAuth: () => void;
+  openAuth: (mode?: AuthMode) => void;
   closeAuth: () => void;
   toggleAuthMode: () => void;
   setAuthError: (msg: string) => void;
@@ -109,7 +109,7 @@ export const useUi = create<UiState>()((set) => ({
 
   setAccount: (a) => set(a ? { account: a } : { account: null, storageUsed: null }),
   setAccountMenuOpen: (v) => set({ accountMenuOpen: v }),
-  openAuth: () => set({ authOpen: true, authMode: "signup", authError: "" }),
+  openAuth: (mode = "signup") => set({ authOpen: true, authMode: mode, authError: "" }),
   closeAuth: () => set({ authOpen: false, authError: "" }),
   toggleAuthMode: () =>
     set((s) => ({ authMode: s.authMode === "signup" ? "signin" : "signup", authError: "" })),
