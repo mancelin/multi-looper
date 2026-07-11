@@ -73,3 +73,7 @@ pb-logs:
 # Create/refresh the .env from the example
 env:
     cp -n .env.example .env || true
+
+deploy:
+    NEXT_PUBLIC_POCKETBASE_URL=https://pb.multi-looper.com bun run build
+    rsync -av --delete out/ $DEPLOY_HOST:/var/www/multi-looper/

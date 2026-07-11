@@ -121,6 +121,7 @@ export function AuthModal() {
           {mode === "signup" ? "Already have an account?" : "New to multi-looper?"}
           <button
             onClick={toggleMode}
+            data-testid="auth-mode-toggle"
             className="cursor-pointer border-none bg-transparent px-[2px] text-[12.5px] font-semibold text-accent"
           >
             {mode === "signup" ? "Sign in" : "Create one"}

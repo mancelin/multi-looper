@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
 import path from "node:path";
+import { expect, type Page } from "@playwright/test";
 
 export const PB_URL = "http://127.0.0.1:8090";
 
@@ -9,6 +10,20 @@ export const PB_URL = "http://127.0.0.1:8090";
  */
 export function e2eEmail(prefix: string): string {
   return `e2e-${prefix}-${Date.now()}@example.com`;
+}
+
+/**
+ * Opens the auth modal (it starts in signup mode), switches to sign-in and
+ * submits the credentials. Signup closes the modal, so this is how every
+ * test signs in after creating an account.
+ */
+export async function signIn(page: Page, email: string, password: string): Promise<void> {
+  await page.getByTitle("Sign in").click();
+  await page.getByTestId("auth-mode-toggle").click();
+  await expect(page.getByText("Welcome back")).toBeVisible();
+  await page.getByPlaceholder("you@example.com").fill(email);
+  await page.getByPlaceholder("Password").fill(password);
+  await page.getByPlaceholder("Password").press("Enter");
 }
 
 /** True when the optional PocketBase backend is up (`just pb-up`). */

@@ -279,8 +279,8 @@ export async function submitAuth(email: string, password: string): Promise<void>
       // fire-and-forget: PB queues the email and always answers 204
       void pb.collection("users").requestVerification(email).catch(() => {});
       // authRule ("verified = true") rejects sign-in until the email is confirmed
+      useUi.getState().closeAuth();
       useUi.getState().pushToast(`Verification email sent to ${email}. Verify, then sign in.`);
-      useUi.getState().toggleAuthMode();
       return;
     }
     await pb.collection("users").authWithPassword(email, password);

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { e2eEmail, pbAvailable, verifyUser } from "./pb";
+import { e2eEmail, pbAvailable, signIn, verifyUser } from "./pb";
 import { makeWav } from "./wav";
 
 /** Number of media blobs in the guest IndexedDB store. */
@@ -59,7 +59,7 @@ test("sign out wipes localStorage and IndexedDB and returns to the empty state",
     page.getByText(`Verification email sent to ${email}. Verify, then sign in.`),
   ).toBeVisible();
   verifyUser(email);
-  await page.getByPlaceholder("Password").press("Enter");
+  await signIn(page, email, "password123");
 
   // import the guest track so the account library is non-empty
   await page.getByRole("button", { name: /Import/ }).click();

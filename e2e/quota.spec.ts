@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { e2eEmail, pbAvailable, setPremium, userMediaSize, verifyUser } from "./pb";
+import { e2eEmail, pbAvailable, setPremium, signIn, userMediaSize, verifyUser } from "./pb";
 import { makeWav } from "./wav";
 
 /** Signs up a fresh verified account and signs it in. */
@@ -14,7 +14,7 @@ async function signUpAndIn(page: Page, email: string): Promise<void> {
     page.getByText(`Verification email sent to ${email}. Verify, then sign in.`),
   ).toBeVisible();
   verifyUser(email);
-  await page.getByPlaceholder("Password").press("Enter");
+  await signIn(page, email, "password123");
   await expect(page.getByText("SYNCED")).toBeVisible();
 }
 

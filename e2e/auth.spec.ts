@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { e2eEmail, pbAvailable } from "./pb";
+import { e2eEmail, pbAvailable, signIn } from "./pb";
 
 test("auth modal offers Google sign-in", async ({ page }) => {
   await page.goto("/");
@@ -19,13 +19,13 @@ test("sign-up requires the verification email before signing in", async ({ page 
   await page.getByPlaceholder("Password").fill("password123");
   await page.getByRole("button", { name: "Sign up" }).click();
 
-  // account created but not signed in — modal flips to sign-in mode
+  // account created but not signed in — modal closes so the toast is visible
   await expect(
     page.getByText(`Verification email sent to ${email}. Verify, then sign in.`),
   ).toBeVisible();
-  await expect(page.getByText("Welcome back")).toBeVisible();
+  await expect(page.getByText("Create your account")).not.toBeVisible();
 
   // signing in before clicking the verification link is rejected
-  await page.getByPlaceholder("Password").press("Enter");
+  await signIn(page, email, "password123");
   await expect(page.getByText("Please verify your email before signing in.")).toBeVisible();
 });
