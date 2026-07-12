@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CloseIcon, ResizeIcon } from "@/components/icons";
+import { CloseIcon, ResizeIcon, UploadIcon } from "@/components/icons";
+import { imageFileToDataUrl } from "@/lib/image";
 import { clearImageHeights, loadImageHeight, saveImageHeight } from "@/lib/imageSize";
 import type { Track } from "@/lib/types";
 import { useLibrary } from "@/store/library";
@@ -9,7 +10,9 @@ import { useLibrary } from "@/store/library";
 const MIN_HEIGHT = 72;
 
 /**
- * Cover image for file tracks, shown above the waveform. Fills the leftover
+ * Cover image for file tracks, shown above the waveform. Without an image it
+ * shows a hint strip instead (click to upload; drop/paste are handled by
+ * PlayerMain). Fills the leftover
  * column height by default; dragging the corner grip sets a fixed height
  * (width follows to keep the aspect ratio), remembered per track until the
  * window is resized — a window resize resets every track back to auto-fit.
@@ -38,7 +41,36 @@ export function ImagePanel({ track }: { track: Track }) {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  if (track.kind !== "file" || !track.image) return null;
+  if (track.kind !== "file") return null;
+
+  if (!track.image) {
+    const onPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      e.target.value = "";
+      if (!file) return;
+      try {
+        const image = await imageFileToDataUrl(file);
+        patchTrack(track.id, { image });
+      } catch {
+        // undecodable image — ignore
+      }
+    };
+    return (
+      <div className="px-4 pb-1 pt-[6px] sm:px-[26px]">
+        <label
+          data-testid="image-drop-hint"
+          title="Add cover image"
+          className="flex cursor-pointer items-center justify-center gap-2 rounded-[10px] border border-dashed border-white/10 px-3 py-[7px] text-[11px] text-muted-2 transition-colors hover:border-white/25 hover:text-ink-2"
+        >
+          <UploadIcon size={13} />
+          <span>
+            Add cover image — click to upload, drag &amp; drop, or paste
+          </span>
+          <input type="file" accept="image/*" className="hidden" onChange={onPick} />
+        </label>
+      </div>
+    );
+  }
 
   const onResizeGrip = (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();

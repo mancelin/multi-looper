@@ -360,6 +360,32 @@ test("pasting an image sets the cover on a file track", async ({ page }) => {
   await expect(page.getByTestId("track-image")).toBeVisible();
 });
 
+test("cover hint shows on file tracks without an image and uploads via click", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await uploadWav(page, 3);
+  await expect(page.getByTitle("Rename loop")).toHaveCount(1); // wait for decode
+
+  // hint strip sits above the waveform while the track has no image
+  const hint = page.getByTestId("image-drop-hint");
+  await expect(hint).toBeVisible();
+  await expect(hint).toContainText("drag & drop, or paste");
+
+  // clicking the hint opens a file picker; picking an image sets the cover
+  await hint.locator('input[type="file"]').setInputFiles({
+    name: "cover.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(TINY_PNG, "base64"),
+  });
+  await expect(page.getByTestId("track-image")).toBeVisible();
+  await expect(hint).toHaveCount(0);
+
+  // removing the image brings the hint back
+  await page.getByTitle("Remove image").click();
+  await expect(page.getByTestId("image-drop-hint")).toBeVisible();
+});
+
 test("cover image resizes via the grip, persists, and resets on window resize", async ({
   page,
 }) => {
