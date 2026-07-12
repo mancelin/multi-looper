@@ -15,8 +15,8 @@ export function EmptyState() {
   };
 
   return (
-    <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto bg-[radial-gradient(120%_80%_at_50%_-10%,#12161d_0%,#0c0e12_60%)] px-6 py-10">
-      <div className="flex w-full max-w-[720px] flex-col items-center text-center">
+    <div className="flex min-h-0 flex-1 overflow-y-auto bg-[radial-gradient(120%_80%_at_50%_-10%,#12161d_0%,#0c0e12_60%)] px-6 py-10">
+      <div className="m-auto flex w-full max-w-[720px] flex-col items-center text-center">
         <div className="relative flex h-24 w-24 items-end justify-center gap-[7px] rounded-[24px] border border-[rgba(94,234,212,.22)] bg-[linear-gradient(135deg,#12303080,#0e1116)] py-[26px] shadow-[0_12px_44px_rgba(45,212,191,.16)]">
           <span className="h-[22px] w-[7px] rounded-[4px] bg-accent [animation:eq_1.1s_ease-in-out_-0.2s_infinite]" />
           <span className="h-10 w-[7px] rounded-[4px] bg-accent-2 [animation:eq_1.1s_ease-in-out_-0.5s_infinite]" />
