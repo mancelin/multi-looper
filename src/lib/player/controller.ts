@@ -21,6 +21,8 @@ interface YTPlayer {
   getPlayerState(): number;
   /** Undocumented but long-stable: metadata of the loaded/cued video. */
   getVideoData?(): { title?: string } | undefined;
+  /** Undocumented but long-stable: unloads a player module ("captions"). */
+  unloadModule?(module: string): void;
   destroy(): void;
 }
 
@@ -431,6 +433,7 @@ class PlaybackController {
           events: {
             onReady: () => {
               this.ytReady = true;
+              this.hideYtCaptions();
               this.pushVolume();
               this.patchYtDuration();
               this.patchYtTitle();
@@ -445,6 +448,7 @@ class PlaybackController {
             },
             onStateChange: (e) => {
               this.ytReady = true;
+              this.hideYtCaptions();
               // playing(1)/buffering(3) count as live so the poster cover
               // doesn't flash on loop seeks; every other state (cued, paused,
               // ended, unstarted) re-covers YouTube's overlay UI
@@ -472,6 +476,7 @@ class PlaybackController {
           if (this.ytPendingPlay) this.yt.loadVideoById(c.videoId!, activeLoop(c).a);
           else this.yt.cueVideoById(c.videoId!, activeLoop(c).a);
         } catch {}
+        this.hideYtCaptions();
         if (this.ytPendingPlay) {
           this.ytPendingPlay = false;
           this.play();
@@ -484,6 +489,14 @@ class PlaybackController {
       // set; onReady consumes it. Calling play() here would recurse forever.
     };
     boot();
+  }
+
+  /** Keeps YouTube captions off — the module reloads with every video, so
+   *  this must run again after each load/cue, not just at player creation. */
+  private hideYtCaptions(): void {
+    try {
+      this.yt?.unloadModule?.("captions");
+    } catch {}
   }
 
   /** Replaces the ingest placeholder title with the real video title. */
