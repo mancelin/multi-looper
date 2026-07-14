@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { ClockIcon, LoopIcon, PauseIcon, PlayIcon } from "@/components/icons";
+import { ClockIcon, LoopIcon, PauseIcon, PlayIcon, VolumeIcon } from "@/components/icons";
 import { player } from "@/lib/player/controller";
 import { fmt, fmtS, parseTime } from "@/lib/time";
 import type { Track } from "@/lib/types";
@@ -10,6 +10,7 @@ import { useUi } from "@/store/ui";
 export function Transport({ track }: { track: Track }) {
   const playing = useUi((s) => s.playing);
   const rate = useUi((s) => s.rate);
+  const volume = useUi((s) => s.volume);
   const loopEnabled = useUi((s) => s.loopEnabled);
   const toggleLoop = useUi((s) => s.toggleLoop);
   const timeRef = useRef<HTMLSpanElement>(null);
@@ -115,6 +116,30 @@ export function Transport({ track }: { track: Track }) {
         >
           1×
         </button>
+      </div>
+
+      <div className="flex min-w-0 max-w-[240px] flex-1 basis-[160px] items-center gap-[10px] rounded-[11px] border border-white/8 bg-panel-2 px-[14px] py-2">
+        <button
+          onClick={() => player.toggleMute()}
+          aria-label={volume === 0 ? "Unmute" : "Mute"}
+          title={volume === 0 ? "Unmute" : "Mute"}
+          className="flex flex-none cursor-pointer items-center border-none bg-transparent p-0 text-muted hover:text-ink"
+        >
+          <VolumeIcon muted={volume === 0} />
+        </button>
+        <input
+          type="range"
+          min={0}
+          max={1}
+          step={0.01}
+          value={volume}
+          onChange={(e) => player.applyVolume(parseFloat(e.target.value))}
+          aria-label="Volume"
+          className="h-1 min-w-0 flex-1 accent-accent"
+        />
+        <span className="tno w-8 flex-none text-right text-[11px] font-semibold text-muted">
+          {Math.round(volume * 100)}%
+        </span>
       </div>
     </div>
   );

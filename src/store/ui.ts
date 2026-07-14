@@ -25,6 +25,8 @@ export interface UiState {
    *  the poster cover only lifts when YouTube truly renders video frames */
   ytSurfaceLive: boolean;
   rate: number;
+  /** 0–1 media volume, applied to both backends by the player controller */
+  volume: number;
   loopEnabled: boolean;
   narrow: boolean;
   sidebarOpen: boolean;
@@ -51,6 +53,7 @@ export interface UiState {
   setPlaying: (v: boolean) => void;
   setYtSurfaceLive: (v: boolean) => void;
   setRate: (v: number) => void;
+  setVolume: (v: number) => void;
   toggleLoop: () => void;
   setNarrow: (v: boolean) => void;
   toggleSidebar: () => void;
@@ -82,6 +85,7 @@ export const useUi = create<UiState>()((set) => ({
   playing: false,
   ytSurfaceLive: false,
   rate: 1,
+  volume: 1,
   loopEnabled: true,
   narrow: false,
   sidebarOpen: true,
@@ -106,6 +110,7 @@ export const useUi = create<UiState>()((set) => ({
   setPlaying: (v) => set({ playing: v }),
   setYtSurfaceLive: (v) => set((s) => (s.ytSurfaceLive === v ? s : { ytSurfaceLive: v })),
   setRate: (v) => set({ rate: v }),
+  setVolume: (v) => set({ volume: v }),
   toggleLoop: () => set((s) => ({ loopEnabled: !s.loopEnabled })),
   // entering narrow closes the drawer, leaving it restores the docked sidebar
   setNarrow: (v) => set((s) => (s.narrow === v ? s : { narrow: v, sidebarOpen: !v })),

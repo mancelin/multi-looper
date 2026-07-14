@@ -178,6 +178,27 @@ export function ClockIcon({ size, ...rest }: P) {
   );
 }
 
+export function VolumeIcon({ size, muted = false, ...rest }: P & { muted?: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" {...svg(size, 16, rest)}>
+      <path
+        d="M11 5.5 6.8 9H4a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h2.8l4.2 3.5V5.5Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+      {muted ? (
+        <path d="m15.5 9.5 5 5m0-5-5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      ) : (
+        <>
+          <path d="M14.5 9.5a3.5 3.5 0 0 1 0 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          <path d="M17 7a7 7 0 0 1 0 10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+        </>
+      )}
+    </svg>
+  );
+}
+
 export function UserIcon({ size, ...rest }: P) {
   return (
     <svg viewBox="0 0 24 24" {...svg(size, 15, rest)}>

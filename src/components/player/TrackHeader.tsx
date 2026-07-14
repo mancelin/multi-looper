@@ -29,6 +29,7 @@ const SRC_BADGES: Record<string, { label: string; color: string; bg: string; bor
 export function TrackHeader({ track }: { track: Track }) {
   const addTag = useLibrary((s) => s.addTag);
   const removeTag = useLibrary((s) => s.removeTag);
+  const patchTrack = useLibrary((s) => s.patchTrack);
   const [newTag, setNewTag] = useState("");
 
   const badge =
@@ -63,9 +64,19 @@ export function TrackHeader({ track }: { track: Track }) {
           >
             {badge.label}
           </span>
-          <h1 className="m-0 overflow-hidden text-ellipsis whitespace-nowrap text-[21px] font-semibold">
-            {track.title}
-          </h1>
+          <input
+            value={track.title}
+            onChange={(e) => patchTrack(track.id, { title: e.target.value })}
+            onBlur={() => {
+              if (!track.title.trim()) patchTrack(track.id, { title: "Untitled" });
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === "Escape") (e.target as HTMLInputElement).blur();
+            }}
+            title="Rename track"
+            aria-label="Track title"
+            className="m-0 min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap rounded-[6px] border border-transparent bg-transparent px-1 py-0 text-[21px] font-semibold text-ink focus:border-white/15 focus:bg-field-2 focus:outline-none"
+          />
         </div>
         <div className="text-[13px] text-muted">{track.artist}</div>
         <div className="mt-[9px] flex flex-wrap items-center gap-[6px]">

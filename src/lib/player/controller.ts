@@ -14,6 +14,8 @@ interface YTPlayer {
   getCurrentTime(): number;
   getDuration(): number;
   setPlaybackRate(rate: number): void;
+  setVolume(volume: number): void; // 0–100
+  unMute(): void;
   loadVideoById(videoId: string, startSeconds?: number): void;
   cueVideoById(videoId: string, startSeconds?: number): void;
   getPlayerState(): number;
@@ -253,6 +255,7 @@ class PlaybackController {
           this.yt.setPlaybackRate(nearestYtRate(rate));
           this.yt.playVideo();
         } catch {}
+        this.pushVolume();
       } else {
         this.ytPendingPlay = true;
         this.ensureYt(c);
@@ -260,6 +263,7 @@ class PlaybackController {
     } else if (c.kind === "file" && this.videoEl) {
       this.videoEl.playbackRate = rate;
       this.videoEl.preservesPitch = true;
+      this.pushVolume();
       void this.videoEl.play().catch(() => {});
     }
     this.startTick();
@@ -305,6 +309,33 @@ class PlaybackController {
 
   bumpRate(delta: number): void {
     this.applyRate(Math.round((useUi.getState().rate + delta) * 100) / 100);
+  }
+
+  /** volume before the last mute, restored by toggleMute */
+  private preMuteVolume = 1;
+
+  applyVolume(v: number): void {
+    if (!isFinite(v)) return;
+    v = Math.max(0, Math.min(1, v));
+    if (v > 0) this.preMuteVolume = v;
+    useUi.getState().setVolume(v);
+    this.pushVolume();
+  }
+
+  toggleMute(): void {
+    this.applyVolume(useUi.getState().volume > 0 ? 0 : this.preMuteVolume);
+  }
+
+  /** Applies the stored volume to whichever backend is live. */
+  private pushVolume(): void {
+    const v = useUi.getState().volume;
+    if (this.videoEl) this.videoEl.volume = v;
+    if (this.yt && this.ytReady) {
+      try {
+        this.yt.unMute(); // YouTube can start muted (e.g. autoplay policy)
+        this.yt.setVolume(Math.round(v * 100));
+      } catch {}
+    }
   }
 
   // ---------- track switching ----------
@@ -400,6 +431,7 @@ class PlaybackController {
           events: {
             onReady: () => {
               this.ytReady = true;
+              this.pushVolume();
               this.patchYtDuration();
               this.patchYtTitle();
               // the player was created cued at 0; re-issue the pending seek

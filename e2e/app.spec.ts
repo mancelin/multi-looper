@@ -101,6 +101,8 @@ async function fakeYoutubeApi(page: Page) {
         return this.state;
       }
       setPlaybackRate(): void {}
+      setVolume(): void {}
+      unMute(): void {}
       destroy(): void {}
     }
     (window as unknown as { YT?: unknown }).YT = { Player: FakePlayer, loaded: 1 };
@@ -227,6 +229,48 @@ test("uploading an audio file decodes duration and spans the loop across it", as
   await expect(page.getByTestId("loop-a")).toHaveValue("0:00.000");
   await expect(page.getByTestId("loop-b")).toHaveValue("0:03.000");
   await expect(page.getByTestId("loop-len")).toHaveText("0:03.000");
+});
+
+test("renaming a track via the header title persists across reload", async ({ page }) => {
+  await page.goto("/");
+  await uploadWav(page, 3);
+
+  const title = page.getByLabel("Track title");
+  await expect(title).toHaveValue("sample");
+  await title.fill("Sweet Home Chicago");
+  await title.press("Enter");
+  await expect(page.getByText("Sweet Home Chicago")).toBeVisible(); // sidebar entry
+
+  await page.reload();
+  await expect(page.getByLabel("Track title")).toHaveValue("Sweet Home Chicago");
+
+  // clearing the title falls back to "Untitled" on blur
+  await page.getByLabel("Track title").fill("");
+  await page.getByLabel("Track title").press("Enter");
+  await expect(page.getByLabel("Track title")).toHaveValue("Untitled");
+});
+
+test("volume slider changes media volume and mute button toggles it", async ({ page }) => {
+  await page.goto("/");
+  await uploadWav(page, 3);
+
+  const video = page.locator("video");
+  await page.getByLabel("Volume").fill("0.3");
+  await expect(page.getByText("30%")).toBeVisible();
+  await expect(video).toHaveJSProperty("volume", 0.3);
+
+  await page.getByRole("button", { name: "Mute" }).click();
+  await expect(video).toHaveJSProperty("volume", 0);
+  await expect(page.getByText("0%")).toBeVisible();
+
+  // unmute restores the pre-mute level
+  await page.getByRole("button", { name: "Unmute" }).click();
+  await expect(video).toHaveJSProperty("volume", 0.3);
+
+  // volume survives playback start
+  await page.getByRole("button", { name: "Play" }).click();
+  await expect(video).toHaveJSProperty("volume", 0.3);
+  await page.getByRole("button", { name: "Pause" }).click();
 });
 
 test("file track media survives reload and still plays", async ({ page }) => {
