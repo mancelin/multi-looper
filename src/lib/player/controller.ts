@@ -70,6 +70,11 @@ class PlaybackController {
   private ytReady = false;
   private ytPendingPlay = false;
   private ytTrackId: string | null = null;
+  /** track id whose duration was already patched from a playing state —
+   *  getDuration() jitters between metadata and DASH values, so re-patching
+   *  on every playing transition (each play press / loop wrap) makes the
+   *  A/B markers drift */
+  private ytDurationPatchedFor: string | null = null;
 
   /** virtual time fallback while no media is ready */
   private vt = 0;
@@ -455,7 +460,10 @@ class PlaybackController {
               useUi.getState().setYtSurfaceLive(e.data === 1 || e.data === 3);
               this.patchYtTitle();
               if (e.data === 1) {
-                this.patchYtDuration();
+                if (this.ytDurationPatchedFor !== this.ytTrackId) {
+                  this.ytDurationPatchedFor = this.ytTrackId;
+                  this.patchYtDuration();
+                }
                 // last-resort guard: the IFrame API autostarts in flows we
                 // can't fully suppress; if the transport says paused, stop it
                 if (!useUi.getState().playing && !this.ytPendingPlay) {
