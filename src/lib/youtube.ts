@@ -1,3 +1,6 @@
+/** Placeholder title until the IFrame player reports the real one. */
+export const YT_PLACEHOLDER_TITLE = "YouTube loop";
+
 export function extractVideoId(input: string): string | null {
   const u = input.trim();
   if (!u) return null;

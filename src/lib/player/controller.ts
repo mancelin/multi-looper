@@ -1,6 +1,7 @@
 "use client";
 
 import { activeLoop, type Track } from "@/lib/types";
+import { YT_PLACEHOLDER_TITLE } from "@/lib/youtube";
 import { currentTrack, useLibrary } from "@/store/library";
 import { useUi } from "@/store/ui";
 
@@ -16,6 +17,8 @@ interface YTPlayer {
   loadVideoById(videoId: string): void;
   cueVideoById(videoId: string, startSeconds?: number): void;
   getPlayerState(): number;
+  /** Undocumented but long-stable: metadata of the loaded/cued video. */
+  getVideoData?(): { title?: string } | undefined;
   destroy(): void;
 }
 
@@ -89,6 +92,7 @@ class PlaybackController {
       this.yt = null;
       this.ytReady = false;
       this.ytTrackId = null;
+      useUi.getState().setYtSurfaceLive(false);
     }
   }
 
@@ -395,6 +399,7 @@ class PlaybackController {
             onReady: () => {
               this.ytReady = true;
               this.patchYtDuration();
+              this.patchYtTitle();
               if (this.ytPendingPlay) {
                 this.ytPendingPlay = false;
                 this.play();
@@ -402,6 +407,11 @@ class PlaybackController {
             },
             onStateChange: (e) => {
               this.ytReady = true;
+              // playing(1)/buffering(3) count as live so the poster cover
+              // doesn't flash on loop seeks; every other state (cued, paused,
+              // ended, unstarted) re-covers YouTube's overlay UI
+              useUi.getState().setYtSurfaceLive(e.data === 1 || e.data === 3);
+              this.patchYtTitle();
               if (e.data === 1) {
                 this.patchYtDuration();
                 // last-resort guard: the IFrame API autostarts in flows we
@@ -417,6 +427,7 @@ class PlaybackController {
         });
       } else if (this.ytTrackId !== c.id) {
         this.ytTrackId = c.id;
+        useUi.getState().setYtSurfaceLive(false); // new video: re-cover until it plays
         try {
           // loadVideoById always autostarts; when we're not meant to play,
           // cue instead — it loads the video without starting playback.
@@ -435,6 +446,17 @@ class PlaybackController {
       // set; onReady consumes it. Calling play() here would recurse forever.
     };
     boot();
+  }
+
+  /** Replaces the ingest placeholder title with the real video title. */
+  private patchYtTitle(): void {
+    const c = this.track();
+    if (!c || c.kind !== "youtube" || c.id !== this.ytTrackId || !this.yt) return;
+    if (c.title !== YT_PLACEHOLDER_TITLE) return; // user already renamed it
+    try {
+      const title = this.yt.getVideoData?.()?.title?.trim();
+      if (title) useLibrary.getState().patchTrack(c.id, { title });
+    } catch {}
   }
 
   private patchYtDuration(): void {

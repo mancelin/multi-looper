@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
-import { ResizeIcon } from "@/components/icons";
+import { PlayIcon, ResizeIcon } from "@/components/icons";
 import { player } from "@/lib/player/controller";
 import type { Track } from "@/lib/types";
 import { useUi } from "@/store/ui";
@@ -13,6 +13,42 @@ let manualVideo = false;
 // identity every render, so React detaches (null) and re-attaches the ref on
 // each re-render — and setYtHost(null) destroys the live YouTube player.
 const ytHostRef = (el: HTMLDivElement | null) => player.setYtHost(el);
+
+// YouTube flashes its chrome (title bar, share/watch-later, "More videos",
+// logo) inside the iframe on every seek — including our loop-restart seeks —
+// and none of it can be styled or disabled from outside. The host is made
+// taller than the visible box: a 16:9 video letterboxes inside the taller
+// iframe, so the chrome anchored to the iframe's top/bottom edges renders in
+// the letterbox strips, which the box's overflow-hidden crops away. The video
+// itself stays uncropped.
+//
+// The chrome piece that survives cropping — the center play/pause control —
+// can't be cropped or covered without hiding the video under it. Instead the
+// iframe renders oversized and is CSS-scaled back down: the video ends up at
+// its normal size while YouTube's fixed-pixel chrome shrinks by the same
+// factor, leaving the center control a faint speck. The scale is pushed as
+// high as the box width allows while keeping the iframe's internal width
+// under the GPU's texture limit (probed via WebGL; conservative fallback),
+// capped at 16x — beyond that the speck is already sub-4px.
+let ytWidthBudget = 7680;
+if (typeof window !== "undefined") {
+  try {
+    const gl = document.createElement("canvas").getContext("webgl");
+    const max = gl?.getParameter(gl.MAX_TEXTURE_SIZE);
+    if (typeof max === "number" && max >= 8192) {
+      ytWidthBudget = Math.min(15360, max - 1024);
+    }
+  } catch {}
+}
+function ytScaleFor(boxWidth: number): number {
+  return Math.max(3, Math.min(16, Math.floor(ytWidthBudget / (boxWidth || 620))));
+}
+
+// Visual px cut off top/bottom: YouTube's title block is ~80px in iframe
+// coordinates at any player size, so scaled down it needs ~96/scale.
+function ytCropFor(scale: number): number {
+  return Math.ceil(96 / scale);
+}
 const videoElRef = (el: HTMLVideoElement | null) => player.setVideoEl(el);
 
 export function VideoPanel({
@@ -24,6 +60,12 @@ export function VideoPanel({
 }) {
   const videoWidth = useUi((s) => s.videoWidth);
   const setVideoWidth = useUi((s) => s.setVideoWidth);
+  // real IFrame player state, not transport intent: the cover must stay up
+  // while the video is cued/loading/paused/ended even if the transport says
+  // "playing" — YouTube shows its overlay UI in all of those states
+  const ytLive = useUi((s) => s.ytSurfaceLive);
+  const ytScale = ytScaleFor(videoWidth);
+  const ytCrop = ytCropFor(ytScale);
   const boxRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -113,8 +155,14 @@ export function VideoPanel({
       >
         <div
           ref={ytHostRef}
-          className="absolute inset-0"
-          style={{ display: track.kind === "youtube" ? "block" : "none" }}
+          className="absolute left-0 origin-top-left"
+          style={{
+            top: -ytCrop,
+            width: `${ytScale * 100}%`,
+            height: `calc(${ytScale * 100}% + ${ytScale * 2 * ytCrop}px)`,
+            transform: `scale(${1 / ytScale})`,
+            display: track.kind === "youtube" ? "block" : "none",
+          }}
         />
         <video
           ref={videoElRef}
@@ -123,6 +171,40 @@ export function VideoPanel({
           className="absolute inset-0 h-full w-full bg-black object-contain"
           style={{ display: track.kind === "file" ? "block" : "none" }}
         />
+        {/* What's left of YouTube's center play/pause control after the
+            scale-down is a ~4px speck. This disc blurs the pixels beneath it,
+            smearing the speck into the surrounding video — optically gone,
+            while the video merely gets an imperceptible soft spot. */}
+        {track.kind === "youtube" && (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute left-1/2 top-1/2 z-2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full"
+            style={{ backdropFilter: "blur(5px)" }}
+          />
+        )}
+        {/* YouTube's paused/cued UI (title bar, share, "More videos", big play
+            button) renders inside the iframe and can't be styled away, so an
+            opaque poster covers the iframe whenever playback is stopped. */}
+        {track.kind === "youtube" && (
+          <div
+            aria-hidden
+            data-testid="yt-cover"
+            className="pointer-events-none absolute inset-0 z-3 flex items-center justify-center bg-black transition-opacity duration-200"
+            style={{ opacity: ytLive ? 0 : 1 }}
+          >
+            {track.thumb && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={track.thumb}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover opacity-60"
+              />
+            )}
+            <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-black/60 text-white">
+              <PlayIcon size={26} />
+            </div>
+          </div>
+        )}
         <div
           onClick={() => player.togglePlay()}
           title="Click to play / pause"

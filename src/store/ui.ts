@@ -20,6 +20,10 @@ export interface Toast {
 
 export interface UiState {
   playing: boolean;
+  /** true while the YouTube IFrame player actually plays/buffers — unlike
+   *  `playing` (transport intent) this follows the player's real state, so
+   *  the poster cover only lifts when YouTube truly renders video frames */
+  ytSurfaceLive: boolean;
   rate: number;
   loopEnabled: boolean;
   narrow: boolean;
@@ -45,6 +49,7 @@ export interface UiState {
   toasts: Toast[];
 
   setPlaying: (v: boolean) => void;
+  setYtSurfaceLive: (v: boolean) => void;
   setRate: (v: number) => void;
   toggleLoop: () => void;
   setNarrow: (v: boolean) => void;
@@ -75,6 +80,7 @@ const TOAST_TTL = 6000;
 
 export const useUi = create<UiState>()((set) => ({
   playing: false,
+  ytSurfaceLive: false,
   rate: 1,
   loopEnabled: true,
   narrow: false,
@@ -98,6 +104,7 @@ export const useUi = create<UiState>()((set) => ({
   toasts: [],
 
   setPlaying: (v) => set({ playing: v }),
+  setYtSurfaceLive: (v) => set((s) => (s.ytSurfaceLive === v ? s : { ytSurfaceLive: v })),
   setRate: (v) => set({ rate: v }),
   toggleLoop: () => set((s) => ({ loopEnabled: !s.loopEnabled })),
   // entering narrow closes the drawer, leaving it restores the docked sidebar

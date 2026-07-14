@@ -44,8 +44,10 @@ async function fakeYoutubeApi(page: Page) {
     const calls: string[] = [];
     class FakePlayer {
       state = -1; // unstarted
+      private videoId: string;
       private events: Events;
       constructor(_el: HTMLElement, opts: { videoId: string; events: Events }) {
+        this.videoId = opts.videoId;
         this.events = opts.events;
         (window as unknown as { __yt?: { calls: string[]; player: FakePlayer } }).__yt = {
           calls,
@@ -78,11 +80,16 @@ async function fakeYoutubeApi(page: Page) {
       }
       loadVideoById(id: string): void {
         calls.push(`loadVideoById:${id}`);
+        this.videoId = id;
         this.setState(1); // always autostarts
       }
       cueVideoById(id: string): void {
         calls.push(`cueVideoById:${id}`);
-        this.state = 5;
+        this.videoId = id;
+        this.setState(5); // real API fires "video cued" too
+      }
+      getVideoData(): { title: string } {
+        return { title: `Title of ${this.videoId}` };
       }
       getCurrentTime(): number {
         return 0;
@@ -130,7 +137,8 @@ test("switching to a YouTube track while paused does not autoplay", async ({ pag
   await expect(page.getByRole("button", { name: "Play", exact: true })).toBeVisible();
 
   // back to the first track via the sidebar — still no autoplay
-  await page.getByText("YouTube loop").nth(1).click();
+  // (titles were patched from the fake player's getVideoData)
+  await page.getByText("Title of dQw4w9WgXcQ").first().click();
   await expect(page.getByTestId("loop-b")).toHaveValue("5:00.000");
   await expect.poll(async () => (await ytState()).calls).toContain("cueVideoById:dQw4w9WgXcQ");
   const after = await ytState();
@@ -141,6 +149,45 @@ test("switching to a YouTube track while paused does not autoplay", async ({ pag
   await page.getByRole("button", { name: "Play", exact: true }).click();
   await expect(page.getByRole("button", { name: "Pause", exact: true })).toBeVisible();
   expect((await ytState()).state).toBe(1);
+});
+
+test("YouTube poster cover hides the iframe UI while paused and clears during playback", async ({
+  page,
+}) => {
+  await blockYoutube(page);
+  await fakeYoutubeApi(page);
+  await page.goto("/");
+
+  const url = page.getByPlaceholder("youtube.com/watch?v=…");
+  await url.fill("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+  await url.press("Enter");
+  await expect(page.getByTestId("loop-b")).toHaveValue("5:00.000");
+
+  // paused: the opaque cover shields YouTube's title/share/"More videos" UI
+  const cover = page.getByTestId("yt-cover");
+  await expect(cover).toHaveCSS("opacity", "1");
+
+  await page.getByRole("button", { name: "Play", exact: true }).click();
+  await expect(cover).toHaveCSS("opacity", "0");
+
+  await page.getByRole("button", { name: "Pause", exact: true }).click();
+  await expect(cover).toHaveCSS("opacity", "1");
+});
+
+test("YouTube track title defaults to the video title once the player reports it", async ({
+  page,
+}) => {
+  await blockYoutube(page);
+  await fakeYoutubeApi(page);
+  await page.goto("/");
+
+  const url = page.getByPlaceholder("youtube.com/watch?v=…");
+  await url.fill("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+  await url.press("Enter");
+
+  // placeholder replaced by the fake player's getVideoData().title
+  await expect(page.getByText("Title of dQw4w9WgXcQ").first()).toBeVisible();
+  await expect(page.getByText("YouTube loop")).toHaveCount(0);
 });
 
 test("uploading an audio file decodes duration and spans the loop across it", async ({ page }) => {

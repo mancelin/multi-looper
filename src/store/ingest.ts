@@ -5,7 +5,7 @@ import { putMedia } from "@/lib/mediaStore";
 import { decodePeaks } from "@/lib/peaks";
 import { player } from "@/lib/player/controller";
 import { ACCENTS, uid, type Track } from "@/lib/types";
-import { extractVideoId, syntheticYtPeaks, thumbUrl } from "@/lib/youtube";
+import { extractVideoId, syntheticYtPeaks, thumbUrl, YT_PLACEHOLDER_TITLE } from "@/lib/youtube";
 import { useLibrary } from "./library";
 
 /** Returns false when the input doesn't contain a YouTube video id. */
@@ -17,7 +17,7 @@ export function addYoutubeUrl(input: string): boolean {
     id: uid("y"),
     kind: "youtube",
     videoId,
-    title: "YouTube loop",
+    title: YT_PLACEHOLDER_TITLE, // replaced with the video title once the player reports it
     artist: "youtube.com",
     tags: ["youtube"],
     duration: 210, // placeholder; patched from the IFrame player once ready
