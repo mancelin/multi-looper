@@ -49,6 +49,17 @@ function ytScaleFor(boxWidth: number): number {
 function ytCropFor(scale: number): number {
   return Math.ceil(96 / scale);
 }
+
+// Firefox refuses to let backdrop-filter sample cross-origin iframe content
+// (privacy), so the speck-erasing disc gets no pixels to blur there. Fallback:
+// -moz-element() paints a live mirror of the player as the disc's own
+// background — aligned 1:1 with what's beneath and blurred via filter, which
+// looks identical to the backdrop-filter path.
+const MOZ_MIRROR =
+  typeof CSS !== "undefined" && CSS.supports("background-image", "-moz-element(#a)");
+
+// diameter of the speck-erasing disc at the video center
+const DISC = 16;
 const videoElRef = (el: HTMLVideoElement | null) => player.setVideoEl(el);
 
 export function VideoPanel({
@@ -154,7 +165,6 @@ export function VideoPanel({
         style={{ width: videoWidth }}
       >
         <div
-          ref={ytHostRef}
           className="absolute left-0 origin-top-left"
           style={{
             top: -ytCrop,
@@ -163,7 +173,9 @@ export function VideoPanel({
             transform: `scale(${1 / ytScale})`,
             display: track.kind === "youtube" ? "block" : "none",
           }}
-        />
+        >
+          <div ref={ytHostRef} id="yt-mirror-src" className="h-full w-full" />
+        </div>
         <video
           ref={videoElRef}
           playsInline
@@ -178,8 +190,20 @@ export function VideoPanel({
         {track.kind === "youtube" && (
           <div
             aria-hidden
-            className="pointer-events-none absolute left-1/2 top-1/2 z-2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full"
-            style={{ backdropFilter: "blur(5px)" }}
+            className="pointer-events-none absolute left-1/2 top-1/2 z-2 -translate-x-1/2 -translate-y-1/2 rounded-full"
+            style={{
+              width: DISC,
+              height: DISC,
+              ...(MOZ_MIRROR
+                ? {
+                    // mirror of the player aligned 1:1 behind the disc; box
+                    // height follows from the aspect-video ratio
+                    background: `-moz-element(#yt-mirror-src) ${-(videoWidth / 2 - DISC / 2)}px ${-((videoWidth * 9) / 32 - DISC / 2 + ytCrop)}px no-repeat`,
+                    backgroundSize: `${videoWidth}px ${(videoWidth * 9) / 16 + 2 * ytCrop}px`,
+                    filter: "blur(5px)",
+                  }
+                : { backdropFilter: "blur(5px)" }),
+            }}
           />
         )}
         {/* YouTube's paused/cued UI (title bar, share, "More videos", big play

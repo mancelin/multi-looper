@@ -137,6 +137,8 @@ class PlaybackController {
         if (!useUi.getState().playing && (s === 5 || s === -1)) {
           this.yt.cueVideoById(c.videoId!, t);
         } else {
+          // note: seekTo(t, false) looks tempting for chrome-free loop wraps,
+          // but it's scrub-preview mode — playback freezes at the target
           this.yt.seekTo(t, true);
         }
       } catch {}
