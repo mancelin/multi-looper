@@ -83,8 +83,8 @@ async function fakeYoutubeApi(page: Page) {
         this.videoId = id;
         this.setState(1); // always autostarts
       }
-      cueVideoById(id: string): void {
-        calls.push(`cueVideoById:${id}`);
+      cueVideoById(id: string, start?: number): void {
+        calls.push(`cueVideoById:${id}@${start ?? 0}`);
         this.videoId = id;
         this.setState(5); // real API fires "video cued" too
       }
@@ -132,7 +132,7 @@ test("switching to a YouTube track while paused does not autoplay", async ({ pag
     });
 
   // switching tracks cues the new video instead of load+autoplay
-  await expect.poll(async () => (await ytState()).calls).toContain("cueVideoById:oHg5SJYRHA0");
+  await expect.poll(async () => (await ytState()).calls).toContain("cueVideoById:oHg5SJYRHA0@0");
   expect((await ytState()).state).not.toBe(1);
   await expect(page.getByRole("button", { name: "Play", exact: true })).toBeVisible();
 
@@ -140,7 +140,7 @@ test("switching to a YouTube track while paused does not autoplay", async ({ pag
   // (titles were patched from the fake player's getVideoData)
   await page.getByText("Title of dQw4w9WgXcQ").first().click();
   await expect(page.getByTestId("loop-b")).toHaveValue("5:00.000");
-  await expect.poll(async () => (await ytState()).calls).toContain("cueVideoById:dQw4w9WgXcQ");
+  await expect.poll(async () => (await ytState()).calls).toContain("cueVideoById:dQw4w9WgXcQ@0");
   const after = await ytState();
   expect(after.state).not.toBe(1);
   expect(after.calls.filter((c) => c.startsWith("loadVideoById") || c === "playVideo")).toEqual([]);
@@ -149,6 +149,35 @@ test("switching to a YouTube track while paused does not autoplay", async ({ pag
   await page.getByRole("button", { name: "Play", exact: true }).click();
   await expect(page.getByRole("button", { name: "Pause", exact: true })).toBeVisible();
   expect((await ytState()).state).toBe(1);
+});
+
+test("a fresh YouTube player cues at the active loop's A point", async ({ page }) => {
+  await blockYoutube(page);
+  await fakeYoutubeApi(page);
+  await page.goto("/");
+
+  const url = page.getByPlaceholder("youtube.com/watch?v=…");
+  await url.fill("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+  await url.press("Enter");
+  await expect(page.getByTestId("loop-b")).toHaveValue("5:00.000"); // fake player ready
+
+  const a = page.getByTestId("loop-a");
+  await a.fill("0:30.000");
+  await a.press("Enter");
+  await expect(a).toHaveValue("0:30.000");
+
+  // a reload creates the player from scratch (cued at 0 by the IFrame API);
+  // onReady must re-cue at loop A so the media matches the readout
+  await page.reload();
+  await expect(page.getByTestId("loop-a")).toHaveValue("0:30.000");
+  await expect(page.getByTestId("time")).toHaveText("0:30.000");
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => (window as unknown as { __yt?: { calls: string[] } }).__yt?.calls ?? [],
+      ),
+    )
+    .toContain("cueVideoById:dQw4w9WgXcQ@30");
 });
 
 test("YouTube poster cover hides the iframe UI while paused and clears during playback", async ({
@@ -283,6 +312,37 @@ test("setting loop B re-enables loop mode", async ({ page }) => {
   await page.mouse.move(box.x + box.width / 2 + 40, box.y + box.height / 2, { steps: 3 });
   await page.mouse.up();
   await expect(loopBtn).toHaveAttribute("aria-pressed", "true");
+});
+
+test("switching tracks seeks the playhead to the active loop start", async ({ page }) => {
+  await page.goto("/");
+  await uploadWav(page, 3, "one.wav");
+  await expect(page.getByTestId("loop-b")).toHaveValue("0:03.000"); // wait for decode
+
+  // move loop A off zero on the first track
+  const a = page.getByTestId("loop-a");
+  await a.fill("0:01.000");
+  await a.press("Enter");
+  await expect(a).toHaveValue("0:01.000");
+
+  // a second track is auto-selected on upload
+  await page.locator('input[accept="audio/*,video/*"]').setInputFiles({
+    name: "two.wav",
+    mimeType: "audio/wav",
+    buffer: makeWav(3),
+  });
+  await expect(page.getByText("two").first()).toBeVisible();
+  await expect(page.getByTestId("time")).toHaveText("0:00.000");
+
+  // switching back lands the playhead on the loop's A point...
+  await page.getByText("one").first().click();
+  await expect(page.getByTestId("time")).toHaveText("0:01.000");
+  // ...and the media element really seeked there (a currentTime set right
+  // after src= is silently dropped by the load algorithm without the
+  // loadedmetadata re-seek)
+  await expect
+    .poll(() => page.evaluate(() => document.querySelector("video")?.currentTime))
+    .toBeCloseTo(1, 1);
 });
 
 test("clicking another loop chip selects it", async ({ page }) => {

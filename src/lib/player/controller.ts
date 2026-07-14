@@ -14,7 +14,7 @@ interface YTPlayer {
   getCurrentTime(): number;
   getDuration(): number;
   setPlaybackRate(rate: number): void;
-  loadVideoById(videoId: string): void;
+  loadVideoById(videoId: string, startSeconds?: number): void;
   cueVideoById(videoId: string, startSeconds?: number): void;
   getPlayerState(): number;
   /** Undocumented but long-stable: metadata of the loaded/cued video. */
@@ -402,6 +402,10 @@ class PlaybackController {
               this.ytReady = true;
               this.patchYtDuration();
               this.patchYtTitle();
+              // the player was created cued at 0; re-issue the pending seek
+              // (loadCurrent targets the active loop's A) now that the API
+              // can act on it — while paused this re-cues at the target
+              if (this.seekPending && this.vt > 0) this.setT(this.vt);
               if (this.ytPendingPlay) {
                 this.ytPendingPlay = false;
                 this.play();
@@ -433,7 +437,7 @@ class PlaybackController {
         try {
           // loadVideoById always autostarts; when we're not meant to play,
           // cue instead — it loads the video without starting playback.
-          if (this.ytPendingPlay) this.yt.loadVideoById(c.videoId!);
+          if (this.ytPendingPlay) this.yt.loadVideoById(c.videoId!, activeLoop(c).a);
           else this.yt.cueVideoById(c.videoId!, activeLoop(c).a);
         } catch {}
         if (this.ytPendingPlay) {
@@ -478,6 +482,11 @@ class PlaybackController {
     if (isFinite(d) && d > 0 && Math.abs(d - c.duration) > 0.5) {
       useLibrary.getState().patchDuration(c.id, d);
     }
+    // a currentTime set right after src= is clobbered when the media load
+    // algorithm runs (it resets the start position to 0) — re-issue the
+    // pending seek (loadCurrent targets the active loop's A) now that the
+    // element can honor it
+    if (this.seekPending && this.vt > 0) this.setT(this.vt);
   }
 }
 
