@@ -12,6 +12,8 @@
   "dependencies": {
     "@capacitor/android": "^8.4.1",
     "@capacitor/core": "^8.4.1",
+    "@tidal-music/auth": "^1.6.1",
+    "@tidal-music/player": "^0.18.3",
     "next": "16.2.10",
     "pocketbase": "^0.27.0",
     "react": "19.2.4",

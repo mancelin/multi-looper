@@ -33,6 +33,9 @@ export interface UiState {
   videoWidth: number;
   showShortcuts: boolean;
   ytModalOpen: boolean;
+  tidalModalOpen: boolean;
+  /** true once the user's tidal.com account is connected (OAuth) */
+  tidalConnected: boolean;
 
   account: Account | null;
   accountMenuOpen: boolean;
@@ -60,6 +63,8 @@ export interface UiState {
   setVideoWidth: (w: number) => void;
   toggleShortcuts: () => void;
   setYtModalOpen: (v: boolean) => void;
+  setTidalModalOpen: (v: boolean) => void;
+  setTidalConnected: (v: boolean) => void;
 
   setAccount: (a: Account | null) => void;
   setAccountMenuOpen: (v: boolean) => void;
@@ -92,6 +97,8 @@ export const useUi = create<UiState>()((set) => ({
   videoWidth: 620,
   showShortcuts: false,
   ytModalOpen: false,
+  tidalModalOpen: false,
+  tidalConnected: false,
 
   account: null,
   accountMenuOpen: false,
@@ -118,6 +125,8 @@ export const useUi = create<UiState>()((set) => ({
   setVideoWidth: (w) => set({ videoWidth: w }),
   toggleShortcuts: () => set((s) => ({ showShortcuts: !s.showShortcuts })),
   setYtModalOpen: (v) => set({ ytModalOpen: v }),
+  setTidalModalOpen: (v) => set({ tidalModalOpen: v }),
+  setTidalConnected: (v) => set({ tidalConnected: v }),
 
   setAccount: (a) => set(a ? { account: a } : { account: null, storageUsed: null }),
   setAccountMenuOpen: (v) => set({ accountMenuOpen: v }),

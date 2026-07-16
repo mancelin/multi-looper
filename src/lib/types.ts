@@ -1,4 +1,4 @@
-export type TrackKind = "file" | "youtube";
+export type TrackKind = "file" | "youtube" | "tidal";
 
 export interface Loop {
   id: string;
@@ -28,6 +28,8 @@ export interface Track {
   /** playable media URL: object URL for fresh uploads, PocketBase file URL when synced */
   url?: string;
   videoId?: string;
+  /** TIDAL track (product) id */
+  tidalId?: string;
   /** PocketBase record id once synced */
   pbId?: string;
 }
@@ -36,6 +38,7 @@ export const ACCENTS = {
   youtube: "#fca5a5",
   audioFile: "#93c5fd",
   videoFile: "#c4b5fd",
+  tidal: "#67e8f9",
   default: "#5eead4",
 } as const;
 

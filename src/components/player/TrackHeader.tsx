@@ -24,6 +24,12 @@ const SRC_BADGES: Record<string, { label: string; color: string; bg: string; bor
     bg: "rgba(196,181,253,.1)",
     border: "rgba(196,181,253,.3)",
   },
+  tidal: {
+    label: "TIDAL",
+    color: "#67e8f9",
+    bg: "rgba(103,232,249,.1)",
+    border: "rgba(103,232,249,.3)",
+  },
 };
 
 export function TrackHeader({ track }: { track: Track }) {
@@ -35,9 +41,11 @@ export function TrackHeader({ track }: { track: Track }) {
   const badge =
     track.kind === "youtube"
       ? SRC_BADGES.youtube
-      : track.hasVideo
-        ? SRC_BADGES.fileVideo
-        : SRC_BADGES.fileAudio;
+      : track.kind === "tidal"
+        ? SRC_BADGES.tidal
+        : track.hasVideo
+          ? SRC_BADGES.fileVideo
+          : SRC_BADGES.fileAudio;
 
   const commitTag = () => {
     if (newTag.trim()) addTag(newTag);

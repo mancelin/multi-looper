@@ -1,9 +1,13 @@
 "use client";
 
+import { tidalConfigured, tidalCredentialsProvider, tidalToken } from "@/lib/tidal";
 import { activeLoop, type Track } from "@/lib/types";
 import { YT_PLACEHOLDER_TITLE } from "@/lib/youtube";
 import { currentTrack, useLibrary } from "@/store/library";
 import { useUi } from "@/store/ui";
+
+/* TIDAL Web SDK, loaded on demand the first time a TIDAL track plays. */
+type TidalModule = typeof import("@tidal-music/player");
 
 /* Minimal YouTube IFrame API surface used by the controller. */
 interface YTPlayer {
@@ -76,6 +80,11 @@ class PlaybackController {
    *  A/B markers drift */
   private ytDurationPatchedFor: string | null = null;
 
+  private tidal: TidalModule | null = null;
+  private tidalLoading: Promise<TidalModule | null> | null = null;
+  /** TIDAL product id currently loaded in the SDK player */
+  private tidalProductId: string | null = null;
+
   /** virtual time fallback while no media is ready */
   private vt = 0;
   /** when the last seek was issued — backends apply seeks asynchronously */
@@ -131,6 +140,13 @@ class PlaybackController {
       }
     }
     if (c.kind === "file" && this.videoEl) return this.videoEl.currentTime || 0;
+    if (c.kind === "tidal" && this.tidal && this.tidalProductId === c.tidalId) {
+      try {
+        return this.tidal.getAssetPosition() || 0;
+      } catch {
+        return this.vt;
+      }
+    }
     return this.vt;
   }
 
@@ -153,6 +169,10 @@ class PlaybackController {
       } catch {}
     } else if (c?.kind === "file" && this.videoEl) {
       this.videoEl.currentTime = t;
+    } else if (c?.kind === "tidal" && this.tidal && this.tidalProductId === c.tidalId) {
+      try {
+        void this.tidal.seek(t);
+      } catch {}
     }
     this.vt = t;
     this.seekIssuedAt = performance.now();
@@ -272,6 +292,8 @@ class PlaybackController {
       this.videoEl.preservesPitch = true;
       this.pushVolume();
       void this.videoEl.play().catch(() => {});
+    } else if (c.kind === "tidal") {
+      void this.playTidal(c);
     }
     this.startTick();
   }
@@ -284,6 +306,11 @@ class PlaybackController {
       } catch {}
     }
     if (c?.kind === "file") this.videoEl?.pause();
+    if (c?.kind === "tidal" && this.tidal) {
+      try {
+        this.tidal.pause();
+      } catch {}
+    }
     useUi.getState().setPlaying(false);
     this.stopTick();
     // sync vt so paused seeks (which trust vt) start from where playback
@@ -312,6 +339,7 @@ class PlaybackController {
         this.yt.setPlaybackRate(nearestYtRate(r));
       } catch {}
     }
+    if (c?.kind === "tidal") this.applyTidalRate();
   }
 
   bumpRate(delta: number): void {
@@ -341,6 +369,11 @@ class PlaybackController {
       try {
         this.yt.unMute(); // YouTube can start muted (e.g. autoplay policy)
         this.yt.setVolume(Math.round(v * 100));
+      } catch {}
+    }
+    if (this.tidal) {
+      try {
+        this.tidal.setVolumeLevel(v);
       } catch {}
     }
   }
@@ -405,6 +438,101 @@ class PlaybackController {
   afterRemoval(): void {
     this.pause();
     this.pendingAutoplay = false;
+  }
+
+  // ---------- TIDAL ----------
+
+  /**
+   * Loads the TIDAL Web SDK once a connected account is available; null
+   * when the app has no TIDAL client id or the user hasn't connected.
+   */
+  private async ensureTidal(): Promise<TidalModule | null> {
+    if (this.tidal) return this.tidal;
+    if (!this.tidalLoading) {
+      this.tidalLoading = (async () => {
+        try {
+          if (!(await tidalToken())) return null; // not connected — retry after connect
+          const mod = await import("@tidal-music/player");
+          mod.setCredentialsProvider(await tidalCredentialsProvider());
+          mod.events.addEventListener("media-product-transition", () => {
+            this.patchTidalDuration();
+            // the SDK swaps media elements between products — re-assert
+            // the app's rate/volume on each transition
+            this.applyTidalRate();
+            this.pushVolume();
+          });
+          this.tidal = mod;
+          return mod;
+        } catch {
+          return null;
+        } finally {
+          this.tidalLoading = null;
+        }
+      })();
+    }
+    return this.tidalLoading;
+  }
+
+  private async playTidal(c: Track): Promise<void> {
+    if (!c.tidalId) return;
+    const mod = await this.ensureTidal();
+    // the user may have paused or switched tracks while the SDK loaded
+    if (!useUi.getState().playing || this.track()?.id !== c.id) return;
+    if (!mod) {
+      useUi.getState().setPlaying(false);
+      this.stopTick();
+      useUi
+        .getState()
+        .pushToast(
+          tidalConfigured()
+            ? "Connect your TIDAL account to play TIDAL tracks."
+            : "TIDAL playback isn't configured — set NEXT_PUBLIC_TIDAL_CLIENT_ID.",
+        );
+      useUi.getState().setTidalModalOpen(true);
+      return;
+    }
+    try {
+      if (this.tidalProductId !== c.tidalId) {
+        this.tidalProductId = c.tidalId;
+        await mod.load(
+          { productId: c.tidalId, productType: "track", sourceId: c.tidalId, sourceType: "TRACK" },
+          this.vt,
+        );
+      }
+      await mod.play();
+      this.applyTidalRate();
+      this.pushVolume();
+      this.patchTidalDuration();
+    } catch {
+      this.tidalProductId = null; // force a fresh load on the next attempt
+      if (this.track()?.id === c.id) {
+        useUi.getState().setPlaying(false);
+        this.stopTick();
+        useUi.getState().pushToast("TIDAL playback failed — check your account/subscription.");
+      }
+    }
+  }
+
+  /** The SDK has no rate API; best effort via its media element. */
+  private applyTidalRate(): void {
+    const el = this.tidal?.getMediaElement();
+    if (!el) return;
+    try {
+      el.playbackRate = useUi.getState().rate;
+      el.preservesPitch = true;
+    } catch {}
+  }
+
+  /** Replaces the placeholder duration with the SDK-reported one. */
+  private patchTidalDuration(): void {
+    const c = this.track();
+    if (!c || c.kind !== "tidal" || !this.tidal) return;
+    try {
+      const ctx = this.tidal.getPlaybackContext();
+      if (!ctx || ctx.actualProductId !== c.tidalId) return;
+      const d = ctx.actualDuration;
+      if (d > 0 && Math.abs(d - c.duration) > 0.5) useLibrary.getState().patchDuration(c.id, d);
+    } catch {}
   }
 
   // ---------- YouTube ----------

@@ -41,9 +41,12 @@ export function ImagePanel({ track }: { track: Track }) {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  if (track.kind !== "file") return null;
+  // file tracks show their user-set cover; TIDAL tracks show the album cover
+  // fetched from the open API (read-only) — YouTube has the video panel
+  const src = track.kind === "tidal" ? track.thumb : track.image;
+  if (track.kind === "youtube" || (track.kind === "tidal" && !src)) return null;
 
-  if (!track.image) {
+  if (track.kind === "file" && !track.image) {
     const onPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       e.target.value = "";
@@ -112,18 +115,20 @@ export function ImagePanel({ track }: { track: Track }) {
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={track.image}
+          src={src}
           alt=""
           data-testid="track-image"
           className="block h-full w-auto max-w-full object-contain"
         />
-        <button
-          onClick={() => patchTrack(track.id, { image: undefined })}
-          title="Remove image"
-          className="absolute right-2 top-2 flex h-6 w-6 cursor-pointer items-center justify-center rounded-[7px] border border-white/10 bg-[rgba(6,8,11,.65)] text-muted opacity-0 transition-opacity hover:text-danger group-hover:opacity-100"
-        >
-          <CloseIcon size={11} strokeWidth={1.8} />
-        </button>
+        {track.kind === "file" && (
+          <button
+            onClick={() => patchTrack(track.id, { image: undefined })}
+            title="Remove image"
+            className="absolute right-2 top-2 flex h-6 w-6 cursor-pointer items-center justify-center rounded-[7px] border border-white/10 bg-[rgba(6,8,11,.65)] text-muted opacity-0 transition-opacity hover:text-danger group-hover:opacity-100"
+          >
+            <CloseIcon size={11} strokeWidth={1.8} />
+          </button>
+        )}
         <div
           onPointerDown={onResizeGrip}
           title="Drag to resize"

@@ -5,6 +5,7 @@ import { AuthModal } from "@/components/modals/AuthModal";
 import { ImportModal } from "@/components/modals/ImportModal";
 import { SettingsModal } from "@/components/modals/SettingsModal";
 import { ShortcutsModal } from "@/components/modals/ShortcutsModal";
+import { TidalModal } from "@/components/modals/TidalModal";
 import { YoutubeModal } from "@/components/modals/YoutubeModal";
 import { EmptyState } from "@/components/EmptyState";
 import { PlayerMain } from "@/components/player/PlayerMain";
@@ -13,6 +14,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { Toasts } from "@/components/Toasts";
 import { TopBar } from "@/components/TopBar";
 import { consumeShareLink } from "@/lib/share";
+import { bootTidal } from "@/lib/tidal";
 import { loadGuestLibrary, restoreFileMedia, startGuestPersistence } from "@/store/guestPersist";
 import { useCurrentTrack, useLibrary } from "@/store/library";
 import { bootAuth, consumeVerificationLink } from "@/store/sync";
@@ -38,6 +40,7 @@ export function Home() {
     booted = true;
     startGuestPersistence();
     void consumeVerificationLink();
+    void bootTidal();
     void bootAuth().then(async (restored) => {
       if (!restored) {
         const guest = loadGuestLibrary();
@@ -66,6 +69,7 @@ export function Home() {
       <ShortcutsProvider />
       <ShortcutsModal />
       <YoutubeModal />
+      <TidalModal />
       <AuthModal />
       <ImportModal />
       <SettingsModal />

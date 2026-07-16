@@ -45,6 +45,7 @@ function recordToTrack(r: RecordModel): Track {
     thumb: (r.thumb as string) || undefined,
     image: (r.image as string) || undefined,
     videoId: (r.videoId as string) || undefined,
+    tidalId: (r.tidalId as string) || undefined,
     url: media ? pb.files.getURL(r, media) : undefined,
   };
 }
@@ -65,6 +66,7 @@ function trackPayload(t: Track): Record<string, unknown> {
     thumb: t.thumb ?? "",
     image: t.image ?? "",
     videoId: t.videoId ?? "",
+    tidalId: t.tidalId ?? "",
   };
 }
 

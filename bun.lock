@@ -7,6 +7,8 @@
       "dependencies": {
         "@capacitor/android": "^8.4.1",
         "@capacitor/core": "^8.4.1",
+        "@tidal-music/auth": "^1.6.1",
+        "@tidal-music/player": "^0.18.3",
         "next": "16.2.10",
         "pocketbase": "^0.27.0",
         "react": "19.2.4",
@@ -249,6 +251,14 @@
     "@tailwindcss/oxide-win32-x64-msvc": ["@tailwindcss/oxide-win32-x64-msvc@4.3.2", "", { "os": "win32", "cpu": "x64" }, "sha512-QI9BO7KlNZsp2GuO0jwAAj5jCDABOKXRkCk2XuKTSaNEFSdfzqswYVTtCHBNKHLsqyjFyFkqlDiwkNbTYSssMQ=="],
 
     "@tailwindcss/postcss": ["@tailwindcss/postcss@4.3.2", "", { "dependencies": { "@alloc/quick-lru": "^5.2.0", "@tailwindcss/node": "4.3.2", "@tailwindcss/oxide": "4.3.2", "postcss": "^8.5.15", "tailwindcss": "4.3.2" } }, "sha512-rjVWYCa7Ngbi5AarT6k8TkxUG3Wl1QKzHdIZVsjZSzf36Jmo2IKZt/NHRAwly8oDkbBOH0YTu+CHuf9jPxMc+g=="],
+
+    "@tidal-music/auth": ["@tidal-music/auth@1.6.1", "", { "dependencies": { "@tidal-music/common": "^0.2.1", "@tidal-music/true-time": "^0.3.1" } }, "sha512-Z0Yt42RbJ97BIve7EunfrXxUaUcgZtNj1nZeOXOdFfb1ZAoxLLzd+lIhBLXnEOyNS+8griqDeySu4MC6GcTO4w=="],
+
+    "@tidal-music/common": ["@tidal-music/common@0.2.1", "", {}, "sha512-23o83gxyXsXYNIydOsupO4+6MkW1ZZfnLFyxphoSCYuS6jXWulbOhiKTz3w8mqZP5+vHeXj6ZQ92gtWmDXCTZg=="],
+
+    "@tidal-music/player": ["@tidal-music/player@0.18.3", "", {}, "sha512-MVu17RiiHIu0YE4C63DwtzSsXAO5tD4dz7PGm8MkxHnp4G2CF4zg7+vPbiVqSKcg0dYfXsoZuCxBkgEa50l46Q=="],
+
+    "@tidal-music/true-time": ["@tidal-music/true-time@0.3.1", "", {}, "sha512-Kmxbe5gmmnwvrkIYfOVWZc/+tUqsScRXhk6rIrwXd92tusnRfI3M2OLR2G6Su6PFWUus0T2nJb/6ev5eGX+2UQ=="],
 
     "@tybys/wasm-util": ["@tybys/wasm-util@0.10.3", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-F3fo1MYrRJYL3zER0OUOmkutjr1Vp23m7OsSgp7nq4SP6OqX6C/56XFIPAl5bt3zaBRjmW7SGz3u/6LwFpYcOg=="],
 

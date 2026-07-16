@@ -1,17 +1,24 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { LoopIcon, PlusIcon, UploadIcon, YoutubeIcon } from "@/components/icons";
-import { addFiles, addYoutubeUrl } from "@/store/ingest";
+import { LoopIcon, PlusIcon, TidalIcon, UploadIcon, YoutubeIcon } from "@/components/icons";
+import { addFiles, addTidalUrl, addYoutubeUrl } from "@/store/ingest";
 
 export function EmptyState() {
   const [ytUrl, setYtUrl] = useState("");
+  const [tidalUrl, setTidalUrl] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const submitYt = () => {
     if (!ytUrl.trim()) return;
     addYoutubeUrl(ytUrl);
     setYtUrl("");
+  };
+
+  const submitTidal = () => {
+    if (!tidalUrl.trim()) return;
+    addTidalUrl(tidalUrl);
+    setTidalUrl("");
   };
 
   return (
@@ -30,7 +37,7 @@ export function EmptyState() {
         </h1>
         <p className="mb-0 mt-3 max-w-[460px] text-[15px] leading-[1.6] text-muted">
           Drop in a track, mark an A–B section, and practice it on repeat — slowed down, pitch
-          intact. Start with a YouTube link or your own audio.
+          intact. Start with a YouTube link, a TIDAL track, or your own audio.
         </p>
 
         <div className="mt-[34px] flex w-full flex-wrap justify-center gap-4">
@@ -90,6 +97,33 @@ export function EmptyState() {
                 e.target.value = "";
               }}
             />
+          </div>
+
+          <div className="flex min-w-[270px] max-w-[340px] flex-1 flex-col items-start rounded-[16px] border border-white/8 bg-panel-2 px-5 py-[22px] text-left">
+            <div className="mb-[14px] flex items-center gap-[10px]">
+              <span className="flex h-[38px] w-[38px] items-center justify-center rounded-[10px] border border-[rgba(103,232,249,.25)] bg-[rgba(103,232,249,.1)] text-[#67e8f9]">
+                <TidalIcon size={19} />
+              </span>
+              <span className="text-[15px] font-semibold text-ink">Paste a TIDAL link</span>
+            </div>
+            <p className="mb-[14px] mt-0 text-[12.5px] leading-[1.5] text-muted-3">
+              Any tidal.com track — plays through your TIDAL account.
+            </p>
+            <div className="flex h-10 w-full items-center gap-2 rounded-[9px] border border-white/9 bg-field px-[11px]">
+              <input
+                value={tidalUrl}
+                onChange={(e) => setTidalUrl(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && submitTidal()}
+                placeholder="tidal.com/track/…"
+                className="min-w-0 flex-1 border-none bg-transparent text-[13px] text-ink"
+              />
+              <button
+                onClick={submitTidal}
+                className="flex-none cursor-pointer rounded-[6px] bg-accent px-3 py-[7px] text-[12px] font-semibold text-on-accent"
+              >
+                Add
+              </button>
+            </div>
           </div>
         </div>
       </div>

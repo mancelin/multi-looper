@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { BookIcon, EqIcon, GearIcon, KeyboardIcon, UploadIcon, YoutubeIcon } from "@/components/icons";
-import { addFiles, addYoutubeUrl } from "@/store/ingest";
+import { BookIcon, EqIcon, GearIcon, KeyboardIcon, TidalIcon, UploadIcon, YoutubeIcon } from "@/components/icons";
+import { addFiles, addTidalUrl, addYoutubeUrl } from "@/store/ingest";
 import { useLibrary } from "@/store/library";
 import { useUi } from "@/store/ui";
 import { AccountArea } from "./AccountMenu";
@@ -13,13 +13,21 @@ export function TopBar() {
   const toggleShortcuts = useUi((s) => s.toggleShortcuts);
   const openSettings = useUi((s) => s.openSettings);
   const setYtModalOpen = useUi((s) => s.setYtModalOpen);
+  const setTidalModalOpen = useUi((s) => s.setTidalModalOpen);
   const [ytUrl, setYtUrl] = useState("");
+  const [tidalUrl, setTidalUrl] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const submitYt = () => {
     if (!ytUrl.trim()) return;
     addYoutubeUrl(ytUrl);
     setYtUrl("");
+  };
+
+  const submitTidal = () => {
+    if (!tidalUrl.trim()) return;
+    addTidalUrl(tidalUrl);
+    setTidalUrl("");
   };
 
   return (
@@ -44,7 +52,7 @@ export function TopBar() {
         </div>
       </div>
 
-      <div className="flex min-w-0 max-w-[640px] flex-1 items-center gap-2 sm:gap-[10px]">
+      <div className="flex min-w-0 max-w-[640px] flex-1 items-center gap-2 min-[900px]:max-w-[900px] sm:gap-[10px]">
         <button
           onClick={() => setYtModalOpen(true)}
           title="Add a YouTube link"
@@ -87,6 +95,29 @@ export function TopBar() {
             e.target.value = "";
           }}
         />
+        <button
+          onClick={() => setTidalModalOpen(true)}
+          title="Add a TIDAL link"
+          className="flex h-[38px] w-[38px] flex-none cursor-pointer items-center justify-center rounded-[9px] border border-white/9 bg-field min-[900px]:hidden"
+        >
+          <TidalIcon className="text-[#67e8f9]" />
+        </button>
+        <div className="hidden h-[38px] min-w-0 flex-1 items-center gap-2 rounded-[9px] border border-white/9 bg-field px-[11px] min-[900px]:flex">
+          <TidalIcon className="flex-none text-[#67e8f9]" />
+          <input
+            value={tidalUrl}
+            onChange={(e) => setTidalUrl(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && submitTidal()}
+            placeholder="Paste a TIDAL link…"
+            className="min-w-0 flex-1 border-none bg-transparent text-[13px] text-ink"
+          />
+          <button
+            onClick={submitTidal}
+            className="flex-none cursor-pointer rounded-[6px] bg-accent px-[11px] py-[6px] text-[12px] font-semibold text-on-accent"
+          >
+            Add
+          </button>
+        </div>
         <button
           onClick={toggleShortcuts}
           title="Keyboard shortcuts"

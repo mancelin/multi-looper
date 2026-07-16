@@ -43,6 +43,17 @@ export function YoutubeIcon({ size, hole = "#0e1116", ...rest }: P & { hole?: st
   );
 }
 
+export function TidalIcon({ size, ...rest }: P) {
+  return (
+    <svg viewBox="0 0 24 24" {...svg(size, 15, rest)}>
+      <path
+        d="M4 4 8 8 4 12 0 8ZM12 4l4 4-4 4-4-4ZM20 4l4 4-4 4-4-4ZM12 12l4 4-4 4-4-4Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
 export function UploadIcon({ size, ...rest }: P) {
   return (
     <svg viewBox="0 0 16 16" {...svg(size, 15, rest)}>
