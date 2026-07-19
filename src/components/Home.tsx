@@ -40,7 +40,15 @@ export function Home() {
     booted = true;
     startGuestPersistence();
     void consumeVerificationLink();
-    void bootTidal();
+    void bootTidal().finally(() => {
+      if (process.env.NODE_ENV !== "production") {
+        // e2e hook: the OAuth redirect can't run offline, so tests flip the
+        // connected flag directly to reach the link-paste UI. Installed only
+        // after boot so bootTidal's own write can't stomp a test's value.
+        (window as unknown as { __setTidalConnected?: (v: boolean) => void }).__setTidalConnected =
+          (v) => useUi.getState().setTidalConnected(v);
+      }
+    });
     void bootAuth().then(async (restored) => {
       if (!restored) {
         const guest = loadGuestLibrary();

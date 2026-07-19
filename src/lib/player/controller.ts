@@ -1,5 +1,6 @@
 "use client";
 
+import { APP_NAME, APP_VERSION } from "@/lib/appInfo";
 import { tidalConfigured, tidalCredentialsProvider, tidalToken } from "@/lib/tidal";
 import { activeLoop, type Track } from "@/lib/types";
 import { YT_PLACEHOLDER_TITLE } from "@/lib/youtube";
@@ -453,7 +454,33 @@ class PlaybackController {
         try {
           if (!(await tidalToken())) return null; // not connected — retry after connect
           const mod = await import("@tidal-music/player");
-          mod.setCredentialsProvider(await tidalCredentialsProvider());
+          const credentialsProvider = await tidalCredentialsProvider();
+          mod.setCredentialsProvider(credentialsProvider);
+          // the SDK refuses playback without an event sender (playlog /
+          // streaming metrics). Wire the official producer against TIDAL's
+          // production ingest; if its worker fails to boot, fall back to a
+          // no-op sender so playback still works (the SDK only ever calls
+          // sendEvent on it).
+          try {
+            const ep = await import("@tidal-music/event-producer");
+            await ep.init({
+              appInfo: { appName: APP_NAME, appVersion: `${APP_VERSION}.0` },
+              blockedConsentCategories: { NECESSARY: false, PERFORMANCE: false, TARGETING: true },
+              credentialsProvider,
+              platform: {
+                browserName: navigator.userAgent,
+                browserVersion: "unknown",
+                osName: navigator.platform || "unknown",
+              },
+              tlConsumerUri: "https://ec.tidal.com/api/event-batch",
+              tlPublicConsumerUri: "https://ec.tidal.com/api/public/event-batch",
+            });
+            mod.setEventSender(ep);
+          } catch {
+            mod.setEventSender({ sendEvent: () => {} } as unknown as Parameters<
+              typeof mod.setEventSender
+            >[0]);
+          }
           mod.events.addEventListener("media-product-transition", () => {
             this.patchTidalDuration();
             // the SDK swaps media elements between products — re-assert
@@ -461,6 +488,21 @@ class PlaybackController {
             this.applyTidalRate();
             this.pushVolume();
           });
+          if (process.env.NODE_ENV !== "production") {
+            // surface the SDK's internal state flow while debugging playback
+            // (console.log, not .debug — Next's dev browser-log forwarding
+            // and default console filters drop the debug level)
+            for (const name of [
+              "playback-state-change",
+              "media-product-transition",
+              "ended",
+              "streaming-privileges-revoked",
+            ]) {
+              mod.events.addEventListener(name, (e) => {
+                console.log(`[tidal] ${name}`, e instanceof CustomEvent ? e.detail : e);
+              });
+            }
+          }
           this.tidal = mod;
           return mod;
         } catch {
@@ -473,8 +515,22 @@ class PlaybackController {
     return this.tidalLoading;
   }
 
+  /** true while a load/play round-trip is in flight — rapid re-presses of
+   *  play must not issue overlapping SDK loads (they abort each other) */
+  private tidalBusy = false;
+
   private async playTidal(c: Track): Promise<void> {
-    if (!c.tidalId) return;
+    const { tidalId } = c;
+    if (!tidalId || this.tidalBusy) return;
+    this.tidalBusy = true;
+    try {
+      await this.playTidalInner({ ...c, tidalId });
+    } finally {
+      this.tidalBusy = false;
+    }
+  }
+
+  private async playTidalInner(c: Track & { tidalId: string }): Promise<void> {
     const mod = await this.ensureTidal();
     // the user may have paused or switched tracks while the SDK loaded
     if (!useUi.getState().playing || this.track()?.id !== c.id) return;
@@ -491,19 +547,48 @@ class PlaybackController {
       useUi.getState().setTidalModalOpen(true);
       return;
     }
+    const dbg = (...args: unknown[]) => {
+      if (process.env.NODE_ENV !== "production") console.log("[tidal]", ...args);
+    };
     try {
       if (this.tidalProductId !== c.tidalId) {
         this.tidalProductId = c.tidalId;
+        dbg("load start", c.tidalId, "at", this.vt);
         await mod.load(
           { productId: c.tidalId, productType: "track", sourceId: c.tidalId, sourceType: "TRACK" },
           this.vt,
         );
+        dbg("load done");
+        // the load can take a while (SDK boot + playbackinfo + buffering) —
+        // the user may have paused or switched tracks in the meantime
+        if (!useUi.getState().playing || this.track()?.id !== c.id) return;
       }
       await mod.play();
+      const el = mod.getMediaElement();
+      dbg("play done", {
+        playbackState: mod.getPlaybackState(),
+        context: mod.getPlaybackContext(),
+        media: el && {
+          paused: el.paused,
+          readyState: el.readyState,
+          muted: el.muted,
+          volume: el.volume,
+          src: (el.currentSrc || el.src || "").slice(0, 80),
+        },
+      });
       this.applyTidalRate();
       this.pushVolume();
       this.patchTidalDuration();
-    } catch {
+      try {
+        const ctx = mod.getPlaybackContext();
+        if (ctx?.previewReason || ctx?.actualAssetPresentation === "PREVIEW") {
+          useUi
+            .getState()
+            .pushToast("TIDAL sent a preview stream — an active subscription is required.");
+        }
+      } catch {}
+    } catch (err) {
+      console.error("TIDAL playback failed:", err);
       this.tidalProductId = null; // force a fresh load on the next attempt
       if (this.track()?.id === c.id) {
         useUi.getState().setPlaying(false);

@@ -63,6 +63,9 @@ async function ensureAuth(): Promise<AuthModule> {
       await auth.init({
         clientId: tidalClientId(),
         credentialsStorageKey: STORAGE_KEY,
+        // must match the "Allowed scopes" of the app registered in the
+        // TIDAL dashboard — an empty scope request errors on login.tidal.com
+        scopes: ["playback"],
       });
       return auth;
     })();
@@ -92,7 +95,9 @@ export async function tidalToken(): Promise<string | null> {
 /** Starts the OAuth redirect flow (leaves the page). */
 export async function connectTidal(): Promise<void> {
   const auth = await ensureAuth();
-  const redirectUri = window.location.origin + window.location.pathname;
+  // always the app root — must byte-match the redirect URI registered in the
+  // TIDAL dashboard, and the app may sit on a track path like /2 when clicked
+  const redirectUri = window.location.origin + "/";
   try {
     localStorage.setItem(LOGIN_PENDING_KEY, redirectUri);
   } catch {}

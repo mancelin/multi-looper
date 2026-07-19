@@ -2,9 +2,14 @@
 
 import { useRef, useState } from "react";
 import { LoopIcon, PlusIcon, TidalIcon, UploadIcon, YoutubeIcon } from "@/components/icons";
+import { connectTidal, tidalConfigured } from "@/lib/tidal";
 import { addFiles, addTidalUrl, addYoutubeUrl } from "@/store/ingest";
+import { useUi } from "@/store/ui";
 
 export function EmptyState() {
+  const tidalConnected = useUi((s) => s.tidalConnected);
+  const setTidalModalOpen = useUi((s) => s.setTidalModalOpen);
+  const pushToast = useUi((s) => s.pushToast);
   const [ytUrl, setYtUrl] = useState("");
   const [tidalUrl, setTidalUrl] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -19,6 +24,14 @@ export function EmptyState() {
     if (!tidalUrl.trim()) return;
     addTidalUrl(tidalUrl);
     setTidalUrl("");
+  };
+
+  const connectTidalClick = () => {
+    if (!tidalConfigured()) {
+      setTidalModalOpen(true); // modal explains the missing client id
+      return;
+    }
+    void connectTidal().catch(() => pushToast("Couldn't reach TIDAL — try again."));
   };
 
   return (
@@ -109,21 +122,31 @@ export function EmptyState() {
             <p className="mb-[14px] mt-0 text-[12.5px] leading-[1.5] text-muted-3">
               Any tidal.com track — plays through your TIDAL account.
             </p>
-            <div className="flex h-10 w-full items-center gap-2 rounded-[9px] border border-white/9 bg-field px-[11px]">
-              <input
-                value={tidalUrl}
-                onChange={(e) => setTidalUrl(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && submitTidal()}
-                placeholder="tidal.com/track/…"
-                className="min-w-0 flex-1 border-none bg-transparent text-[13px] text-ink"
-              />
+            {tidalConnected ? (
+              <div className="flex h-10 w-full items-center gap-2 rounded-[9px] border border-white/9 bg-field px-[11px]">
+                <input
+                  value={tidalUrl}
+                  onChange={(e) => setTidalUrl(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && submitTidal()}
+                  placeholder="tidal.com/track/…"
+                  className="min-w-0 flex-1 border-none bg-transparent text-[13px] text-ink"
+                />
+                <button
+                  onClick={submitTidal}
+                  className="flex-none cursor-pointer rounded-[6px] bg-accent px-3 py-[7px] text-[12px] font-semibold text-on-accent"
+                >
+                  Add
+                </button>
+              </div>
+            ) : (
               <button
-                onClick={submitTidal}
-                className="flex-none cursor-pointer rounded-[6px] bg-accent px-3 py-[7px] text-[12px] font-semibold text-on-accent"
+                onClick={connectTidalClick}
+                className="flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-[9px] border border-[rgba(103,232,249,.25)] bg-[rgba(103,232,249,.06)] text-[13px] font-semibold text-[#67e8f9]"
               >
-                Add
+                <TidalIcon size={15} />
+                Connect TIDAL
               </button>
-            </div>
+            )}
           </div>
         </div>
       </div>

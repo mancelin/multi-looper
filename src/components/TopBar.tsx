@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { BookIcon, EqIcon, GearIcon, KeyboardIcon, TidalIcon, UploadIcon, YoutubeIcon } from "@/components/icons";
+import { connectTidal, tidalConfigured } from "@/lib/tidal";
 import { addFiles, addTidalUrl, addYoutubeUrl } from "@/store/ingest";
 import { useLibrary } from "@/store/library";
 import { useUi } from "@/store/ui";
@@ -14,6 +15,8 @@ export function TopBar() {
   const openSettings = useUi((s) => s.openSettings);
   const setYtModalOpen = useUi((s) => s.setYtModalOpen);
   const setTidalModalOpen = useUi((s) => s.setTidalModalOpen);
+  const tidalConnected = useUi((s) => s.tidalConnected);
+  const pushToast = useUi((s) => s.pushToast);
   const [ytUrl, setYtUrl] = useState("");
   const [tidalUrl, setTidalUrl] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -28,6 +31,16 @@ export function TopBar() {
     if (!tidalUrl.trim()) return;
     addTidalUrl(tidalUrl);
     setTidalUrl("");
+  };
+
+  // straight to the tidal.com login redirect; the modal only opens to explain
+  // a missing client id or a failed reach
+  const connectTidalClick = () => {
+    if (!tidalConfigured()) {
+      setTidalModalOpen(true);
+      return;
+    }
+    void connectTidal().catch(() => pushToast("Couldn't reach TIDAL — try again."));
   };
 
   return (
@@ -95,29 +108,43 @@ export function TopBar() {
             e.target.value = "";
           }}
         />
-        <button
-          onClick={() => setTidalModalOpen(true)}
-          title="Add a TIDAL link"
-          className="flex h-[38px] w-[38px] flex-none cursor-pointer items-center justify-center rounded-[9px] border border-white/9 bg-field min-[900px]:hidden"
-        >
-          <TidalIcon className="text-[#67e8f9]" />
-        </button>
-        <div className="hidden h-[38px] min-w-0 flex-1 items-center gap-2 rounded-[9px] border border-white/9 bg-field px-[11px] min-[900px]:flex">
-          <TidalIcon className="flex-none text-[#67e8f9]" />
-          <input
-            value={tidalUrl}
-            onChange={(e) => setTidalUrl(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && submitTidal()}
-            placeholder="Paste a TIDAL link…"
-            className="min-w-0 flex-1 border-none bg-transparent text-[13px] text-ink"
-          />
+        {!tidalConnected ? (
+          // pasting TIDAL links unlocks after login — until then, just the login button
           <button
-            onClick={submitTidal}
-            className="flex-none cursor-pointer rounded-[6px] bg-accent px-[11px] py-[6px] text-[12px] font-semibold text-on-accent"
+            onClick={connectTidalClick}
+            title="Connect TIDAL"
+            className="flex h-[38px] flex-none cursor-pointer items-center gap-[7px] rounded-[9px] border border-white/9 bg-field px-[13px] text-[13px] font-medium text-ink"
           >
-            Add
+            <TidalIcon className="text-[#67e8f9]" />
+            <span className="hidden sm:inline">Connect TIDAL</span>
           </button>
-        </div>
+        ) : (
+          <>
+            <button
+              onClick={() => setTidalModalOpen(true)}
+              title="Add a TIDAL link"
+              className="flex h-[38px] w-[38px] flex-none cursor-pointer items-center justify-center rounded-[9px] border border-white/9 bg-field min-[900px]:hidden"
+            >
+              <TidalIcon className="text-[#67e8f9]" />
+            </button>
+            <div className="hidden h-[38px] min-w-0 flex-1 items-center gap-2 rounded-[9px] border border-white/9 bg-field px-[11px] min-[900px]:flex">
+              <TidalIcon className="flex-none text-[#67e8f9]" />
+              <input
+                value={tidalUrl}
+                onChange={(e) => setTidalUrl(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && submitTidal()}
+                placeholder="Paste a TIDAL link…"
+                className="min-w-0 flex-1 border-none bg-transparent text-[13px] text-ink"
+              />
+              <button
+                onClick={submitTidal}
+                className="flex-none cursor-pointer rounded-[6px] bg-accent px-[11px] py-[6px] text-[12px] font-semibold text-on-accent"
+              >
+                Add
+              </button>
+            </div>
+          </>
+        )}
         <button
           onClick={toggleShortcuts}
           title="Keyboard shortcuts"
