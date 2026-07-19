@@ -646,3 +646,51 @@ test("keyboard shortcut R resets speed to 1.00", async ({ page }) => {
   await page.locator("body").press("r");
   await expect(rate).toHaveValue("1.00");
 });
+
+test("A/B badges stay inside the waveform at track edges and never overlap when close", async ({
+  page,
+}) => {
+  await blockYoutube(page);
+  await page.goto("/");
+  const url = page.getByPlaceholder("youtube.com/watch?v=…");
+  await url.fill("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+  await url.press("Enter");
+  await expect(page.getByTestId("loop-a")).toHaveValue("0:00.000");
+
+  const box = async (id: string) => (await page.getByTestId(id).boundingBox())!;
+  type Box = { x: number; y: number; width: number; height: number };
+  const intersect = (r: Box, s: Box) =>
+    r.x < s.x + s.width && s.x < r.x + r.width && r.y < s.y + s.height && s.y < r.y + r.height;
+
+  // full-track loop: A hugs the left edge, B hugs the right edge — both badges
+  // must be flipped inward so they stay inside the strip
+  const wave = await box("waveform");
+  let a = await box("loop-label-a");
+  let b = await box("loop-label-b");
+  expect(a.x).toBeGreaterThanOrEqual(wave.x - 1);
+  expect(b.x + b.width).toBeLessThanOrEqual(wave.x + wave.width + 1);
+
+  // markers close together mid-track: badges must not overlap
+  const aIn = page.getByTestId("loop-a");
+  const bIn = page.getByTestId("loop-b");
+  await aIn.fill("1:00.000");
+  await aIn.press("Enter");
+  await bIn.fill("1:00.100");
+  await bIn.press("Enter");
+  await expect(bIn).toHaveValue("1:00.100");
+  a = await box("loop-label-a");
+  b = await box("loop-label-b");
+  expect(intersect(a, b)).toBe(false);
+
+  // markers close together at the very start: both badges forced rightward,
+  // so B must dodge (stagger below) instead of covering A
+  await aIn.fill("0:00.000");
+  await aIn.press("Enter");
+  await bIn.fill("0:00.100");
+  await bIn.press("Enter");
+  await expect(bIn).toHaveValue("0:00.100");
+  a = await box("loop-label-a");
+  b = await box("loop-label-b");
+  expect(a.x).toBeGreaterThanOrEqual(wave.x - 1);
+  expect(intersect(a, b)).toBe(false);
+});

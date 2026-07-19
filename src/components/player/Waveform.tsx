@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { player } from "@/lib/player/controller";
 import { fmtS } from "@/lib/time";
 import { activeLoop, type Track } from "@/lib/types";
@@ -12,11 +12,48 @@ export function Waveform({ track }: { track: Track }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const playheadRef = useRef<HTMLDivElement>(null);
   const patchActiveLoop = useLibrary((s) => s.patchActiveLoop);
+  const [wrapW, setWrapW] = useState(0);
 
   const lp = activeLoop(track);
   const d = track.duration || 1;
   const aPct = (lp.a / d) * 100;
   const bPct = (lp.b / d) * 100;
+
+  // A/B badge alignment: keep badges inside the strip at the edges and apart
+  // from each other when the markers sit close together.
+  const LABEL_W = 16; // px, approximate badge width
+  const aX = (aPct / 100) * wrapW;
+  const bX = (bPct / 100) * wrapW;
+  const close = bX - aX < LABEL_W + 4;
+  type Align = "center" | "left" | "right";
+  const aAlign: Align = !wrapW
+    ? "center"
+    : aX < LABEL_W / 2 + 3
+      ? "right"
+      : close && aX >= LABEL_W + 3
+        ? "left"
+        : close
+          ? "right"
+          : "center";
+  const bAlign: Align = !wrapW
+    ? "center"
+    : wrapW - bX < LABEL_W / 2 + 3
+      ? "left"
+      : close && wrapW - bX >= LABEL_W + 3
+        ? "right"
+        : close
+          ? "left"
+          : "center";
+  const ext = (x: number, al: Align): [number, number] =>
+    al === "center" ? [x - LABEL_W / 2, x + LABEL_W / 2] : al === "left" ? [x - LABEL_W, x] : [x, x + LABEL_W];
+  const [a0, a1] = ext(aX, aAlign);
+  const [b0, b1] = ext(bX, bAlign);
+  const staggerB = wrapW > 0 && b0 < a1 + 2 && a0 < b1 + 2;
+  const alignCls: Record<Align, string> = {
+    center: "left-1/2 -translate-x-1/2",
+    left: "left-1/2 -translate-x-full",
+    right: "left-1/2",
+  };
 
   const draw = useCallback(() => {
     const wrap = wrapRef.current;
@@ -51,8 +88,12 @@ export function Waveform({ track }: { track: Track }) {
   }, [track.peaks, track.accent, lp.a, lp.b, d]);
 
   useEffect(() => {
-    draw();
-    const ro = new ResizeObserver(draw);
+    const measure = () => {
+      setWrapW(wrapRef.current?.clientWidth ?? 0);
+      draw();
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
     if (wrapRef.current) ro.observe(wrapRef.current);
     return () => ro.disconnect();
   }, [draw]);
@@ -109,6 +150,7 @@ export function Waveform({ track }: { track: Track }) {
     <div className="flex flex-none flex-col px-4 pt-[6px] sm:px-[26px]">
       <div
         ref={wrapRef}
+        data-testid="waveform"
         onPointerDown={(e) => player.setT(pctFromEvent(e) * d)}
         className="relative h-[132px] flex-none cursor-text overflow-hidden rounded-[12px] border border-white/7 bg-panel-2"
       >
@@ -134,7 +176,10 @@ export function Waveform({ track }: { track: Track }) {
           style={{ left: `${aPct}%` }}
         >
           <div className="absolute bottom-0 left-1/2 top-0 w-[2px] -translate-x-1/2 bg-accent" />
-          <div className="absolute left-1/2 top-[6px] -translate-x-1/2 rounded-[4px] bg-accent px-[5px] py-[2px] text-[9px] font-bold text-on-accent">
+          <div
+            data-testid="loop-label-a"
+            className={`absolute top-[6px] rounded-[4px] bg-accent px-[5px] py-[2px] text-[9px] font-bold text-on-accent ${alignCls[aAlign]}`}
+          >
             A
           </div>
         </div>
@@ -145,7 +190,12 @@ export function Waveform({ track }: { track: Track }) {
           style={{ left: `${bPct}%` }}
         >
           <div className="absolute bottom-0 left-1/2 top-0 w-[2px] -translate-x-1/2 bg-accent" />
-          <div className="absolute left-1/2 top-[6px] -translate-x-1/2 rounded-[4px] bg-accent px-[5px] py-[2px] text-[9px] font-bold text-on-accent">
+          <div
+            data-testid="loop-label-b"
+            className={`absolute rounded-[4px] bg-accent px-[5px] py-[2px] text-[9px] font-bold text-on-accent ${
+              staggerB ? "top-[24px]" : "top-[6px]"
+            } ${alignCls[bAlign]}`}
+          >
             B
           </div>
         </div>
