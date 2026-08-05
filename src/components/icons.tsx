@@ -279,6 +279,34 @@ export function TrashIcon({ size, ...rest }: P) {
   );
 }
 
+export function UndoIcon({ size, ...rest }: P) {
+  return (
+    <svg viewBox="0 0 24 24" {...svg(size, 15, rest)}>
+      <path
+        d="M4 9h10a5 5 0 0 1 0 10h-4M4 9l4-4M4 9l4 4"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function RedoIcon({ size, ...rest }: P) {
+  return (
+    <svg viewBox="0 0 24 24" {...svg(size, 15, rest)}>
+      <path
+        d="M20 9H10a5 5 0 0 0 0 10h4M20 9l-4-4M20 9l-4 4"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function InfoIcon({ size, ...rest }: P) {
   return (
     <svg viewBox="0 0 24 24" {...svg(size, 15, rest)}>

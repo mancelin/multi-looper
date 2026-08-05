@@ -15,6 +15,7 @@ import { TopBar } from "@/components/TopBar";
 import { consumeShareLink } from "@/lib/share";
 import { loadGuestLibrary, restoreFileMedia, startGuestPersistence } from "@/store/guestPersist";
 import { useCurrentTrack, useLibrary } from "@/store/library";
+import { startLoopHistory } from "@/store/loopHistory";
 import { bootAuth, consumeVerificationLink } from "@/store/sync";
 import { useUi } from "@/store/ui";
 import { applyTrackFromUrl, startUrlSync } from "@/store/urlSync";
@@ -37,6 +38,7 @@ export function Home() {
     if (booted) return;
     booted = true;
     startGuestPersistence();
+    startLoopHistory();
     void consumeVerificationLink();
     void bootAuth().then(async (restored) => {
       if (!restored) {

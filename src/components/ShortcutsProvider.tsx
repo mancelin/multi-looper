@@ -9,6 +9,7 @@ import {
 } from "@/lib/loopEdit";
 import { player } from "@/lib/player/controller";
 import { useLibrary } from "@/store/library";
+import { redoLoopEdit, undoLoopEdit } from "@/store/loopHistory";
 import { useUi } from "@/store/ui";
 
 export function ShortcutsProvider() {
@@ -18,6 +19,15 @@ export function ShortcutsProvider() {
       if (tag === "input" || tag === "textarea") return;
       if (!useLibrary.getState().tracks.length) return;
       const k = e.key;
+      if (e.ctrlKey || e.metaKey) {
+        // Ctrl/Cmd+Z undo, +Shift redo; every other combo stays with the browser
+        if (k === "z" || k === "Z") {
+          e.preventDefault();
+          if (e.shiftKey) redoLoopEdit();
+          else undoLoopEdit();
+        }
+        return;
+      }
       if (k === " ") {
         e.preventDefault();
         player.togglePlay();

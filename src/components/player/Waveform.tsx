@@ -5,6 +5,7 @@ import { player } from "@/lib/player/controller";
 import { fmtS } from "@/lib/time";
 import { activeLoop, type Track } from "@/lib/types";
 import { useLibrary } from "@/store/library";
+import { beginLoopGesture, endLoopGesture } from "@/store/loopHistory";
 import { useUi } from "@/store/ui";
 
 export function Waveform({ track }: { track: Track }) {
@@ -123,6 +124,8 @@ export function Waveform({ track }: { track: Track }) {
     e.preventDefault();
     // dragging the loop end means the user wants looping on
     if (which === "B") useUi.setState({ loopEnabled: true });
+    // the whole drag is one undo step, not one per pointermove
+    beginLoopGesture();
     const move = (ev: PointerEvent) => {
       const t = pctFromEvent(ev) * d;
       // read the freshest loop bounds for clamping while dragging
@@ -133,6 +136,7 @@ export function Waveform({ track }: { track: Track }) {
       else patchActiveLoop({ b: Math.max(l.a + 0.05, Math.min(t, d)) });
     };
     const up = () => {
+      endLoopGesture();
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
     };

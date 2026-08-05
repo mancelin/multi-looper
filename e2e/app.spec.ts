@@ -476,6 +476,98 @@ test("setting A past B (or B before A) is refused, not clamped", async ({ page }
   await expect(page.getByTestId("loop-b")).toHaveValue("0:01.000");
 });
 
+test("undo / redo reverts the last loop edit, by button and by shortcut", async ({ page }) => {
+  await page.goto("/");
+  await uploadWav(page, 3);
+  await expect(page.getByTestId("loop-b")).toHaveValue("0:03.000"); // wait for decode
+
+  const body = page.locator("body");
+  const a = page.getByTestId("loop-a");
+  const b = page.getByTestId("loop-b");
+  const undo = page.getByTestId("loop-undo");
+  const redo = page.getByTestId("loop-redo");
+
+  // nothing edited yet
+  await expect(undo).toBeDisabled();
+  await expect(redo).toBeDisabled();
+
+  // set B at 1s, then A at 0.5s
+  await body.press("ArrowRight");
+  await body.press("ArrowRight");
+  await body.press("ArrowRight");
+  await body.press("ArrowRight");
+  await page.getByRole("button", { name: "Set B here" }).click();
+  await expect(b).toHaveValue("0:01.000");
+  await body.press("ArrowLeft");
+  await body.press("ArrowLeft");
+  await page.getByRole("button", { name: "Set A here" }).click();
+  await expect(a).toHaveValue("0:00.500");
+
+  // Ctrl+Z takes back the A set, then the B set
+  await body.press("Control+z");
+  await expect(a).toHaveValue("0:00.000");
+  await expect(b).toHaveValue("0:01.000");
+  await body.press("Control+z");
+  await expect(b).toHaveValue("0:03.000");
+  await expect(undo).toBeDisabled();
+
+  // Ctrl+Shift+Z replays them
+  await body.press("Control+Shift+z");
+  await expect(b).toHaveValue("0:01.000");
+  await body.press("Control+Shift+z");
+  await expect(a).toHaveValue("0:00.500");
+  await expect(redo).toBeDisabled();
+
+  // the buttons do the same
+  await undo.click();
+  await expect(a).toHaveValue("0:00.000");
+  await redo.click();
+  await expect(a).toHaveValue("0:00.500");
+
+  // a fresh edit drops the redo branch
+  await undo.click();
+  await expect(redo).toBeEnabled();
+  await b.fill("0:02.000");
+  await b.press("Enter");
+  await expect(redo).toBeDisabled();
+});
+
+test("loop history holds 10 steps, is per loop, and collapses a drag", async ({ page }) => {
+  await page.goto("/");
+  await uploadWav(page, 3);
+  await expect(page.getByTestId("loop-b")).toHaveValue("0:03.000"); // wait for decode
+
+  const a = page.getByTestId("loop-a");
+  const undo = page.getByTestId("loop-undo");
+
+  // 12 edits, only the last 10 are undoable
+  for (let i = 1; i <= 12; i++) {
+    await a.fill(`0:00.${String(i * 10).padStart(3, "0")}`);
+    await a.press("Enter");
+  }
+  await expect(a).toHaveValue("0:00.120");
+  for (let i = 0; i < 10; i++) await undo.click();
+  await expect(a).toHaveValue("0:00.020"); // state after the 2nd edit
+  await expect(undo).toBeDisabled();
+
+  // a new loop starts with its own empty history
+  await page.locator("body").press("n");
+  await expect(undo).toBeDisabled();
+
+  // one whole drag of the B handle is one undo step
+  const before = await page.getByTestId("loop-b").inputValue();
+  const handle = page.locator(".cursor-ew-resize").filter({ hasText: "B" });
+  const box = (await handle.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2 - 60, box.y + box.height / 2, { steps: 5 });
+  await page.mouse.up();
+  await expect(page.getByTestId("loop-b")).not.toHaveValue(before);
+  await undo.click();
+  await expect(page.getByTestId("loop-b")).toHaveValue(before);
+  await expect(undo).toBeDisabled();
+});
+
 test("switching tracks seeks the playhead to the active loop start", async ({ page }) => {
   await page.goto("/");
   await uploadWav(page, 3, "one.wav");

@@ -1,11 +1,18 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { RedoIcon, UndoIcon } from "@/components/icons";
 import { MIN_GAP, canSetLoopA, canSetLoopB, setLoopA, setLoopB } from "@/lib/loopEdit";
 import { player } from "@/lib/player/controller";
 import { fmt, parseTime } from "@/lib/time";
 import { activeLoop, type Track } from "@/lib/types";
 import { useLibrary } from "@/store/library";
+import {
+  redoLoopEdit,
+  undoLoopEdit,
+  useCanRedoLoop,
+  useCanUndoLoop,
+} from "@/store/loopHistory";
 
 function NudgeButton({ onClick, title, children }: { onClick: () => void; title: string; children: React.ReactNode }) {
   return (
@@ -21,6 +28,8 @@ function NudgeButton({ onClick, title, children }: { onClick: () => void; title:
 
 export function LoopTrim({ track }: { track: Track }) {
   const patchActiveLoop = useLibrary((s) => s.patchActiveLoop);
+  const canUndo = useCanUndoLoop();
+  const canRedo = useCanRedoLoop();
   const aRef = useRef<HTMLInputElement>(null);
   const bRef = useRef<HTMLInputElement>(null);
 
@@ -104,6 +113,9 @@ export function LoopTrim({ track }: { track: Track }) {
   const setBtnCls =
     "h-full cursor-pointer whitespace-nowrap rounded-[11px] border border-[rgba(94,234,212,.3)] bg-[rgba(94,234,212,.07)] px-[15px] py-[10px] text-[12.5px] font-semibold text-accent disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-muted-3";
 
+  const histBtnCls =
+    "flex h-full w-[42px] cursor-pointer items-center justify-center rounded-[11px] border border-white/10 bg-white/5 text-ink-3 hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:border-white/8 disabled:bg-white/3 disabled:text-muted-3 disabled:hover:border-white/8 disabled:hover:text-muted-3";
+
   return (
     <div className="flex flex-wrap items-stretch gap-[10px] px-4 pt-3 sm:px-[26px]">
       <div className="flex flex-wrap items-center gap-x-[14px] gap-y-2 rounded-[11px] border border-white/8 bg-panel-2 px-[15px] py-[9px]">
@@ -171,6 +183,26 @@ export function LoopTrim({ track }: { track: Track }) {
           className={setBtnCls}
         >
           Set B here
+        </button>
+        <button
+          onClick={undoLoopEdit}
+          disabled={!canUndo}
+          data-testid="loop-undo"
+          title="Undo loop edit (Ctrl+Z)"
+          aria-label="Undo loop edit"
+          className={histBtnCls}
+        >
+          <UndoIcon />
+        </button>
+        <button
+          onClick={redoLoopEdit}
+          disabled={!canRedo}
+          data-testid="loop-redo"
+          title="Redo loop edit (Ctrl+Shift+Z)"
+          aria-label="Redo loop edit"
+          className={histBtnCls}
+        >
+          <RedoIcon />
         </button>
       </div>
     </div>
