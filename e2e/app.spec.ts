@@ -80,16 +80,23 @@ async function fakeYoutubeApi(page: Page) {
       }
       loadVideoById(id: string): void {
         calls.push(`loadVideoById:${id}`);
-        this.videoId = id;
-        this.setState(1); // always autostarts
+        this.swapVideo(id, 1); // always autostarts
       }
       cueVideoById(id: string, start?: number): void {
         calls.push(`cueVideoById:${id}@${start ?? 0}`);
-        this.videoId = id;
-        this.setState(5); // real API fires "video cued" too
+        this.swapVideo(id, 5); // real API fires "video cued" too
       }
-      getVideoData(): { title: string } {
-        return { title: `Title of ${this.videoId}` };
+      // the real player fires state changes before getVideoData() catches up:
+      // it keeps reporting the previous video's metadata until the new one loads
+      private swapVideo(id: string, state: number): void {
+        this.setState(state);
+        setTimeout(() => {
+          this.videoId = id;
+          this.setState(state);
+        }, 0);
+      }
+      getVideoData(): { title: string; video_id: string } {
+        return { title: `Title of ${this.videoId}`, video_id: this.videoId };
       }
       getCurrentTime(): number {
         return 0;
@@ -219,6 +226,27 @@ test("YouTube track title defaults to the video title once the player reports it
   // placeholder replaced by the fake player's getVideoData().title
   await expect(page.getByText("Title of dQw4w9WgXcQ").first()).toBeVisible();
   await expect(page.getByText("YouTube loop")).toHaveCount(0);
+});
+
+test("a second YouTube track gets its own title, not the previous video's", async ({ page }) => {
+  await blockYoutube(page);
+  await fakeYoutubeApi(page);
+  await page.goto("/");
+
+  const url = page.getByPlaceholder("youtube.com/watch?v=…");
+  await url.fill("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+  await url.press("Enter");
+  await expect(page.getByText("Title of dQw4w9WgXcQ").first()).toBeVisible();
+
+  const topbarUrl = page.getByPlaceholder("Paste a YouTube link…");
+  await topbarUrl.fill("https://www.youtube.com/watch?v=oHg5SJYRHA0");
+  await topbarUrl.press("Enter");
+
+  // the cue fires state changes while getVideoData() still reports the first
+  // video — the new track must wait for its own metadata instead of inheriting
+  await expect(page.getByText("Title of oHg5SJYRHA0").first()).toBeVisible();
+  await expect(page.getByText("YouTube loop")).toHaveCount(0);
+  await expect(page.getByText("Title of dQw4w9WgXcQ")).toHaveCount(1); // sidebar only
 });
 
 test("uploading an audio file decodes duration and spans the loop across it", async ({ page }) => {

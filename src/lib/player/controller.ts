@@ -20,7 +20,7 @@ interface YTPlayer {
   cueVideoById(videoId: string, startSeconds?: number): void;
   getPlayerState(): number;
   /** Undocumented but long-stable: metadata of the loaded/cued video. */
-  getVideoData?(): { title?: string } | undefined;
+  getVideoData?(): { title?: string; video_id?: string } | undefined;
   /** Undocumented but long-stable: unloads a player module ("captions"). */
   unloadModule?(module: string): void;
   destroy(): void;
@@ -513,7 +513,12 @@ class PlaybackController {
     if (!c || c.kind !== "youtube" || c.id !== this.ytTrackId || !this.yt) return;
     if (c.title !== YT_PLACEHOLDER_TITLE) return; // user already renamed it
     try {
-      const title = this.yt.getVideoData?.()?.title?.trim();
+      const data = this.yt.getVideoData?.();
+      // after cueVideoById/loadVideoById the player keeps reporting the
+      // previous video's metadata until the new one loads — without this
+      // check the new track would inherit the previous video's title
+      if (data?.video_id && data.video_id !== c.videoId) return;
+      const title = data?.title?.trim();
       if (title) useLibrary.getState().patchTrack(c.id, { title });
     } catch {}
   }
