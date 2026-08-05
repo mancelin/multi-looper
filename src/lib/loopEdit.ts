@@ -7,6 +7,9 @@ import { useUi } from "@/store/ui";
 
 /** Shared clamped loop-edit operations (UI buttons + keyboard shortcuts). */
 
+/** Smallest allowed A→B distance. */
+export const MIN_GAP = 0.05;
+
 function ctx() {
   const s = useLibrary.getState();
   const track = currentTrack(s);
@@ -14,16 +17,28 @@ function ctx() {
   return { s, track, loop: activeLoop(track) };
 }
 
+/** A can only land left of B (min gap): past it the edit is refused, not clamped. */
+export function canSetLoopA(v: number): boolean {
+  const c = ctx();
+  return !!c && v <= c.loop.b - MIN_GAP;
+}
+
+/** Mirror of {@link canSetLoopA} for the loop end. */
+export function canSetLoopB(v: number): boolean {
+  const c = ctx();
+  return !!c && v >= c.loop.a + MIN_GAP;
+}
+
 export function setLoopA(v: number): void {
   const c = ctx();
-  if (!c) return;
-  c.s.patchActiveLoop({ a: Math.max(0, Math.min(v, c.loop.b - 0.05)) });
+  if (!c || v > c.loop.b - MIN_GAP) return;
+  c.s.patchActiveLoop({ a: Math.max(0, v) });
 }
 
 export function setLoopB(v: number): void {
   const c = ctx();
-  if (!c) return;
-  c.s.patchActiveLoop({ b: Math.max(c.loop.a + 0.05, Math.min(v, c.track.duration)) });
+  if (!c || v < c.loop.a + MIN_GAP) return;
+  c.s.patchActiveLoop({ b: Math.min(v, c.track.duration) });
   // committing a loop end means the user wants looping on
   useUi.setState({ loopEnabled: true });
 }
@@ -31,13 +46,14 @@ export function setLoopB(v: number): void {
 export function nudgeA(delta: number): void {
   const c = ctx();
   if (!c) return;
-  setLoopA(c.loop.a + delta);
+  // fine trim still clamps at the min gap rather than refusing the step
+  setLoopA(Math.min(c.loop.a + delta, c.loop.b - MIN_GAP));
 }
 
 export function nudgeB(delta: number): void {
   const c = ctx();
   if (!c) return;
-  setLoopB(c.loop.b + delta);
+  setLoopB(Math.max(c.loop.b + delta, c.loop.a + MIN_GAP));
 }
 
 export function addLoopAtPlayhead(): void {

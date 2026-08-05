@@ -364,11 +364,15 @@ test("setting loop B re-enables loop mode", async ({ page }) => {
   const loopBtn = page.getByRole("button", { name: "Loop", exact: true });
   await expect(loopBtn).toHaveAttribute("aria-pressed", "true");
 
-  // pressing B re-enables looping
+  // pressing B re-enables looping (playhead must be right of A first)
+  await page.locator("body").press("ArrowRight");
+  await page.locator("body").press("ArrowRight");
+  await expect(page.getByTestId("time")).toHaveText("0:00.500");
   await loopBtn.click();
   await expect(loopBtn).toHaveAttribute("aria-pressed", "false");
   await page.locator("body").press("b");
   await expect(loopBtn).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByTestId("loop-b")).toHaveValue("0:00.500");
 
   // so does the "Set B here" button
   await loopBtn.click();
@@ -384,6 +388,43 @@ test("setting loop B re-enables loop mode", async ({ page }) => {
   await page.mouse.move(box.x + box.width / 2 + 40, box.y + box.height / 2, { steps: 3 });
   await page.mouse.up();
   await expect(loopBtn).toHaveAttribute("aria-pressed", "true");
+});
+
+test("setting A past B (or B before A) is refused, not clamped", async ({ page }) => {
+  await page.goto("/");
+  await uploadWav(page, 3);
+  await expect(page.getByTestId("loop-b")).toHaveValue("0:03.000"); // wait for decode
+
+  const body = page.locator("body");
+  const setA = page.getByRole("button", { name: "Set A here" });
+  const setB = page.getByRole("button", { name: "Set B here" });
+  const seek = async (times: number, key: "ArrowLeft" | "ArrowRight") => {
+    for (let i = 0; i < times; i++) await body.press(key);
+  };
+
+  // pull B in to 1s
+  await seek(4, "ArrowRight");
+  await expect(page.getByTestId("time")).toHaveText("0:01.000");
+  await setB.click();
+  await expect(page.getByTestId("loop-b")).toHaveValue("0:01.000");
+
+  // playhead past B: setting A is refused, by button and by shortcut
+  await seek(4, "ArrowRight");
+  await expect(page.getByTestId("time")).toHaveText("0:02.000");
+  await expect(setA).toBeDisabled();
+  await body.press("a");
+  await expect(page.getByTestId("loop-a")).toHaveValue("0:00.000");
+
+  // mirror case: playhead before A leaves B alone
+  await seek(6, "ArrowLeft");
+  await expect(page.getByTestId("time")).toHaveText("0:00.500");
+  await setA.click();
+  await expect(page.getByTestId("loop-a")).toHaveValue("0:00.500");
+  await seek(1, "ArrowLeft");
+  await expect(page.getByTestId("time")).toHaveText("0:00.250");
+  await expect(setB).toBeDisabled();
+  await body.press("b");
+  await expect(page.getByTestId("loop-b")).toHaveValue("0:01.000");
 });
 
 test("switching tracks seeks the playhead to the active loop start", async ({ page }) => {
