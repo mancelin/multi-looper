@@ -298,6 +298,14 @@ class PlaybackController {
     else this.play();
   }
 
+  /** Jump back to the active loop's start and play from there. */
+  restartLoop(): void {
+    const c = this.track();
+    if (!c) return;
+    this.setT(activeLoop(c).a);
+    this.play();
+  }
+
   applyRate(r: number): void {
     if (!isFinite(r)) return;
     r = Math.max(0.25, Math.min(1.5, r));

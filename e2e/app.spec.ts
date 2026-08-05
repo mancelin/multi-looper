@@ -846,17 +846,27 @@ test("keyboard shortcut S toggles the shortcuts modal", async ({ page }) => {
   await expect(heading).not.toBeVisible();
 });
 
-test("keyboard shortcut R resets speed to 1.00", async ({ page }) => {
+test("keyboard shortcut R plays from the loop start", async ({ page }) => {
   await page.goto("/");
-  await uploadWav(page, 3);
+  await uploadWav(page, 6);
 
-  await expect(page.getByTestId("loop-b")).toHaveValue("0:03.000"); // shortcuts ignore keys until a track exists
+  const a = page.getByTestId("loop-a");
+  await a.fill("0:02.000"); // shortcuts ignore keys until a track exists
+  await a.press("Enter");
+  await expect(a).toHaveValue("0:02.000");
 
-  const rate = page.getByTitle("Type a speed from 0.25 to 1.50");
-  await page.locator("body").press("ArrowDown");
-  await expect(rate).toHaveValue("0.95");
+  const time = page.getByTestId("time");
+  await page.getByRole("button", { name: "Play" }).click();
+  await expect(time).toHaveText(/^0:0[3-5]\./, { timeout: 5000 }); // ran past the loop start
+
   await page.locator("body").press("r");
-  await expect(rate).toHaveValue("1.00");
+  await expect(time).toHaveText(/^0:02\./);
+  await expect(page.getByRole("button", { name: "Pause" })).toBeVisible();
+
+  // also starts playback when paused
+  await page.getByRole("button", { name: "Pause" }).click();
+  await page.locator("body").press("r");
+  await expect(page.getByRole("button", { name: "Pause" })).toBeVisible();
 });
 
 test("A/B badges stay inside the waveform at track edges and never overlap when close", async ({

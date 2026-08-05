@@ -12,7 +12,7 @@ const SHORTCUTS: Array<{ key: string; label: string }> = [
   { key: "< / >", label: "Previous / next song" },
   { key: "[ / ]", label: "Previous / next loop" },
   { key: "N", label: "Add loop at playhead" },
-  { key: "R", label: "Reset speed" },
+  { key: "R", label: "Play from loop start" },
   { key: "Ctrl+Z", label: "Undo loop edit" },
   { key: "Ctrl+Shift+Z", label: "Redo loop edit" },
   { key: "S", label: "Show / hide shortcuts" },

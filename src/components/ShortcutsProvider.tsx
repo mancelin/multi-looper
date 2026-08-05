@@ -55,7 +55,10 @@ export function ShortcutsProvider() {
         e.preventDefault();
         cycleLoop(1);
       } else if (k === "n" || k === "N") addLoopAtPlayhead();
-      else if (k === "r" || k === "R") player.applyRate(1);
+      else if (k === "r" || k === "R") {
+        e.preventDefault();
+        player.restartLoop();
+      }
       else if (k === "s" || k === "S") useUi.getState().toggleShortcuts();
     };
     window.addEventListener("keydown", onKey);
