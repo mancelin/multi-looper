@@ -189,7 +189,7 @@ test("a fresh YouTube player cues at the active loop's A point", async ({ page }
     .toContain("cueVideoById:dQw4w9WgXcQ@30");
 });
 
-test("YouTube poster cover hides the iframe UI while paused and clears during playback", async ({
+test("YouTube poster cover hides the iframe UI before playback and clears once started", async ({
   page,
 }) => {
   await blockYoutube(page);
@@ -201,14 +201,27 @@ test("YouTube poster cover hides the iframe UI while paused and clears during pl
   await url.press("Enter");
   await expect(page.getByTestId("loop-b")).toHaveValue("5:00.000");
 
-  // paused: the opaque cover shields YouTube's title/share/"More videos" UI
+  // cued, never played: the opaque cover shields YouTube's title/share UI
   const cover = page.getByTestId("yt-cover");
   await expect(cover).toHaveCSS("opacity", "1");
 
   await page.getByRole("button", { name: "Play", exact: true }).click();
   await expect(cover).toHaveCSS("opacity", "0");
 
+  // pause freezes on the current video frame — the cover must not come back
   await page.getByRole("button", { name: "Pause", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Play", exact: true })).toBeVisible();
+  await expect(cover).toHaveCSS("opacity", "0");
+  expect(
+    await page.evaluate(
+      () => (window as unknown as { __yt: { player: { state: number } } }).__yt.player.state,
+    ),
+  ).toBe(2);
+
+  // switching to another video re-cues it: no frame yet, so cover returns
+  const topbarUrl = page.getByPlaceholder("Paste a YouTube link…");
+  await topbarUrl.fill("https://www.youtube.com/watch?v=oHg5SJYRHA0");
+  await topbarUrl.press("Enter");
   await expect(cover).toHaveCSS("opacity", "1");
 });
 

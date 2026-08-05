@@ -455,9 +455,13 @@ class PlaybackController {
               this.ytReady = true;
               this.hideYtCaptions();
               // playing(1)/buffering(3) count as live so the poster cover
-              // doesn't flash on loop seeks; every other state (cued, paused,
-              // ended, unstarted) re-covers YouTube's overlay UI
-              useUi.getState().setYtSurfaceLive(e.data === 1 || e.data === 3);
+              // doesn't flash on loop seeks; paused(2) stays live too so a
+              // pause freezes on the current video frame instead of swapping
+              // to the poster (the crop + scale-down already neutralize the
+              // chrome YouTube draws over a paused frame). The remaining
+              // states (cued, ended, unstarted) show no frame of ours and
+              // YouTube's full overlay UI, so they re-cover.
+              useUi.getState().setYtSurfaceLive(e.data === 1 || e.data === 2 || e.data === 3);
               this.patchYtTitle();
               if (e.data === 1) {
                 if (this.ytDurationPatchedFor !== this.ytTrackId) {

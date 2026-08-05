@@ -72,8 +72,10 @@ export function VideoPanel({
   const videoWidth = useUi((s) => s.videoWidth);
   const setVideoWidth = useUi((s) => s.setVideoWidth);
   // real IFrame player state, not transport intent: the cover must stay up
-  // while the video is cued/loading/paused/ended even if the transport says
-  // "playing" — YouTube shows its overlay UI in all of those states
+  // while the video is cued/unstarted/ended even if the transport says
+  // "playing" — YouTube shows its overlay UI in those states and there is no
+  // frame of ours underneath. A pause keeps the surface live so the current
+  // frame stays visible.
   const ytLive = useUi((s) => s.ytSurfaceLive);
   const ytScale = ytScaleFor(videoWidth);
   const ytCrop = ytCropFor(ytScale);
@@ -206,9 +208,9 @@ export function VideoPanel({
             }}
           />
         )}
-        {/* YouTube's paused/cued UI (title bar, share, "More videos", big play
+        {/* YouTube's cued/ended UI (title bar, share, "More videos", big play
             button) renders inside the iframe and can't be styled away, so an
-            opaque poster covers the iframe whenever playback is stopped. */}
+            opaque poster covers the iframe until playback starts. */}
         {track.kind === "youtube" && (
           <div
             aria-hidden
