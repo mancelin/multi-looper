@@ -356,6 +356,42 @@ test("editing loop start via the trim field updates loop length", async ({ page 
   await expect(page.getByTestId("loop-len")).toHaveText("0:02.000");
 });
 
+test("typing one loop end in the trim field spans 10s from it", async ({ page }) => {
+  await blockYoutube(page);
+  await page.goto("/");
+  const url = page.getByPlaceholder("youtube.com/watch?v=…");
+  await url.fill("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+  await url.press("Enter");
+  await expect(page.getByTestId("loop-b")).toHaveValue("3:30.000"); // 210s placeholder
+
+  // typing a start pulls the end 10s after it
+  const a = page.getByTestId("loop-a");
+  await a.fill("1:00.000");
+  await a.press("Enter");
+  await expect(a).toHaveValue("1:00.000");
+  await expect(page.getByTestId("loop-b")).toHaveValue("1:10.000");
+  await expect(page.getByTestId("loop-len")).toHaveText("0:10.000");
+
+  // typing an end pushes the start 10s before it
+  const b = page.getByTestId("loop-b");
+  await b.fill("0:30.000");
+  await b.press("Enter");
+  await expect(a).toHaveValue("0:20.000");
+  await expect(b).toHaveValue("0:30.000");
+
+  // re-blurring an untouched field leaves the loop alone
+  await a.focus();
+  await a.blur();
+  await expect(a).toHaveValue("0:20.000");
+  await expect(b).toHaveValue("0:30.000");
+
+  // near the end of the track the span is clamped, not pushed past the duration
+  await a.fill("3:25.000");
+  await a.press("Enter");
+  await expect(b).toHaveValue("3:30.000");
+  await expect(page.getByTestId("loop-len")).toHaveText("0:05.000");
+});
+
 test("setting loop B re-enables loop mode", async ({ page }) => {
   await page.goto("/");
   await uploadWav(page, 3);
@@ -708,6 +744,8 @@ test("keyboard shortcut S toggles the shortcuts modal", async ({ page }) => {
 test("keyboard shortcut R resets speed to 1.00", async ({ page }) => {
   await page.goto("/");
   await uploadWav(page, 3);
+
+  await expect(page.getByTestId("loop-b")).toHaveValue("0:03.000"); // shortcuts ignore keys until a track exists
 
   const rate = page.getByTitle("Type a speed from 0.25 to 1.50");
   await page.locator("body").press("ArrowDown");

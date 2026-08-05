@@ -28,6 +28,19 @@ export function LoopTrim({ track }: { track: Track }) {
   const clampA = (v: number) => Math.max(0, Math.min(v, lp.b - MIN_GAP));
   const clampB = (v: number) => Math.max(lp.a + MIN_GAP, Math.min(v, track.duration));
 
+  /** Typing one end into a time field re-spans the loop to this length around it. */
+  const TYPED_SPAN = 10;
+
+  /** Both ends move together, so each is clamped to the track rather than the other. */
+  const spanFromA = (v: number) => {
+    const a = Math.max(0, Math.min(v, track.duration - MIN_GAP));
+    return { a, b: Math.min(a + TYPED_SPAN, track.duration) };
+  };
+  const spanFromB = (v: number) => {
+    const b = Math.max(MIN_GAP, Math.min(v, track.duration));
+    return { a: Math.max(b - TYPED_SPAN, 0), b };
+  };
+
   // the playhead moves imperatively, so watch it here and only re-render when
   // a "Set A/B here" button flips between usable and refused
   const [canA, setCanA] = useState(true);
@@ -60,7 +73,9 @@ export function LoopTrim({ track }: { track: Track }) {
   const commit = (which: "a" | "b") => {
     const ref = which === "a" ? aRef : bRef;
     const v = parseTime(ref.current?.value);
-    if (v != null) patchActiveLoop(which === "a" ? { a: clampA(v) } : { b: clampB(v) });
+    const cur = which === "a" ? lp.a : lp.b;
+    // a blur with the value untouched must not re-span the loop
+    if (v != null && v !== cur) patchActiveLoop(which === "a" ? spanFromA(v) : spanFromB(v));
     setTimeout(() => {
       if (aRef.current && document.activeElement !== aRef.current) aRef.current.value = fmt(activeLoop(currentFromStore() ?? track).a);
       if (bRef.current && document.activeElement !== bRef.current) bRef.current.value = fmt(activeLoop(currentFromStore() ?? track).b);
