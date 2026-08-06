@@ -1,10 +1,37 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { CloseIcon, NoteIcon, SearchIcon } from "@/components/icons";
 import { player } from "@/lib/player/controller";
 import { fmtS } from "@/lib/time";
 import { useLibrary } from "@/store/library";
 import { useUi } from "@/store/ui";
+
+/** Pointer travel (px) that turns a mouse press into a drag. */
+const MOUSE_DRAG_SLOP = 5;
+/** Touch press (ms) that starts a drag; below it the list still scrolls normally. */
+const TOUCH_HOLD_MS = 350;
+/** Distance from the list edges (px) where a drag auto-scrolls. */
+const EDGE = 44;
+
+// Non-passive so it can actually stop the page from scrolling under a touch drag.
+function blockTouchScroll(e: TouchEvent) {
+  e.preventDefault();
+}
+
+interface Gesture {
+  id: string;
+  x: number;
+  y: number;
+  pointerId: number;
+  timer: ReturnType<typeof setTimeout> | null;
+  dragging: boolean;
+}
+
+interface Drop {
+  id: string;
+  after: boolean;
+}
 
 export function Sidebar() {
   const tracks = useLibrary((s) => s.tracks);
@@ -12,9 +39,111 @@ export function Sidebar() {
   const search = useLibrary((s) => s.search);
   const setSearch = useLibrary((s) => s.setSearch);
   const removeTrack = useLibrary((s) => s.removeTrack);
+  const reorderTracks = useLibrary((s) => s.reorderTracks);
   const narrow = useUi((s) => s.narrow);
   const sidebarOpen = useUi((s) => s.sidebarOpen);
   const toggleSidebar = useUi((s) => s.toggleSidebar);
+
+  const listRef = useRef<HTMLDivElement>(null);
+  const gesture = useRef<Gesture | null>(null);
+  const dropRef = useRef<Drop | null>(null);
+  const scrollDir = useRef(0);
+  const raf = useRef(0);
+  // a drag ends with a click on the row it started from — that must not select it
+  const suppressClick = useRef(false);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [drop, setDrop] = useState<Drop | null>(null);
+
+  const stopAutoScroll = () => {
+    scrollDir.current = 0;
+    if (raf.current) cancelAnimationFrame(raf.current);
+    raf.current = 0;
+  };
+
+  const endGesture = () => {
+    const g = gesture.current;
+    if (g?.timer) clearTimeout(g.timer);
+    gesture.current = null;
+    dropRef.current = null;
+    setDragId(null);
+    setDrop(null);
+    stopAutoScroll();
+    document.removeEventListener("touchmove", blockTouchScroll);
+  };
+
+  useEffect(() => endGesture, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const beginDrag = (g: Gesture) => {
+    g.timer = null;
+    g.dragging = true;
+    setDragId(g.id);
+    document.addEventListener("touchmove", blockTouchScroll, { passive: false });
+    const step = () => {
+      const el = listRef.current;
+      if (el && scrollDir.current) el.scrollTop += scrollDir.current * 9;
+      raf.current = requestAnimationFrame(step);
+    };
+    raf.current = requestAnimationFrame(step);
+  };
+
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>, id: string) => {
+    if (e.button !== 0) return;
+    if ((e.target as HTMLElement).closest("button")) return; // remove button
+    // a drag that ended over another row never produces a click — clear the flag here
+    suppressClick.current = false;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const g: Gesture = { id, x: e.clientX, y: e.clientY, pointerId: e.pointerId, timer: null, dragging: false };
+    gesture.current = g;
+    if (e.pointerType !== "mouse") {
+      g.timer = setTimeout(() => beginDrag(g), TOUCH_HOLD_MS);
+    }
+  };
+
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const g = gesture.current;
+    if (!g || g.pointerId !== e.pointerId) return;
+    if (!g.dragging) {
+      const moved = Math.hypot(e.clientX - g.x, e.clientY - g.y);
+      if (e.pointerType === "mouse") {
+        if (moved > MOUSE_DRAG_SLOP) beginDrag(g);
+      } else if (moved > 10) {
+        endGesture(); // the finger is scrolling, not dragging
+      }
+      return;
+    }
+
+    const row = (document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null)?.closest(
+      "[data-track-id]",
+    ) as HTMLElement | null;
+    if (row) {
+      const r = row.getBoundingClientRect();
+      const next: Drop = { id: row.dataset.trackId!, after: e.clientY > r.top + r.height / 2 };
+      if (next.id !== dropRef.current?.id || next.after !== dropRef.current.after) {
+        dropRef.current = next;
+        setDrop(next);
+      }
+    }
+
+    const box = listRef.current?.getBoundingClientRect();
+    scrollDir.current = !box
+      ? 0
+      : e.clientY < box.top + EDGE
+        ? -1
+        : e.clientY > box.bottom - EDGE
+          ? 1
+          : 0;
+  };
+
+  const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    const g = gesture.current;
+    if (!g || g.pointerId !== e.pointerId) return;
+    const target = dropRef.current;
+    if (g.dragging) {
+      suppressClick.current = true;
+      if (target && target.id !== g.id) reorderTracks(g.id, target.id, target.after);
+    }
+    endGesture();
+  };
 
   if (!sidebarOpen || tracks.length === 0) return null;
 
@@ -54,13 +183,27 @@ export function Sidebar() {
           />
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto px-2 pb-[14px] pt-[2px]">
+      <div
+        ref={listRef}
+        className={`flex-1 overflow-y-auto px-2 pb-[14px] pt-[2px] ${dragId ? "select-none" : ""}`}
+      >
         {filtered.map((t) => {
           const active = t.id === currentId;
+          const dragging = t.id === dragId;
+          const marker = dragId && drop?.id === t.id && drop.id !== dragId ? drop : null;
           return (
             <div
               key={t.id}
+              data-track-id={t.id}
+              onPointerDown={(e) => onPointerDown(e, t.id)}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+              onPointerCancel={endGesture}
               onClick={() => {
+                if (suppressClick.current) {
+                  suppressClick.current = false;
+                  return;
+                }
                 player.selectTrack(t.id);
                 if (narrow) toggleSidebar();
               }}
@@ -68,8 +211,17 @@ export function Sidebar() {
               style={{
                 background: active ? "rgba(94,234,212,.08)" : "transparent",
                 borderColor: active ? "rgba(94,234,212,.28)" : "transparent",
+                opacity: dragging ? 0.4 : 1,
+                touchAction: dragId ? "none" : undefined,
               }}
             >
+              {marker && (
+                <div
+                  data-testid="drop-marker"
+                  className="pointer-events-none absolute left-[4px] right-[4px] h-[2px] rounded-full bg-[#5eead4]"
+                  style={marker.after ? { bottom: -3 } : { top: -3 }}
+                />
+              )}
               <div
                 className="absolute bottom-[9px] left-0 top-[9px] w-[3px] rounded-[3px]"
                 style={{ background: active ? t.accent : "transparent" }}
@@ -77,7 +229,7 @@ export function Sidebar() {
               <div className="relative flex h-11 w-11 flex-none items-center justify-center overflow-hidden rounded-[7px] bg-field-2">
                 {t.thumb ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={t.thumb} alt="" className="h-full w-full object-cover" />
+                  <img src={t.thumb} alt="" className="h-full w-full object-cover" draggable={false} />
                 ) : (
                   <span className="flex" style={{ color: t.accent }}>
                     <NoteIcon />

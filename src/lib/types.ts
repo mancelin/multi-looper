@@ -21,6 +21,8 @@ export interface Track {
   loops: Loop[];
   activeLoopId: string;
   accent: string;
+  /** library position, ascending; only meaningful for restoring order after a sync round-trip */
+  sortOrder?: number;
   peaks?: number[];
   thumb?: string;
   /** cover image as a data URL (downscaled), shown above the waveform for file tracks */

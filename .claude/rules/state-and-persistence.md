@@ -1,6 +1,6 @@
 # Data Model, Stores & Persistence
 
-Data model (`src/lib/types.ts`): a `Track` holds ≥1 named `Loop`s (`a`/`b` in seconds, kept sorted by `a`); `activeLoopId` picks the loop all A/B editing applies to. `id` is a client uid; `pbId` is set once synced to PocketBase.
+Data model (`src/lib/types.ts`): a `Track` holds ≥1 named `Loop`s (`a`/`b` in seconds, kept sorted by `a`); `activeLoopId` picks the loop all A/B editing applies to. `id` is a client uid; `pbId` is set once synced to PocketBase. Library order is the `tracks` array order (drag-and-drop in `Sidebar`); `sortOrder` mirrors it so PB restores it on load (new tracks get negative values to stay on top).
 
 Three Zustand stores in `src/store/`:
 - `library.ts` — tracks, current track, all track/loop mutations. Uses `subscribeWithSelector` so the persistence layers can watch it.

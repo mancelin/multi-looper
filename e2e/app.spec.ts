@@ -662,6 +662,47 @@ test.describe("mobile (360px)", () => {
   });
 });
 
+test("dragging a library entry reorders it, persists, and does not select on drop", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await uploadWav(page, 3, "alpha.wav");
+  await uploadWav(page, 4, "bravo.wav");
+
+  const rows = page.locator("[data-track-id]");
+  await expect(rows).toHaveCount(2);
+  // newest track is prepended
+  await expect(rows.nth(0)).toContainText("bravo");
+  await expect(rows.nth(1)).toContainText("alpha");
+  await expect(page.getByLabel("Track title")).toHaveValue("bravo");
+
+  const drag = async (fromIndex: number, toIndex: number, edge: "top" | "bottom") => {
+    const from = await rows.nth(fromIndex).boundingBox();
+    const to = await rows.nth(toIndex).boundingBox();
+    if (!from || !to) throw new Error("row not laid out");
+    await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+    await page.mouse.down();
+    const y = edge === "bottom" ? to.y + to.height * 0.8 : to.y + to.height * 0.2;
+    await page.mouse.move(to.x + to.width / 2, y, { steps: 12 });
+    await page.mouse.up();
+  };
+
+  // drop "bravo" below "alpha"
+  await drag(0, 1, "bottom");
+  await expect(rows.nth(0)).toContainText("alpha");
+  await expect(rows.nth(1)).toContainText("bravo");
+  // the drag must not double as a click that switches tracks
+  await expect(page.getByLabel("Track title")).toHaveValue("bravo");
+
+  await page.reload();
+  await expect(page.locator("[data-track-id]").nth(0)).toContainText("alpha");
+  await expect(page.locator("[data-track-id]").nth(1)).toContainText("bravo");
+
+  // a plain click still selects
+  await page.locator("[data-track-id]").nth(0).click();
+  await expect(page.getByLabel("Track title")).toHaveValue("alpha");
+});
+
 test("removing the last track returns to the empty state", async ({ page }) => {
   await page.goto("/");
   await uploadWav(page, 3);

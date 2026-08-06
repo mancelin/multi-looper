@@ -15,6 +15,7 @@ export interface LibraryState {
   removeTrack: (id: string) => void;
   selectTrack: (id: string) => void;
   patchTrack: (id: string, fields: Partial<Track>) => void;
+  reorderTracks: (dragId: string, targetId: string, after: boolean) => void;
   patchDuration: (id: string, duration: number) => void;
 
   selectLoop: (loopId: string) => void;
@@ -45,10 +46,18 @@ export const useLibrary = create<LibraryState>()(
       set({ tracks, currentId: currentId !== undefined ? currentId : (tracks[0]?.id ?? null) }),
 
     addTracks: (newTracks, select = true) =>
-      set((s) => ({
-        tracks: [...newTracks, ...s.tracks],
-        currentId: select && newTracks.length ? newTracks[0].id : s.currentId,
-      })),
+      set((s) => {
+        // new tracks go on top and must stay there after a sync round-trip
+        const top = Math.min(0, ...s.tracks.map((t) => t.sortOrder ?? 0));
+        const added = newTracks.map((t, i) => ({
+          ...t,
+          sortOrder: top - (newTracks.length - i),
+        }));
+        return {
+          tracks: [...added, ...s.tracks],
+          currentId: select && added.length ? added[0].id : s.currentId,
+        };
+      }),
 
     removeTrack: (id) =>
       set((s) => {
@@ -61,6 +70,20 @@ export const useLibrary = create<LibraryState>()(
 
     patchTrack: (id, fields) =>
       set((s) => ({ tracks: s.tracks.map((t) => (t.id === id ? { ...t, ...fields } : t)) })),
+
+    /** Move `dragId` before (or after) `targetId`; renumbers `sortOrder` so the order survives sync. */
+    reorderTracks: (dragId, targetId, after) =>
+      set((s) => {
+        if (dragId === targetId) return {};
+        const from = s.tracks.findIndex((t) => t.id === dragId);
+        if (from < 0) return {};
+        const list = [...s.tracks];
+        const [moved] = list.splice(from, 1);
+        const to = list.findIndex((t) => t.id === targetId);
+        if (to < 0) return {};
+        list.splice(after ? to + 1 : to, 0, moved);
+        return { tracks: list.map((t, i) => (t.sortOrder === i ? t : { ...t, sortOrder: i })) };
+      }),
 
     patchDuration: (id, d) =>
       set((s) => ({

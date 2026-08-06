@@ -41,6 +41,7 @@ function recordToTrack(r: RecordModel): Track {
     loops: (r.loops as Track["loops"]) ?? [],
     activeLoopId: (r.activeLoopId as string) || "",
     accent: (r.accent as string) || "#5eead4",
+    sortOrder: (r.sortOrder as number) || 0,
     peaks: (r.peaks as number[]) ?? undefined,
     thumb: (r.thumb as string) || undefined,
     image: (r.image as string) || undefined,
@@ -61,6 +62,7 @@ function trackPayload(t: Track): Record<string, unknown> {
     loops: t.loops,
     activeLoopId: t.activeLoopId,
     accent: t.accent,
+    sortOrder: t.sortOrder ?? 0,
     peaks: t.peaks ?? [],
     thumb: t.thumb ?? "",
     image: t.image ?? "",
@@ -216,7 +218,9 @@ let pendingGuest: Track[] | null = null;
 let pendingSaved: Track[] | null = null;
 
 async function fetchAccountTracks(): Promise<Track[]> {
-  const records = await pb.collection(COLLECTION).getFullList({ sort: "-created" });
+  // sortOrder is the user's drag order (newest tracks get negative values so
+  // they stay on top); -created only breaks ties between never-reordered records
+  const records = await pb.collection(COLLECTION).getFullList({ sort: "sortOrder,-created" });
   return records.map(recordToTrack);
 }
 
