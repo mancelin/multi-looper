@@ -74,6 +74,20 @@ pb-logs:
 env:
     cp -n .env.example .env || true
 
+# Build with the production PB URL and rsync the export to the VPS (frontend only)
 deploy:
     NEXT_PUBLIC_POCKETBASE_URL=https://pb.multi-looper.com bun run build
     rsync -av --delete out/ $DEPLOY_HOST:/var/www/multi-looper/
+
+# Push, then pull + rebuild PocketBase on the VPS (pending migrations run on boot)
+pb-deploy:
+    git push
+    ssh $DEPLOY_HOST 'cd ~/multi-looper && git pull --ff-only && docker compose up -d --build'
+    @echo "waiting for PocketBase…"
+    @for i in $(seq 30); do curl -sf https://pb.multi-looper.com/api/health >/dev/null && exit 0; sleep 2; done; echo "PocketBase never came back healthy"; exit 1
+    @test "$(ls pb/pb_migrations | sort | md5sum)" = "$(ssh $DEPLOY_HOST 'ls ~/multi-looper/pb/pb_migrations | sort | md5sum')" || { echo "VPS migrations differ from local — the frontend was NOT deployed"; exit 1; }
+    @echo "PocketBase up to date"
+
+# Full release: migrate PocketBase first, then ship the frontend (a frontend expecting new PB fields breaks against an un-migrated server)
+deploy-and-migrate: pb-deploy deploy
+    @echo "deployed: https://multi-looper.com"
