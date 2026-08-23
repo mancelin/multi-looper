@@ -21,6 +21,9 @@ export function ShortcutsProvider() {
       // the record modal owns the keyboard while it is open — its preview
       // transport is separate from the app player behind the overlay
       if (useUi.getState().recordOpen) return;
+      // the remove confirmation owns the keyboard too — Space must not reach
+      // the transport behind it
+      if (useUi.getState().confirmRemoveId) return;
       const k = e.key;
       if (e.ctrlKey || e.metaKey) {
         // Ctrl/Cmd+Z undo, +Shift redo; every other combo stays with the browser

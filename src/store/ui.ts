@@ -36,6 +36,8 @@ export interface UiState {
   recordOpen: boolean;
   /** run mic takes through the browser's speech denoiser */
   recordDenoise: boolean;
+  /** track awaiting the remove confirmation, null when the dialog is closed */
+  confirmRemoveId: string | null;
 
   account: Account | null;
   accountMenuOpen: boolean;
@@ -65,6 +67,8 @@ export interface UiState {
   setYtModalOpen: (v: boolean) => void;
   setRecordOpen: (v: boolean) => void;
   setRecordDenoise: (v: boolean) => void;
+  askRemoveTrack: (id: string) => void;
+  closeRemoveConfirm: () => void;
 
   setAccount: (a: Account | null) => void;
   setAccountMenuOpen: (v: boolean) => void;
@@ -99,6 +103,7 @@ export const useUi = create<UiState>()((set) => ({
   ytModalOpen: false,
   recordOpen: false,
   recordDenoise: true,
+  confirmRemoveId: null,
 
   account: null,
   accountMenuOpen: false,
@@ -127,6 +132,8 @@ export const useUi = create<UiState>()((set) => ({
   setYtModalOpen: (v) => set({ ytModalOpen: v }),
   setRecordOpen: (v) => set({ recordOpen: v }),
   setRecordDenoise: (v) => set({ recordDenoise: v }),
+  askRemoveTrack: (id) => set({ confirmRemoveId: id }),
+  closeRemoveConfirm: () => set({ confirmRemoveId: null }),
 
   setAccount: (a) => set(a ? { account: a } : { account: null, storageUsed: null }),
   setAccountMenuOpen: (v) => set({ accountMenuOpen: v }),

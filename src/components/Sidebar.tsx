@@ -38,8 +38,8 @@ export function Sidebar() {
   const currentId = useLibrary((s) => s.currentId);
   const search = useLibrary((s) => s.search);
   const setSearch = useLibrary((s) => s.setSearch);
-  const removeTrack = useLibrary((s) => s.removeTrack);
   const reorderTracks = useLibrary((s) => s.reorderTracks);
+  const askRemoveTrack = useUi((s) => s.askRemoveTrack);
   const narrow = useUi((s) => s.narrow);
   const sidebarOpen = useUi((s) => s.sidebarOpen);
   const toggleSidebar = useUi((s) => s.toggleSidebar);
@@ -264,9 +264,7 @@ export function Sidebar() {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  const wasCurrent = t.id === currentId;
-                  removeTrack(t.id);
-                  if (wasCurrent) player.afterRemoval();
+                  askRemoveTrack(t.id);
                 }}
                 title="Remove"
                 className="flex h-[22px] w-[22px] flex-none cursor-pointer items-center justify-center self-start rounded-[6px] border-none bg-transparent text-muted-5 hover:bg-[rgba(248,113,113,.1)] hover:text-danger"

@@ -710,9 +710,30 @@ test("removing the last track returns to the empty state", async ({ page }) => {
   await expect(page.getByTitle("Rename loop")).toHaveCount(1);
 
   await page.getByTitle("Remove", { exact: true }).click();
+  await expect(page.getByTestId("confirm-remove")).toContainText("sample");
+  await page.getByTestId("confirm-remove-ok").click();
   await expect(
     page.getByRole("heading", { name: "Loop anything" }),
   ).toBeVisible();
+});
+
+test("cancelling the remove confirmation keeps the track", async ({ page }) => {
+  await page.goto("/");
+  await uploadWav(page, 3, "keeper.wav");
+  await expect(page.getByTitle("Rename loop")).toHaveCount(1);
+
+  // cancel button
+  await page.getByTitle("Remove", { exact: true }).click();
+  await page.getByTestId("confirm-remove-cancel").click();
+  await expect(page.getByTestId("confirm-remove")).toHaveCount(0);
+  await expect(page.locator("[data-track-id]")).toHaveCount(1);
+
+  // Escape does the same, and does not reach the transport behind the dialog
+  await page.getByTitle("Remove", { exact: true }).click();
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId("confirm-remove")).toHaveCount(0);
+  await expect(page.locator("[data-track-id]")).toHaveCount(1);
+  await expect(page.getByLabel("Track title")).toHaveValue("keeper");
 });
 
 // 1x1 red PNG, base64

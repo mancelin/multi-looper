@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { AuthModal } from "@/components/modals/AuthModal";
+import { ConfirmRemoveModal } from "@/components/modals/ConfirmRemoveModal";
 import { ImportModal } from "@/components/modals/ImportModal";
 import { RecordModal } from "@/components/modals/RecordModal";
 import { SettingsModal } from "@/components/modals/SettingsModal";
@@ -73,6 +74,7 @@ export function Home() {
       <AuthModal />
       <ImportModal />
       <SettingsModal />
+      <ConfirmRemoveModal />
       <Toasts />
     </div>
   );
