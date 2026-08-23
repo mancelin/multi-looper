@@ -66,7 +66,11 @@ export interface RecordResult {
 
 type Tick = (peaks: readonly number[], elapsed: number) => void;
 
-export interface StartOptions {
+/** the encoder never starts until the stream has been open this long, so a
+ *  click landing right on the modal opening still misses the mic-open noise */
+const MIN_OPEN_MS = 500;
+
+export interface OpenOptions {
   /** run the mic through the browser's speech denoiser (default true) */
   noiseSuppression?: boolean;
 }
@@ -80,6 +84,8 @@ export class Recorder {
   private gain: GainNode | null = null;
   private hp: BiquadFilterNode | null = null;
   private dest: MediaStreamAudioDestinationNode | null = null;
+  /** what the encoder records: the ramped copy, or the raw mic as a fallback */
+  private source: MediaStream | null = null;
   private data: Uint8Array<ArrayBuffer> | null = null;
   private disposed = false;
   private raf = 0;
@@ -93,6 +99,7 @@ export class Recorder {
   peaks: number[] = [];
   elapsed = 0;
   private capturing = false;
+  private openedAt = 0;
 
   onTick(cb: Tick): () => void {
     this.listeners.add(cb);
@@ -102,13 +109,20 @@ export class Recorder {
   }
 
   /**
+   * Brings the mic up and leaves it running, muted, with the meter live.
+   *
+   * This is deliberately not tied to the record button. Opening a capture
+   * stream is what makes the noise we keep chasing — a Bluetooth headset beeps
+   * as it switches to its headset profile, interfaces pop — so the stream has
+   * to be open well before the encoder starts. Held open across takes too, so
+   * "record again" never triggers a second profile switch.
+   *
    * Rejects when the mic is unavailable or the user denies permission.
    * `noiseSuppression` hands the take to the browser's speech denoiser — good
    * on a noisy room, but it gates quiet note tails, so instrument takes want
    * it off.
    */
-  async start({ noiseSuppression = true }: StartOptions = {}): Promise<void> {
-    const mimeType = pickMime();
+  async open({ noiseSuppression = true }: OpenOptions = {}): Promise<void> {
     // The rest of the speech DSP stays off whatever the caller asks for: AGC
     // pumps on dynamics and the echo canceller emits transients while it
     // converges. Non-`exact` constraints, so a device that can't honour them
@@ -158,10 +172,35 @@ export class Recorder {
       this.hp = null;
     }
 
-    // Capture starts on the click — no wait. The take simply opens muted (the
-    // gain still sits at 0) and unmutes once the mic has settled, so whatever
-    // noise opening the stream made lands in the file as silence.
-    this.rec = new MediaRecorder(source, mimeType ? { mimeType } : undefined);
+    this.source = source;
+    this.openedAt = performance.now();
+    this.lastPeakAt = this.openedAt;
+    this.tick(); // meter runs while idle, so the input is visible before arming
+  }
+
+  /** True once {@link open} has the mic running. */
+  get ready(): boolean {
+    return !!this.source;
+  }
+
+  /**
+   * Starts the encoder on the already-open stream. Nothing is gated and
+   * nothing is discarded: by now the mic has been live long enough that its
+   * open-noise is over, so the take is clean from its first frame.
+   */
+  async begin(): Promise<void> {
+    if (!this.source) throw new Error("mic not open");
+    const since = performance.now() - this.openedAt;
+    if (since < MIN_OPEN_MS) await wait(MIN_OPEN_MS - since);
+    if (this.disposed || !this.source) return;
+
+    this.chunks = [];
+    this.peaks = [];
+    this.elapsed = 0;
+    this.bucket = 0;
+
+    const mimeType = pickMime();
+    this.rec = new MediaRecorder(this.source, mimeType ? { mimeType } : undefined);
     this.rec.ondataavailable = (e) => {
       if (e.data.size) this.chunks.push(e.data);
     };
@@ -172,7 +211,6 @@ export class Recorder {
     this.capturing = true;
     this.startedAt = performance.now();
     this.lastPeakAt = this.startedAt;
-    this.tick();
   }
 
 
@@ -228,7 +266,11 @@ export class Recorder {
     });
     if (rec.state !== "inactive") rec.stop();
     await done;
-    this.teardown();
+    this.rec = null;
+    this.capturing = false;
+    this.peaks = []; // the idle meter starts clean for the next take
+    // the mic stays open: reopening it is exactly what makes the noise this
+    // whole arrangement exists to avoid, so the next take reuses this stream
 
     const type = rec.mimeType || "audio/webm";
     const blob = new Blob(this.chunks, { type });
@@ -260,6 +302,7 @@ export class Recorder {
     this.stream = null;
     this.dest?.stream.getTracks().forEach((t) => t.stop());
     this.dest = null;
+    this.source = null;
     this.gain?.disconnect();
     this.gain = null;
     this.hp?.disconnect();

@@ -34,6 +34,27 @@ test("the empty state's record card opens the modal", async ({ page }) => {
   await expect(page.getByTestId("record-start")).toBeVisible();
 });
 
+test("the waveform stays blank until the take starts", async ({ page }) => {
+  await page.goto("/");
+  await page.getByTestId("open-record").click();
+  await expect(page.getByTestId("record-start")).toBeEnabled(); // mic is live
+  await page.waitForTimeout(700);
+
+  const painted = () =>
+    page.locator('[data-testid="record-waveform"] canvas').evaluate((cv: HTMLCanvasElement) => {
+      const px = cv.getContext("2d")!.getImageData(0, 0, cv.width, cv.height).data;
+      let n = 0;
+      for (let i = 3; i < px.length; i += 4) if (px[i] !== 0) n++;
+      return n;
+    });
+  // the mic is already open, but nothing may move before the user commits
+  expect(await painted()).toBe(0);
+
+  await page.getByTestId("record-start").click();
+  await expect(page.getByTestId("record-stop")).toBeVisible();
+  await expect.poll(painted, { timeout: 10_000 }).toBeGreaterThan(0);
+});
+
 test("recording from the mic saves a playable track into the library", async ({ page }) => {
   await fakeMic(page, [[0, 0.5]]); // steady tone, so head/loop assertions are exact
   await page.goto("/");
@@ -98,16 +119,10 @@ test("record again clears the previous take from the view", async ({ page }) => 
   await expect(page.getByTestId("record-start")).toBeVisible();
   await expect(page.getByTestId("record-save")).toBeDisabled();
   await expect(page.getByTestId("record-time")).toHaveText("0:00.000");
-  // the canvas must be wiped, or the hint text renders on top of the old take
-  const painted = await page
-    .locator('[data-testid="record-waveform"] canvas')
-    .evaluate((cv: HTMLCanvasElement) => {
-      const px = cv.getContext("2d")!.getImageData(0, 0, cv.width, cv.height).data;
-      let n = 0;
-      for (let i = 3; i < px.length; i += 4) if (px[i] !== 0) n++;
-      return n;
-    });
-  expect(painted).toBe(0);
+  // review-only chrome must go with it, or the old take stays on screen
+  await expect(page.getByTestId("record-name")).toHaveCount(0);
+  await expect(page.getByTestId("record-play")).toHaveCount(0);
+  await expect(page.locator("audio")).toHaveCount(0);
 });
 
 /** Replaces the mic with a scripted tone: [seconds, amplitude] steps. */
@@ -164,6 +179,31 @@ test("a saved take behaves like any local file track", async ({ page }) => {
   // same source label and accent as a local file — only the tag differs
   await expect(page.getByText("Local file").first()).toBeVisible();
   await expect(page.getByText("REC").first()).toBeVisible();
+});
+
+test("noise made when the mic opens is not in the take", async ({ page }) => {
+  // Stand in for a Bluetooth headset: a loud beep for the first 250ms the
+  // stream is open, then quiet. The stream opens with the modal, and the
+  // encoder additionally refuses to start until it has been open MIN_OPEN_MS,
+  // so even this click-immediately path must produce a clean file.
+  await fakeMic(page, [
+    [0, 0.9],
+    [0.25, 0],
+  ]);
+  await page.goto("/");
+  await page.getByTestId("open-record").click();
+  await recordFor(page, 1);
+  await expect(page.getByTestId("record-play")).toBeVisible({ timeout: 15_000 });
+
+  const peak = await page.evaluate(async () => {
+    const el = document.querySelector("audio") as HTMLAudioElement;
+    const ab = await new AudioContext().decodeAudioData(await (await fetch(el.src)).arrayBuffer());
+    const ch = ab.getChannelData(0);
+    let m = 0;
+    for (let i = 0; i < ch.length; i++) m = Math.max(m, Math.abs(ch[i]));
+    return m;
+  });
+  expect(peak).toBeLessThan(0.1); // the 0.9 beep never reached the encoder
 });
 
 test("the noise suppression toggle drives the capture constraint", async ({ page }) => {
@@ -256,9 +296,9 @@ test("denied microphone permission shows an actionable error", async ({ browser 
   });
   await page.goto("/");
   await page.getByTestId("open-record").click();
-  await page.getByTestId("record-start").click();
 
+  // the mic is requested with the modal, so the error shows without clicking
   await expect(page.getByText("Microphone access was denied.")).toBeVisible();
-  await expect(page.getByTestId("record-start")).toBeVisible(); // still retryable
+  await expect(page.getByTestId("record-start")).toBeDisabled();
   await context.close();
 });

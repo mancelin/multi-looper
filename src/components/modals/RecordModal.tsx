@@ -60,6 +60,7 @@ function RecordModalContent() {
   const [name, setName] = useState("");
   const [previewPlaying, setPreviewPlaying] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [micReady, setMicReady] = useState(false);
 
   const recRef = useRef<Recorder | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -67,40 +68,47 @@ function RecordModalContent() {
   const headRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const takeRef = useRef<Take | null>(null);
+  const phaseRef = useRef<Phase>("idle");
 
   const supported = recordingSupported();
+  const shownError = supported ? error : "Recording isn't supported in this browser.";
 
   // mirrored into a ref so the unmount cleanup below can revoke the live take
   useEffect(() => {
     takeRef.current = take;
   }, [take]);
 
+  // read from the meter tick, which must not re-wire on every phase change
+  useEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
+
   // the mic and the app transport must not run at once
   useEffect(() => {
     player.pause();
   }, []);
 
-  // release the mic and the preview object URL whatever way the modal goes away
+  // release the preview object URL whatever way the modal goes away
   useEffect(
     () => () => {
-      recRef.current?.dispose();
-      recRef.current = null;
       if (takeRef.current) URL.revokeObjectURL(takeRef.current.url);
     },
     [],
   );
 
-  const startRecording = async () => {
-    setError("");
-    if (!supported) {
-      setError("Recording isn't supported in this browser.");
-      return;
-    }
+  // Bring the mic up with the modal, not with the record button: opening the
+  // stream is what makes the beep/pop, so it has to happen while the user is
+  // still reading the dialog. Re-runs when the denoiser toggle changes, which
+  // is only reachable before a take has started.
+  useEffect(() => {
+    if (!supported) return;
     const rec = new Recorder();
     recRef.current = rec;
-    setBusy(true); // the permission prompt sits between the click and the first frame
     // live meter is driven imperatively — no React render per frame
     rec.onTick((peaks, elapsed) => {
+      // the mic runs from the moment the modal opens, but a waveform moving
+      // before the take has started reads as if it were already recording
+      if (phaseRef.current !== "recording") return;
       if (canvasRef.current) {
         // widen the slots while the window is still filling, then let it scroll
         const slots = Math.min(LIVE_PEAKS, Math.max(peaks.length, LIVE_MIN_SLOTS));
@@ -108,24 +116,45 @@ function RecordModalContent() {
       }
       if (clockRef.current) clockRef.current.textContent = fmt(elapsed);
     });
-    try {
-      await rec.start({ noiseSuppression: denoise });
-    } catch (e) {
-      recRef.current = null;
-      rec.dispose();
+    let dead = false;
+    rec.open({ noiseSuppression: denoise }).then(
+      () => {
+        if (!dead) setMicReady(true);
+      },
+      (e: unknown) => {
+      if (dead) return;
       const code = e instanceof DOMException ? e.name : "";
       setError(
         code === "NotAllowedError"
           ? "Microphone access was denied. Allow it in your browser, then try again."
           : code === "NotFoundError"
             ? "No microphone found."
-            : `Couldn't start recording: ${e instanceof Error ? e.message : String(e)}`,
-      );
+            : `Couldn't open the microphone: ${e instanceof Error ? e.message : String(e)}`,
+        );
+      },
+    );
+    return () => {
+      dead = true;
+      setMicReady(false);
+      rec.dispose();
+      if (recRef.current === rec) recRef.current = null;
+    };
+  }, [supported, denoise]);
+
+  const startRecording = async () => {
+    const rec = recRef.current;
+    if (!rec) return;
+    setError("");
+    setBusy(true);
+    try {
+      await rec.begin();
+    } catch (e) {
+      setError(`Couldn't start recording: ${e instanceof Error ? e.message : String(e)}`);
       return;
     } finally {
       setBusy(false);
     }
-    if (recRef.current !== rec) return; // cancelled while the prompt was up
+    if (recRef.current !== rec) return; // modal closed while the mic settled
     setPhase("recording");
   };
 
@@ -135,7 +164,6 @@ function RecordModalContent() {
     setBusy(true);
     try {
       const { file, elapsed } = await rec.stop();
-      recRef.current = null;
       const { peaks, duration } = await decodePeaks(file);
       const dur = duration || elapsed || 1; // 0 = decode failed; wall clock is close enough
       setTake({ file, peaks, duration: dur, url: URL.createObjectURL(file) });
@@ -156,11 +184,7 @@ function RecordModalContent() {
     setPhase("idle");
   };
 
-  const close = () => {
-    recRef.current?.dispose();
-    recRef.current = null;
-    setOpen(false);
-  };
+  const close = () => setOpen(false);
 
   const save = () => {
     if (!take) return;
@@ -359,7 +383,7 @@ function RecordModalContent() {
             <button
               onClick={() => void startRecording()}
               data-testid="record-start"
-              disabled={busy}
+              disabled={busy || !micReady || !!shownError}
               className="flex h-10 cursor-pointer items-center gap-2 rounded-[9px] bg-danger px-4 text-[13px] font-semibold text-white disabled:opacity-60"
             >
               <MicIcon size={16} />
@@ -417,7 +441,7 @@ function RecordModalContent() {
           </div>
         </div>
 
-        {error && <p className="mb-0 mt-3 text-[12.5px] text-danger">{error}</p>}
+        {shownError && <p className="mb-0 mt-3 text-[12.5px] text-danger">{shownError}</p>}
       </div>
     </div>
   );
