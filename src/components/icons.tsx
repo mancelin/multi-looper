@@ -366,3 +366,33 @@ export function ResizeIcon({ size, ...rest }: P) {
     </svg>
   );
 }
+
+export function MicIcon({ size, ...rest }: P) {
+  return (
+    <svg viewBox="0 0 24 24" {...svg(size, 15, rest)}>
+      <rect
+        x="9"
+        y="2.5"
+        width="6"
+        height="11"
+        rx="3"
+        stroke="currentColor"
+        strokeWidth="1.6"
+      />
+      <path
+        d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M9 21h6"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+export function StopIcon({ size, ...rest }: P) {
+  return (
+    <svg viewBox="0 0 16 16" {...svg(size, 14, rest)}>
+      <rect x="3.5" y="3.5" width="9" height="9" rx="1.5" fill="currentColor" />
+    </svg>
+  );
+}

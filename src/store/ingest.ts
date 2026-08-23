@@ -63,3 +63,36 @@ export async function addFiles(files: File[]): Promise<void> {
   player.pause();
   useLibrary.getState().addTracks(tracks);
 }
+
+/**
+ * Adds a microphone take as a local file track and selects it.
+ * The record modal already decoded the blob, so peaks/duration come in ready
+ * rather than being decoded a second time here.
+ */
+export function addRecording(
+  file: File,
+  title: string,
+  peaks: number[],
+  duration: number,
+): void {
+  const id = uid("r");
+  const url = URL.createObjectURL(file);
+  const loopId = uid("l");
+  const track: Track = {
+    id,
+    kind: "file",
+    title: title.trim() || "Recording",
+    artist: "Recording",
+    tags: ["REC"],
+    duration,
+    loops: [{ id: loopId, name: "Loop 1", a: 0, b: duration }],
+    activeLoopId: loopId,
+    accent: ACCENTS.recording,
+    peaks,
+    url,
+  };
+  registerFile(id, file);
+  void putMedia(id, file); // survive reload (guest mode restores from IndexedDB)
+  player.pause();
+  useLibrary.getState().addTracks([track]);
+}

@@ -58,9 +58,37 @@ android-run: android-sync
 android-open:
     bunx cap open android
 
-# Start PocketBase (auth + sync backend, optional)
+# Start PocketBase (auth + sync backend).
+# Port 8090 is exclusive: any other project's PB container holding it (e.g.
+# day-log-pocketbase) is stopped first, otherwise the bind fails.
 pb-up:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    if [ -n "$(docker ps -q --filter 'name=^multilooper-pocketbase$')" ]; then
+        echo "PocketBase already up: http://localhost:8090/_/"
+        exit 0
+    fi
+
+    for id in $(docker ps -q --filter 'publish=8090'); do
+        name=$(docker inspect -f '{{{{ .Name }}' "$id" | sed 's|^/||')
+        if [ "$name" != "multilooper-pocketbase" ]; then
+            echo "Stopping $name — it owns :8090"
+            docker stop "$id" >/dev/null
+        fi
+    done
+
     docker compose up -d
+
+    for _ in $(seq 1 40); do
+        if curl -sf http://127.0.0.1:8090/api/health >/dev/null; then
+            echo "PocketBase up: http://localhost:8090/_/"
+            exit 0
+        fi
+        sleep 0.5
+    done
+    echo "PocketBase never got healthy — check: just pb-logs" >&2
+    exit 1
 
 # Stop PocketBase
 pb-down:

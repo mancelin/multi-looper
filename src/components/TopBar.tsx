@@ -1,7 +1,15 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { BookIcon, EqIcon, GearIcon, KeyboardIcon, UploadIcon, YoutubeIcon } from "@/components/icons";
+import {
+  BookIcon,
+  EqIcon,
+  GearIcon,
+  KeyboardIcon,
+  MicIcon,
+  UploadIcon,
+  YoutubeIcon,
+} from "@/components/icons";
 import { addFiles, addYoutubeUrl } from "@/store/ingest";
 import { useLibrary } from "@/store/library";
 import { useUi } from "@/store/ui";
@@ -13,6 +21,7 @@ export function TopBar() {
   const toggleShortcuts = useUi((s) => s.toggleShortcuts);
   const openSettings = useUi((s) => s.openSettings);
   const setYtModalOpen = useUi((s) => s.setYtModalOpen);
+  const setRecordOpen = useUi((s) => s.setRecordOpen);
   const [ytUrl, setYtUrl] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -87,6 +96,14 @@ export function TopBar() {
             e.target.value = "";
           }}
         />
+        <button
+          onClick={() => setRecordOpen(true)}
+          data-testid="open-record"
+          className="flex h-[38px] w-[38px] flex-none cursor-pointer items-center justify-center rounded-[9px] border border-white/9 bg-field text-muted"
+          title="Record from microphone"
+        >
+          <MicIcon />
+        </button>
         <button
           onClick={toggleShortcuts}
           title="Keyboard shortcuts"

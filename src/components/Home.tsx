@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { AuthModal } from "@/components/modals/AuthModal";
 import { ImportModal } from "@/components/modals/ImportModal";
+import { RecordModal } from "@/components/modals/RecordModal";
 import { SettingsModal } from "@/components/modals/SettingsModal";
 import { ShortcutsModal } from "@/components/modals/ShortcutsModal";
 import { YoutubeModal } from "@/components/modals/YoutubeModal";
@@ -68,6 +69,7 @@ export function Home() {
       <ShortcutsProvider />
       <ShortcutsModal />
       <YoutubeModal />
+      <RecordModal />
       <AuthModal />
       <ImportModal />
       <SettingsModal />

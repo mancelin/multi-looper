@@ -18,6 +18,9 @@ export function ShortcutsProvider() {
       const tag = ((e.target as HTMLElement)?.tagName || "").toLowerCase();
       if (tag === "input" || tag === "textarea") return;
       if (!useLibrary.getState().tracks.length) return;
+      // the record modal owns the keyboard while it is open — its preview
+      // transport is separate from the app player behind the overlay
+      if (useUi.getState().recordOpen) return;
       const k = e.key;
       if (e.ctrlKey || e.metaKey) {
         // Ctrl/Cmd+Z undo, +Shift redo; every other combo stays with the browser
