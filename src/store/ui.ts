@@ -34,6 +34,8 @@ export interface UiState {
   showShortcuts: boolean;
   ytModalOpen: boolean;
   recordOpen: boolean;
+  /** run mic takes through the browser's speech denoiser */
+  recordDenoise: boolean;
 
   account: Account | null;
   accountMenuOpen: boolean;
@@ -62,6 +64,7 @@ export interface UiState {
   toggleShortcuts: () => void;
   setYtModalOpen: (v: boolean) => void;
   setRecordOpen: (v: boolean) => void;
+  setRecordDenoise: (v: boolean) => void;
 
   setAccount: (a: Account | null) => void;
   setAccountMenuOpen: (v: boolean) => void;
@@ -95,6 +98,7 @@ export const useUi = create<UiState>()((set) => ({
   showShortcuts: false,
   ytModalOpen: false,
   recordOpen: false,
+  recordDenoise: true,
 
   account: null,
   accountMenuOpen: false,
@@ -122,6 +126,7 @@ export const useUi = create<UiState>()((set) => ({
   toggleShortcuts: () => set((s) => ({ showShortcuts: !s.showShortcuts })),
   setYtModalOpen: (v) => set({ ytModalOpen: v }),
   setRecordOpen: (v) => set({ recordOpen: v }),
+  setRecordDenoise: (v) => set({ recordDenoise: v }),
 
   setAccount: (a) => set(a ? { account: a } : { account: null, storageUsed: null }),
   setAccountMenuOpen: (v) => set({ accountMenuOpen: v }),

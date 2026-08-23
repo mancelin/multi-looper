@@ -1,10 +1,12 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { LoopIcon, PlusIcon, UploadIcon, YoutubeIcon } from "@/components/icons";
+import { LoopIcon, MicIcon, PlusIcon, UploadIcon, YoutubeIcon } from "@/components/icons";
 import { addFiles, addYoutubeUrl } from "@/store/ingest";
+import { useUi } from "@/store/ui";
 
 export function EmptyState() {
+  const setRecordOpen = useUi((s) => s.setRecordOpen);
   const [ytUrl, setYtUrl] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -16,7 +18,7 @@ export function EmptyState() {
 
   return (
     <div className="flex min-h-0 flex-1 overflow-y-auto bg-[radial-gradient(120%_80%_at_50%_-10%,#12161d_0%,#0c0e12_60%)] px-6 py-10">
-      <div className="m-auto flex w-full max-w-[720px] flex-col items-center text-center">
+      <div className="m-auto flex w-full max-w-[900px] flex-col items-center text-center">
         <div className="relative flex h-24 w-24 items-end justify-center gap-[7px] rounded-[24px] border border-[rgba(94,234,212,.22)] bg-[linear-gradient(135deg,#12303080,#0e1116)] py-[26px] shadow-[0_12px_44px_rgba(45,212,191,.16)]">
           <span className="h-[22px] w-[7px] rounded-[4px] bg-accent [animation:eq_1.1s_ease-in-out_-0.2s_infinite]" />
           <span className="h-10 w-[7px] rounded-[4px] bg-accent-2 [animation:eq_1.1s_ease-in-out_-0.5s_infinite]" />
@@ -30,7 +32,7 @@ export function EmptyState() {
         </h1>
         <p className="mb-0 mt-3 max-w-[460px] text-[15px] leading-[1.6] text-muted">
           Drop in a track, mark an A–B section, and practice it on repeat — slowed down, pitch
-          intact. Start with a YouTube link or your own audio.
+          intact. Start with a YouTube link, your own audio, or a take straight from your mic.
         </p>
 
         <div className="mt-[34px] flex w-full flex-wrap justify-center gap-4">
@@ -90,6 +92,26 @@ export function EmptyState() {
                 e.target.value = "";
               }}
             />
+          </div>
+
+          <div
+            onClick={() => setRecordOpen(true)}
+            data-testid="empty-record"
+            className="flex min-w-[270px] max-w-[340px] flex-1 cursor-pointer flex-col items-start rounded-[16px] border border-white/8 bg-panel-2 px-5 py-[22px] text-left hover:border-[rgba(253,186,116,.5)] hover:bg-[#111722]"
+          >
+            <div className="mb-[14px] flex items-center gap-[10px]">
+              <span className="flex h-[38px] w-[38px] items-center justify-center rounded-[10px] border border-[rgba(253,186,116,.25)] bg-[rgba(253,186,116,.1)] text-[#fdba74]">
+                <MicIcon size={19} />
+              </span>
+              <span className="text-[15px] font-semibold text-ink">Record audio</span>
+            </div>
+            <p className="mb-[14px] mt-0 text-[12.5px] leading-[1.5] text-muted-3">
+              Play into your mic and loop the take right away.
+            </p>
+            <div className="flex h-10 w-full items-center justify-center gap-2 rounded-[9px] border border-[rgba(253,186,116,.25)] bg-[rgba(253,186,116,.06)] text-[13px] font-semibold text-[#fdba74]">
+              <MicIcon size={15} />
+              Start recording
+            </div>
           </div>
         </div>
       </div>

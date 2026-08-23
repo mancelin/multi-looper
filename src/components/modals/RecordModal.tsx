@@ -43,7 +43,7 @@ function paint(cv: HTMLCanvasElement, peaks: readonly number[], slots: number, p
   for (let i = 0; i < peaks.length; i++) {
     const h = Math.max(1.5, peaks[i] * (H * 0.86));
     const x = i * bw;
-    g.fillStyle = x + bw * 0.31 <= cut ? ACCENTS.recording : "#39414f";
+    g.fillStyle = x + bw * 0.31 <= cut ? ACCENTS.audioFile : "#39414f";
     g.fillRect(x, mid - h / 2, Math.max(1, bw * 0.62), h);
   }
 }
@@ -52,6 +52,8 @@ function paint(cv: HTMLCanvasElement, peaks: readonly number[], slots: number, p
 function RecordModalContent() {
   const setOpen = useUi((s) => s.setRecordOpen);
   const pushToast = useUi((s) => s.pushToast);
+  const denoise = useUi((s) => s.recordDenoise);
+  const setDenoise = useUi((s) => s.setRecordDenoise);
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState("");
   const [take, setTake] = useState<Take | null>(null);
@@ -96,9 +98,18 @@ function RecordModalContent() {
     }
     const rec = new Recorder();
     recRef.current = rec;
-    setBusy(true); // permission prompt + mic warm-up happen before the first frame
+    setBusy(true); // the permission prompt sits between the click and the first frame
+    // live meter is driven imperatively — no React render per frame
+    rec.onTick((peaks, elapsed) => {
+      if (canvasRef.current) {
+        // widen the slots while the window is still filling, then let it scroll
+        const slots = Math.min(LIVE_PEAKS, Math.max(peaks.length, LIVE_MIN_SLOTS));
+        paint(canvasRef.current, peaks, slots, 1);
+      }
+      if (clockRef.current) clockRef.current.textContent = fmt(elapsed);
+    });
     try {
-      await rec.start();
+      await rec.start({ noiseSuppression: denoise });
     } catch (e) {
       recRef.current = null;
       rec.dispose();
@@ -114,16 +125,7 @@ function RecordModalContent() {
     } finally {
       setBusy(false);
     }
-    if (recRef.current !== rec) return; // cancelled while warming up
-    // live meter is driven imperatively — no React render per frame
-    rec.onTick((peaks, elapsed) => {
-      if (canvasRef.current) {
-        // widen the slots while the window is still filling, then let it scroll
-        const slots = Math.min(LIVE_PEAKS, Math.max(peaks.length, LIVE_MIN_SLOTS));
-        paint(canvasRef.current, peaks, slots, 1);
-      }
-      if (clockRef.current) clockRef.current.textContent = fmt(elapsed);
-    });
+    if (recRef.current !== rec) return; // cancelled while the prompt was up
     setPhase("recording");
   };
 
@@ -300,6 +302,7 @@ function RecordModalContent() {
               Rec
             </span>
           )}
+
         </div>
 
         <div className="mt-[10px] flex items-center justify-between">
@@ -321,6 +324,24 @@ function RecordModalContent() {
             onEnded={() => setPreviewPlaying(false)}
             className="hidden"
           />
+        )}
+
+        {phase === "idle" && (
+          <label className="mt-3 flex cursor-pointer items-start gap-[9px] text-[12.5px] leading-[1.5] text-muted">
+            <input
+              type="checkbox"
+              data-testid="record-denoise"
+              checked={denoise}
+              onChange={(e) => setDenoise(e.target.checked)}
+              className="mt-[3px] h-[15px] w-[15px] flex-none cursor-pointer accent-[#fdba74]"
+            />
+            <span>
+              Noise suppression{" "}
+              <span className="text-muted-4">
+                — cleans up a noisy room, but gates quiet instrument tails
+              </span>
+            </span>
+          </label>
         )}
 
         {phase === "review" && (

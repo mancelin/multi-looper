@@ -50,6 +50,7 @@ export async function addFiles(files: File[]): Promise<void> {
       artist: isVideo ? "Local video" : "Local file",
       tags: [(f.name.split(".").pop() || "audio").toUpperCase()],
       duration: dur,
+      durationExact: duration > 0, // 0 = decode failed, so `dur` is a placeholder
       loops: [{ id: loopId, name: "Loop 1", a: 0, b: dur }],
       activeLoopId: loopId,
       accent: isVideo ? ACCENTS.videoFile : ACCENTS.audioFile,
@@ -82,12 +83,13 @@ export function addRecording(
     id,
     kind: "file",
     title: title.trim() || "Recording",
-    artist: "Recording",
+    artist: "Local file", // a take is a local file like any other, bar the tag
     tags: ["REC"],
     duration,
+    durationExact: true,
     loops: [{ id: loopId, name: "Loop 1", a: 0, b: duration }],
     activeLoopId: loopId,
-    accent: ACCENTS.recording,
+    accent: ACCENTS.audioFile,
     peaks,
     url,
   };

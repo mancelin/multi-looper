@@ -549,7 +549,9 @@ class PlaybackController {
     const c = this.track();
     if (!c || c.kind !== "file" || !this.videoEl) return;
     const d = this.videoEl.duration;
-    if (isFinite(d) && d > 0 && Math.abs(d - c.duration) > 0.5) {
+    // a decoded duration is authoritative: MediaRecorder webm carries no
+    // duration header, so the element reports a fraction of the real length
+    if (!c.durationExact && isFinite(d) && d > 0 && Math.abs(d - c.duration) > 0.5) {
       useLibrary.getState().patchDuration(c.id, d);
     }
     // a currentTime set right after src= is clobbered when the media load

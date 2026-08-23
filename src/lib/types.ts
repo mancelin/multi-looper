@@ -17,6 +17,9 @@ export interface Track {
   artist: string;
   tags: string[];
   duration: number;
+  /** true when `duration` came from a real decode, so the media element must
+   *  not overwrite it (MediaRecorder webm under-reports its own length) */
+  durationExact?: boolean;
   /** always >= 1 entry, kept sorted by `a` */
   loops: Loop[];
   activeLoopId: string;
@@ -38,7 +41,6 @@ export const ACCENTS = {
   youtube: "#fca5a5",
   audioFile: "#93c5fd",
   videoFile: "#c4b5fd",
-  recording: "#fdba74",
   default: "#5eead4",
 } as const;
 

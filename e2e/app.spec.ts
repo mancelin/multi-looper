@@ -15,11 +15,12 @@ async function uploadWav(page: Page, seconds: number, name = "sample.wav") {
   });
 }
 
-test("empty state renders with both ingest paths", async ({ page }) => {
+test("empty state renders every ingest path", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Loop anything" })).toBeVisible();
   await expect(page.getByPlaceholder("youtube.com/watch?v=…")).toBeVisible();
   await expect(page.getByText("Choose files")).toBeVisible();
+  await expect(page.getByTestId("empty-record")).toBeVisible();
 });
 
 test("adding a YouTube link creates a track with a full-track loop", async ({ page }) => {

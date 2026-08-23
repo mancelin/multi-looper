@@ -16,19 +16,27 @@ export const LIVE_PEAKS = 200;
 export const LIVE_MIN_SLOTS = 45;
 /** one live peak is emitted per this many ms of audio */
 const PEAK_INTERVAL_MS = 45;
-/** discarded before capture starts, so the capture device has settled */
-const WARMUP_MS = 250;
-/** gain ramp at both ends of the take, seconds */
-const FADE_S = 0.06;
+/** gain ramp at both ends of the take, seconds — long enough to kill the
+ *  sample-zero click, short enough that no playing is audibly lost */
+const FADE_S = 0.02;
+/** subsonic cutoff, Hz — below the lowest note of a 4-string bass (41 Hz), so
+ *  it strips rumble, handling thumps and DC offset without touching pitch */
+const RUMBLE_HZ = 30;
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-/** Ordered by preference; Chrome/Firefox land on webm/opus, Safari on mp4. */
+/**
+ * Ordered by preference. Ogg comes first because Firefox's webm output is a
+ * live stream — no duration, empty `seekable`, every seek snaps back to 0, so
+ * the transport and the A/B shortcuts have nothing to move. Its ogg output
+ * carries both. Chrome has no ogg encoder and falls through to webm, which it
+ * does write seekably; Safari lands on mp4.
+ */
 const MIME_CANDIDATES = [
+  "audio/ogg;codecs=opus",
   "audio/webm;codecs=opus",
   "audio/webm",
   "audio/mp4",
-  "audio/ogg;codecs=opus",
 ];
 
 export function recordingSupported(): boolean {
@@ -58,6 +66,11 @@ export interface RecordResult {
 
 type Tick = (peaks: readonly number[], elapsed: number) => void;
 
+export interface StartOptions {
+  /** run the mic through the browser's speech denoiser (default true) */
+  noiseSuppression?: boolean;
+}
+
 export class Recorder {
   private stream: MediaStream | null = null;
   private rec: MediaRecorder | null = null;
@@ -65,6 +78,7 @@ export class Recorder {
   private ac: AudioContext | null = null;
   private analyser: AnalyserNode | null = null;
   private gain: GainNode | null = null;
+  private hp: BiquadFilterNode | null = null;
   private dest: MediaStreamAudioDestinationNode | null = null;
   private data: Uint8Array<ArrayBuffer> | null = null;
   private disposed = false;
@@ -78,6 +92,7 @@ export class Recorder {
   /** rolling window of live peaks, oldest first; at most LIVE_PEAKS entries */
   peaks: number[] = [];
   elapsed = 0;
+  private capturing = false;
 
   onTick(cb: Tick): () => void {
     this.listeners.add(cb);
@@ -86,14 +101,20 @@ export class Recorder {
     };
   }
 
-  /** Rejects when the mic is unavailable or the user denies permission. */
-  async start(): Promise<void> {
+  /**
+   * Rejects when the mic is unavailable or the user denies permission.
+   * `noiseSuppression` hands the take to the browser's speech denoiser — good
+   * on a noisy room, but it gates quiet note tails, so instrument takes want
+   * it off.
+   */
+  async start({ noiseSuppression = true }: StartOptions = {}): Promise<void> {
     const mimeType = pickMime();
-    // The speech DSP Chrome enables by default pumps and gates on music, and
-    // its echo canceller emits transients while it converges. Non-`exact`
-    // constraints, so a device that can't honour them still opens.
+    // The rest of the speech DSP stays off whatever the caller asks for: AGC
+    // pumps on dynamics and the echo canceller emits transients while it
+    // converges. Non-`exact` constraints, so a device that can't honour them
+    // still opens.
     const stream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+      audio: { echoCancellation: false, autoGainControl: false, noiseSuppression },
     });
     if (this.disposed) {
       // cancelled while the permission prompt was up — don't hold the mic open
@@ -105,6 +126,7 @@ export class Recorder {
     this.peaks = [];
     this.elapsed = 0;
     this.bucket = 0;
+    this.capturing = false;
 
     // Record a gain-ramped copy of the mic rather than the raw track: a
     // freshly opened capture device puts a click in its first frames, and
@@ -115,34 +137,55 @@ export class Recorder {
       this.ac = new AudioContext();
       await this.ac.resume();
       const src = this.ac.createMediaStreamSource(this.stream);
+      // subsonic rumble carries no signal but eats headroom in the encoder
+      this.hp = this.ac.createBiquadFilter();
+      this.hp.type = "highpass";
+      this.hp.frequency.value = RUMBLE_HZ;
       this.gain = this.ac.createGain();
       this.gain.gain.value = 0;
       this.dest = this.ac.createMediaStreamDestination();
       this.analyser = this.ac.createAnalyser();
       this.analyser.fftSize = 1024;
-      src.connect(this.gain);
-      this.gain.connect(this.analyser);
+      src.connect(this.hp);
+      this.hp.connect(this.analyser); // ahead of the ramp: arming must hear the real input
+      this.hp.connect(this.gain);
       this.gain.connect(this.dest); // never reaches ac.destination — no monitoring/feedback
       this.data = new Uint8Array(new ArrayBuffer(this.analyser.fftSize));
       source = this.dest.stream;
     } catch {
       this.analyser = null;
       this.gain = null;
+      this.hp = null;
     }
 
-    await wait(WARMUP_MS);
-    if (this.disposed) return; // cancelled during the warm-up
-
+    // Capture starts on the click — no wait. The take simply opens muted (the
+    // gain still sits at 0) and unmutes once the mic has settled, so whatever
+    // noise opening the stream made lands in the file as silence.
     this.rec = new MediaRecorder(source, mimeType ? { mimeType } : undefined);
     this.rec.ondataavailable = (e) => {
       if (e.data.size) this.chunks.push(e.data);
     };
     this.rec.start(250); // periodic chunks so a long take isn't one giant buffer
-    this.fade(1); // opens from digital silence once the encoder is already running
 
+    this.fade(1); // opens from digital silence, so sample zero can't click
+
+    this.capturing = true;
     this.startedAt = performance.now();
     this.lastPeakAt = this.startedAt;
     this.tick();
+  }
+
+
+  /** Peak of the current analyser frame, 0–1. */
+  private level(): number {
+    if (!this.analyser || !this.data) return 0;
+    this.analyser.getByteTimeDomainData(this.data);
+    let mx = 0;
+    for (let i = 0; i < this.data.length; i++) {
+      const v = Math.abs(this.data[i] - 128) / 128;
+      if (v > mx) mx = v;
+    }
+    return mx;
   }
 
   /** Ramps the recorded signal to `to` over FADE_S; no-op without Web Audio. */
@@ -157,17 +200,10 @@ export class Recorder {
   private tick = () => {
     this.raf = requestAnimationFrame(this.tick);
     const now = performance.now();
-    this.elapsed = (now - this.startedAt) / 1000;
+    this.elapsed = this.capturing ? (now - this.startedAt) / 1000 : 0;
 
-    if (this.analyser && this.data) {
-      this.analyser.getByteTimeDomainData(this.data);
-      let mx = 0;
-      for (let i = 0; i < this.data.length; i++) {
-        const v = Math.abs(this.data[i] - 128) / 128;
-        if (v > mx) mx = v;
-      }
-      if (mx > this.bucket) this.bucket = mx;
-    }
+    const mx = this.level();
+    if (mx > this.bucket) this.bucket = mx;
 
     if (now - this.lastPeakAt >= PEAK_INTERVAL_MS) {
       this.lastPeakAt = now;
@@ -226,6 +262,8 @@ export class Recorder {
     this.dest = null;
     this.gain?.disconnect();
     this.gain = null;
+    this.hp?.disconnect();
+    this.hp = null;
     this.analyser = null;
     this.data = null;
     void this.ac?.close().catch(() => {});
