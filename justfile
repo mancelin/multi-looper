@@ -98,7 +98,7 @@ pb-down:
 pb-logs:
     docker compose logs -f pocketbase
 
-# Set the release version everywhere, e.g. `just set_version 1.3`
+# Set the release version everywhere and tag it, e.g. `just set_version 1.3` -> tag v1.3
 # (package.json, android versionName; the Android versionCode is bumped by 1,
 #  Play refuses an install/upgrade that doesn't increment it)
 set_version version:
@@ -115,12 +115,27 @@ set_version version:
     code=$(sed -n 's/.*versionCode \([0-9]*\).*/\1/p' android/app/build.gradle)
     [ -n "$code" ] || { echo "no versionCode in android/app/build.gradle" >&2; exit 1; }
 
+    # checked before anything is written, so a clash leaves the tree untouched
+    tag="v$name"
+    if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+        echo "tag $tag already exists — nothing changed" >&2
+        exit 1
+    fi
+
     sed -i "s/^\(  \"version\": \).*/\1\"$pkg\",/" package.json
     sed -i "s/versionCode .*/versionCode $((code + 1))/; s/versionName \".*\"/versionName \"$name\"/" android/app/build.gradle
 
     echo "package.json      $pkg"
     echo "versionName       $name"
     echo "versionCode       $((code + 1))"
+
+    git tag "$tag"
+    echo "tag               $tag -> $(git rev-parse --short HEAD)"
+    # the bump itself is still uncommitted here (committing is manual), so the
+    # tag names the commit before it; move it after committing with git tag -f
+    if ! git diff --quiet -- package.json android/app/build.gradle; then
+        echo "note: version bump not committed yet; after committing run: git tag -f $tag" >&2
+    fi
 
 # Create/refresh the .env from the example
 env:
