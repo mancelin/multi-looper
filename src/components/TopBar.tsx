@@ -7,6 +7,7 @@ import {
   GearIcon,
   KeyboardIcon,
   MicIcon,
+  PlusIcon,
   UploadIcon,
   YoutubeIcon,
 } from "@/components/icons";
@@ -20,8 +21,8 @@ export function TopBar() {
   const hasTracks = useLibrary((s) => s.tracks.length > 0);
   const toggleShortcuts = useUi((s) => s.toggleShortcuts);
   const openSettings = useUi((s) => s.openSettings);
-  const setYtModalOpen = useUi((s) => s.setYtModalOpen);
   const setRecordOpen = useUi((s) => s.setRecordOpen);
+  const setAddMenuOpen = useUi((s) => s.setAddMenuOpen);
   const [ytUrl, setYtUrl] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -55,11 +56,12 @@ export function TopBar() {
 
       <div className="flex min-w-0 max-w-[640px] flex-1 items-center gap-2 sm:gap-[10px]">
         <button
-          onClick={() => setYtModalOpen(true)}
-          title="Add a YouTube link"
-          className="flex h-[38px] w-[38px] flex-none cursor-pointer items-center justify-center rounded-[9px] border border-white/9 bg-field min-[480px]:hidden"
+          onClick={() => setAddMenuOpen(true)}
+          data-testid="open-add-menu"
+          title="Add a track"
+          className="flex h-[38px] w-[38px] flex-none cursor-pointer items-center justify-center rounded-[9px] border border-white/9 bg-field text-ink min-[480px]:hidden"
         >
-          <YoutubeIcon className="text-[#e11d48]" />
+          <PlusIcon />
         </button>
         <div className="hidden h-[38px] min-w-0 flex-1 items-center gap-2 rounded-[9px] border border-white/9 bg-field px-[11px] min-[480px]:flex">
           <YoutubeIcon className="flex-none text-[#e11d48]" />
@@ -79,7 +81,7 @@ export function TopBar() {
         </div>
         <button
           onClick={() => fileRef.current?.click()}
-          className="flex h-[38px] flex-none cursor-pointer items-center gap-[7px] rounded-[9px] border border-white/9 bg-field px-[13px] text-[13px] font-medium text-ink"
+          className="hidden h-[38px] flex-none cursor-pointer items-center gap-[7px] rounded-[9px] border border-white/9 bg-field px-[13px] text-[13px] font-medium text-ink min-[480px]:flex"
           title="Upload file"
         >
           <UploadIcon />
@@ -99,7 +101,7 @@ export function TopBar() {
         <button
           onClick={() => setRecordOpen(true)}
           data-testid="open-record"
-          className="flex h-[38px] w-[38px] flex-none cursor-pointer items-center justify-center rounded-[9px] border border-white/9 bg-field text-muted"
+          className="hidden h-[38px] w-[38px] flex-none cursor-pointer items-center justify-center rounded-[9px] border border-white/9 bg-field text-muted min-[480px]:flex"
           title="Record from microphone"
         >
           <MicIcon />

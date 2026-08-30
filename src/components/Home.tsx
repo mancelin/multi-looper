@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { AddTrackModal } from "@/components/modals/AddTrackModal";
 import { AuthModal } from "@/components/modals/AuthModal";
 import { ConfirmRemoveModal } from "@/components/modals/ConfirmRemoveModal";
 import { ImportModal } from "@/components/modals/ImportModal";
@@ -69,6 +70,7 @@ export function Home() {
       )}
       <ShortcutsProvider />
       <ShortcutsModal />
+      <AddTrackModal />
       <YoutubeModal />
       <RecordModal />
       <AuthModal />

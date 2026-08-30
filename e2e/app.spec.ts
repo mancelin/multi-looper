@@ -643,13 +643,16 @@ test.describe("mobile (360px)", () => {
     await expect(page.getByTestId("time")).not.toHaveText("0:00.000", { timeout: 5000 });
   });
 
-  test("YouTube link is added through a modal", async ({ page }) => {
+  test("YouTube link is added through the add sheet", async ({ page }) => {
     await blockYoutube(page);
     await page.goto("/");
 
-    // inline URL field is hidden on small screens; icon button opens a modal
+    // the toolbar can't fit the ingest controls this narrow: one "+" replaces them
     await expect(page.getByPlaceholder("Paste a YouTube link…")).toBeHidden();
-    await page.getByTitle("Add a YouTube link").click();
+    await expect(page.getByTestId("open-record")).toBeHidden();
+    await page.getByTestId("open-add-menu").click();
+    await page.getByTestId("add-youtube").click();
+    await expect(page.getByTestId("add-track-sheet")).toBeHidden(); // sheet gives way to the modal
 
     const input = page.getByPlaceholder("youtube.com/watch?v=…").last(); // modal's, not empty-state's
     await input.fill("not a link");
@@ -660,6 +663,43 @@ test.describe("mobile (360px)", () => {
     await input.press("Enter");
     await expect(page.getByText("Add a YouTube link", { exact: true })).toBeHidden(); // modal closed
     await expect(page.getByTestId("loop-b")).toHaveValue("3:30.000");
+  });
+
+  test("add sheet lists every ingest path without scrolling and picks a local file", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await page.getByTestId("open-add-menu").click();
+
+    const sheet = page.getByTestId("add-track-sheet");
+    await expect(sheet).toBeVisible();
+    for (const id of ["add-youtube", "add-file", "add-record"]) {
+      await expect(page.getByTestId(id)).toBeVisible();
+    }
+    // all three options fit the viewport — nothing to scroll to reach them
+    const box = (await sheet.boundingBox())!;
+    expect(box.y).toBeGreaterThanOrEqual(0);
+    expect(box.y + box.height).toBeLessThanOrEqual(page.viewportSize()!.height);
+    expect(await sheet.evaluate((el) => el.scrollHeight - el.clientHeight)).toBe(0);
+
+    const chooser = page.waitForEvent("filechooser");
+    await page.getByTestId("add-file").click();
+    await (await chooser).setFiles({
+      name: "sample.wav",
+      mimeType: "audio/wav",
+      buffer: makeWav(3),
+    });
+
+    await expect(sheet).toBeHidden(); // picking a file closes the sheet
+    await expect(page.getByLabel("Track title")).toHaveValue("sample");
+  });
+
+  test("add sheet opens the recorder", async ({ page }) => {
+    await page.goto("/");
+    await page.getByTestId("open-add-menu").click();
+    await page.getByTestId("add-record").click();
+    await expect(page.getByTestId("add-track-sheet")).toBeHidden();
+    await expect(page.getByTestId("record-modal")).toBeVisible();
   });
 });
 

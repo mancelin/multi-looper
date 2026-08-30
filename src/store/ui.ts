@@ -33,6 +33,8 @@ export interface UiState {
   videoWidth: number;
   showShortcuts: boolean;
   ytModalOpen: boolean;
+  /** compact "+" sheet listing the add-a-track options (narrow screens) */
+  addMenuOpen: boolean;
   recordOpen: boolean;
   /** run mic takes through the browser's speech denoiser */
   recordDenoise: boolean;
@@ -65,6 +67,7 @@ export interface UiState {
   setVideoWidth: (w: number) => void;
   toggleShortcuts: () => void;
   setYtModalOpen: (v: boolean) => void;
+  setAddMenuOpen: (v: boolean) => void;
   setRecordOpen: (v: boolean) => void;
   setRecordDenoise: (v: boolean) => void;
   askRemoveTrack: (id: string) => void;
@@ -101,6 +104,7 @@ export const useUi = create<UiState>()((set) => ({
   videoWidth: 620,
   showShortcuts: false,
   ytModalOpen: false,
+  addMenuOpen: false,
   recordOpen: false,
   recordDenoise: true,
   confirmRemoveId: null,
@@ -129,8 +133,9 @@ export const useUi = create<UiState>()((set) => ({
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
   setVideoWidth: (w) => set({ videoWidth: w }),
   toggleShortcuts: () => set((s) => ({ showShortcuts: !s.showShortcuts })),
-  setYtModalOpen: (v) => set({ ytModalOpen: v }),
-  setRecordOpen: (v) => set({ recordOpen: v }),
+  setYtModalOpen: (v) => set({ ytModalOpen: v, addMenuOpen: false }),
+  setAddMenuOpen: (v) => set({ addMenuOpen: v }),
+  setRecordOpen: (v) => set({ recordOpen: v, addMenuOpen: false }),
   setRecordDenoise: (v) => set({ recordDenoise: v }),
   askRemoveTrack: (id) => set({ confirmRemoveId: id }),
   closeRemoveConfirm: () => set({ confirmRemoveId: null }),
