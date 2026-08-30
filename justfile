@@ -98,6 +98,30 @@ pb-down:
 pb-logs:
     docker compose logs -f pocketbase
 
+# Set the release version everywhere, e.g. `just set_version 1.3`
+# (package.json, android versionName; the Android versionCode is bumped by 1,
+#  Play refuses an install/upgrade that doesn't increment it)
+set_version version:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    v="{{version}}"
+    [[ "$v" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]] || { echo "version must look like 1.3 or 1.3.1" >&2; exit 1; }
+
+    # package.json wants a full semver; the Android versionName drops a trailing .0
+    pkg="$v"; [[ "$pkg" == *.*.* ]] || pkg="$pkg.0"
+    name="${pkg%.0}"
+
+    code=$(sed -n 's/.*versionCode \([0-9]*\).*/\1/p' android/app/build.gradle)
+    [ -n "$code" ] || { echo "no versionCode in android/app/build.gradle" >&2; exit 1; }
+
+    sed -i "s/^\(  \"version\": \).*/\1\"$pkg\",/" package.json
+    sed -i "s/versionCode .*/versionCode $((code + 1))/; s/versionName \".*\"/versionName \"$name\"/" android/app/build.gradle
+
+    echo "package.json      $pkg"
+    echo "versionName       $name"
+    echo "versionCode       $((code + 1))"
+
 # Create/refresh the .env from the example
 env:
     cp -n .env.example .env || true
