@@ -98,9 +98,10 @@ pb-down:
 pb-logs:
     docker compose logs -f pocketbase
 
-# Set the release version everywhere and tag it, e.g. `just set_version 1.3` -> tag v1.3
-# (package.json, android versionName; the Android versionCode is bumped by 1,
-#  Play refuses an install/upgrade that doesn't increment it)
+# Release version bump: rewrite the version files, commit them, tag it.
+# `just set_version 1.3` -> package.json 1.3.0, versionName 1.3, commit "v1.3", tag v1.3.
+# The Android versionCode is bumped by 1 — Play refuses an install/upgrade
+# that doesn't increment it.
 set_version version:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -129,13 +130,19 @@ set_version version:
     echo "versionName       $name"
     echo "versionCode       $((code + 1))"
 
+    # pathspec commit: only the version files land in it, whatever else is
+    # staged or dirty stays untouched in the working tree
+    files="package.json android/app/build.gradle"
+    if git diff --quiet -- $files && git diff --cached --quiet -- $files; then
+        echo "commit            skipped — version files already at $pkg"
+    else
+        git commit -q -m "$tag" -- $files
+        echo "commit            $tag"
+    fi
+
+    # tags the version commit itself, so `git show $tag` is the bump
     git tag "$tag"
     echo "tag               $tag -> $(git rev-parse --short HEAD)"
-    # the bump itself is still uncommitted here (committing is manual), so the
-    # tag names the commit before it; move it after committing with git tag -f
-    if ! git diff --quiet -- package.json android/app/build.gradle; then
-        echo "note: version bump not committed yet; after committing run: git tag -f $tag" >&2
-    fi
 
 # Create/refresh the .env from the example
 env:
