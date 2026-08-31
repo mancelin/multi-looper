@@ -181,6 +181,16 @@ export function Sidebar() {
             placeholder="Search loops & tags"
             className="min-w-0 flex-1 border-none bg-transparent text-[12.5px] text-ink"
           />
+          {search && (
+            <button
+              type="button"
+              aria-label="Clear search"
+              onClick={() => setSearch("")}
+              className="flex-none rounded-[4px] p-[2px] text-muted-4 hover:text-ink"
+            >
+              <CloseIcon size={12} />
+            </button>
+          )}
         </div>
       </div>
       <div

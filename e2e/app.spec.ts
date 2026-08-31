@@ -612,6 +612,25 @@ test("clicking another loop chip selects it", async ({ page }) => {
   await expect(page.getByTestId("loop-len")).toHaveText("0:03.000");
 });
 
+test("search clear button appears with text and resets the filter", async ({ page }) => {
+  await page.goto("/");
+  await uploadWav(page, 3);
+  await expect(page.getByTitle("Rename loop")).toHaveCount(1); // wait for decode
+
+  const search = page.getByPlaceholder("Search loops & tags");
+  const clear = page.getByRole("button", { name: "Clear search" });
+  await expect(clear).toBeHidden(); // no cross while empty
+
+  await search.fill("zzz");
+  await expect(clear).toBeVisible();
+  await expect(page.locator("[data-track-id]")).toHaveCount(0);
+
+  await clear.click();
+  await expect(search).toHaveValue("");
+  await expect(clear).toBeHidden();
+  await expect(page.locator("[data-track-id]")).toHaveCount(1);
+});
+
 test.describe("mobile (360px)", () => {
   test.use({ viewport: { width: 360, height: 740 } });
 
