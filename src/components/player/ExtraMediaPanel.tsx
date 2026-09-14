@@ -16,9 +16,15 @@ import { MarkdownView } from "./MarkdownView";
 
 const MIN_HEIGHT = 72;
 
+// Two standalone buttons rather than one strip split in half: separate
+// objects with an "or" between them read as alternatives, where a divided
+// strip reads as two slots that could both be filled.
+const hintChoice =
+  "flex flex-1 cursor-pointer flex-col items-center justify-center gap-1 rounded-[10px] border border-white/10 bg-field px-4 py-3 text-center transition-colors hover:border-white/25 hover:bg-field-2";
+
 /**
  * Extra media for any track — file or YouTube — shown above the video panel:
- * either a cover image (sheet music, album art) or markdown notes (chords,
+ * either an image (sheet music, album art) or markdown notes (chords,
  * lyrics, reminders). A track holds one at a time; adding one replaces the
  * other. With nothing set the panel is a hint strip offering both.
  *
@@ -93,27 +99,30 @@ export function ExtraMediaPanel({ track }: { track: Track }) {
     };
     return (
       <div className="px-4 pb-1 pt-[6px] sm:px-[26px]">
-        <div
-          data-testid="extra-media-hint"
-          className="flex items-center justify-center divide-x divide-white/8 rounded-[10px] border border-dashed border-white/10 text-[11px] text-muted-2"
-        >
-          <label
-            title="Add cover image"
-            className="flex flex-1 cursor-pointer items-center justify-center gap-2 px-3 py-[7px] transition-colors hover:text-ink-2"
-          >
-            <UploadIcon size={13} />
-            <span>Add cover image — click, drag &amp; drop, or paste</span>
+        <div data-testid="extra-media-hint" className="flex w-full items-stretch gap-3">
+          <label title="Add image" className={hintChoice}>
+            <span className="flex items-center gap-2 text-[12.5px] text-ink-2">
+              <UploadIcon size={14} />
+              Add image
+            </span>
+            <span className="text-[10.5px] text-muted-4">click, drag &amp; drop, or paste</span>
             <input type="file" accept="image/*" className="hidden" onChange={onPick} />
           </label>
+          <span className="select-none self-center text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-4">
+            or
+          </span>
           <button
             type="button"
             title="Add notes"
             data-testid="add-notes"
             onClick={() => setEdit({ id: track.id, on: true })}
-            className="flex flex-1 cursor-pointer items-center justify-center gap-2 px-3 py-[7px] transition-colors hover:text-ink-2"
+            className={hintChoice}
           >
-            <TextIcon size={13} />
-            <span>Add notes — markdown</span>
+            <span className="flex items-center gap-2 text-[12.5px] text-ink-2">
+              <TextIcon size={14} />
+              Add notes
+            </span>
+            <span className="text-[10.5px] text-muted-4">markdown</span>
           </button>
         </div>
       </div>

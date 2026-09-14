@@ -55,7 +55,7 @@ export function ConfirmRemoveExtraMediaModal() {
           <TrashIcon />
         </div>
         <h2 className="mb-2 mt-0 text-[18px] font-bold">
-          {notes ? "Remove these notes?" : "Remove this cover image?"}
+          {notes ? "Remove these notes?" : "Remove this image?"}
         </h2>
         <p className="mb-5 mt-0 text-[13.5px] leading-[1.55] text-muted">
           {notes

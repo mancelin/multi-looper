@@ -1107,6 +1107,8 @@ test("keyboard shortcut N adds a second loop", async ({ page }) => {
 test("keyboard shortcut S toggles the shortcuts modal", async ({ page }) => {
   await page.goto("/");
   await uploadWav(page, 3);
+  // shortcuts no-op until a track is in the store — wait for the decode
+  await expect(page.getByTitle("Rename loop")).toHaveCount(1);
 
   const heading = page.getByRole("heading", { name: "Keyboard shortcuts" });
   await expect(heading).not.toBeVisible();

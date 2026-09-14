@@ -1,7 +1,7 @@
 export type TrackKind = "file" | "youtube";
 
 /**
- * Optional companion content shown above the video/waveform — a cover image
+ * Optional companion content shown above the video/waveform — an image
  * (sheet music, album art) or markdown notes (chords, lyrics, reminders).
  * A track carries at most one; picking a kind replaces whatever was there.
  */
