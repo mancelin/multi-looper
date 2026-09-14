@@ -4,4 +4,4 @@ Playback (`src/lib/player/controller.ts`): singleton `player` outside React — 
 
 Loop editing: all clamped A/B operations (set/nudge, min gap 0.05s) live in `src/lib/loopEdit.ts`, shared by UI buttons and keyboard shortcuts (`components/ShortcutsProvider.tsx`). Don't patch `a`/`b` directly from components — go through `loopEdit` or `library.patchActiveLoop`.
 
-UI composition: `app/page.tsx` → `TopBar` + `Sidebar` (library) + `PlayerMain` (`TrackHeader`, `VideoPanel`, `Waveform`, `LoopStrip`, `LoopTrim`, `Transport`) + modals. `Waveform` paints bars inside the loop region with the track accent color.
+UI composition: `app/page.tsx` → `TopBar` + `Sidebar` (library) + `PlayerMain` (`TrackHeader`, `ImagePanel`, `VideoPanel`, `Waveform`, `LoopStrip`, `LoopTrim`, `Transport`) + modals. `Waveform` paints bars inside the loop region with the track accent color. `ImagePanel` is an optional cover image (sheet music, chord chart) available on every track kind, sitting above the video; it is set by click/drop/paste and stored as a downscaled data URL on `Track.image`.

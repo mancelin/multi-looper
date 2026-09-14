@@ -28,7 +28,7 @@ export interface Track {
   sortOrder?: number;
   peaks?: number[];
   thumb?: string;
-  /** cover image as a data URL (downscaled), shown above the waveform for file tracks */
+  /** cover image as a data URL (downscaled), shown above the waveform */
   image?: string;
   /** playable media URL: object URL for fresh uploads, PocketBase file URL when synced */
   url?: string;

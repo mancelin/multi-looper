@@ -850,7 +850,7 @@ test("cover hint shows on file tracks without an image and uploads via click", a
   await uploadWav(page, 3);
   await expect(page.getByTitle("Rename loop")).toHaveCount(1); // wait for decode
 
-  // hint strip sits above the waveform while the track has no image
+  // hint strip sits above the video panel while the track has no image
   const hint = page.getByTestId("image-drop-hint");
   await expect(hint).toBeVisible();
   await expect(hint).toContainText("drag & drop, or paste");
@@ -867,6 +867,32 @@ test("cover hint shows on file tracks without an image and uploads via click", a
   // removing the image brings the hint back
   await page.getByTitle("Remove image").click();
   await expect(page.getByTestId("image-drop-hint")).toBeVisible();
+});
+
+test("cover image works on a YouTube track too", async ({ page }) => {
+  await blockYoutube(page);
+  await page.goto("/");
+  const url = page.getByPlaceholder("youtube.com/watch?v=…");
+  await url.fill("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+  await url.press("Enter");
+  await expect(page.getByText("YouTube loop").first()).toBeVisible();
+
+  // hint strip sits above the video panel, same as on file tracks
+  const hint = page.getByTestId("image-drop-hint");
+  await expect(hint).toBeVisible();
+  await hint.locator('input[type="file"]').setInputFiles({
+    name: "chart.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(TINY_PNG, "base64"),
+  });
+
+  // image and the YouTube video panel coexist
+  await expect(page.getByTestId("track-image")).toBeVisible();
+  await expect(page.getByTestId("yt-cover")).toBeVisible();
+
+  // data URL, so it survives the guest localStorage round-trip
+  await page.reload();
+  await expect(page.getByTestId("track-image")).toBeVisible();
 });
 
 test("cover image resizes via the grip, persists, and resets on window resize", async ({

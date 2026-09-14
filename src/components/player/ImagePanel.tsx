@@ -10,12 +10,12 @@ import { useLibrary } from "@/store/library";
 const MIN_HEIGHT = 72;
 
 /**
- * Cover image for file tracks, shown above the waveform. Without an image it
- * shows a hint strip instead (click to upload; drop/paste are handled by
- * PlayerMain). Fills the leftover
- * column height by default; dragging the corner grip sets a fixed height
- * (width follows to keep the aspect ratio), remembered per track until the
- * window is resized — a window resize resets every track back to auto-fit.
+ * Cover image for any track — file or YouTube — shown above the video panel
+ * (sheet music, chord charts, lyrics). Without an image it shows a hint strip
+ * instead (click to upload; drop/paste are handled by PlayerMain). Fills the
+ * leftover column height by default; dragging the corner grip sets a fixed
+ * height (width follows to keep the aspect ratio), remembered per track until
+ * the window is resized — a window resize resets every track back to auto-fit.
  */
 export function ImagePanel({ track }: { track: Track }) {
   const patchTrack = useLibrary((s) => s.patchTrack);
@@ -40,8 +40,6 @@ export function ImagePanel({ track }: { track: Track }) {
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
-
-  if (track.kind !== "file") return null;
 
   if (!track.image) {
     const onPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
