@@ -795,6 +795,12 @@ test("cancelling the remove confirmation keeps the track", async ({ page }) => {
   await expect(page.getByLabel("Track title")).toHaveValue("keeper");
 });
 
+/** The × on the extra-media panel is guarded by a confirmation dialog. */
+async function removeExtraMedia(page: Page, title: "Remove image" | "Remove notes") {
+  await page.getByTitle(title).click();
+  await page.getByTestId("confirm-remove-extra-media-ok").click();
+}
+
 // 1x1 red PNG, base64
 const TINY_PNG =
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
@@ -820,8 +826,8 @@ test("dropping an image onto a file track shows it and survives reload", async (
   await page.reload();
   await expect(page.getByTestId("track-image")).toBeVisible();
 
-  // remove button clears it
-  await page.getByTitle("Remove image").click();
+  // remove button clears it, once confirmed
+  await removeExtraMedia(page, "Remove image");
   await expect(page.getByTestId("track-image")).toHaveCount(0);
 });
 
@@ -865,7 +871,7 @@ test("cover hint shows on file tracks without an image and uploads via click", a
   await expect(hint).toHaveCount(0);
 
   // removing the image brings the hint back
-  await page.getByTitle("Remove image").click();
+  await removeExtraMedia(page, "Remove image");
   await expect(page.getByTestId("extra-media-hint")).toBeVisible();
 });
 
@@ -933,9 +939,32 @@ test("markdown notes: toolbar, preview, save, edit and remove", async ({ page })
   await expect(page.getByTestId("track-markdown")).toContainText("Am - F - C - G");
 
   // removing brings the hint strip back
-  await page.getByTitle("Remove notes").click();
+  await removeExtraMedia(page, "Remove notes");
   await expect(page.getByTestId("track-markdown")).toHaveCount(0);
   await expect(page.getByTestId("extra-media-hint")).toBeVisible();
+});
+
+test("cancelling the extra-media confirmation keeps the notes", async ({ page }) => {
+  await page.goto("/");
+  await uploadWav(page, 3);
+  await expect(page.getByTitle("Rename loop")).toHaveCount(1);
+
+  await page.getByTestId("add-notes").click();
+  await page.getByTestId("markdown-input").fill("keep me");
+  await page.getByTestId("markdown-save").click();
+  await expect(page.getByTestId("track-markdown")).toContainText("keep me");
+
+  await page.getByTitle("Remove notes").click();
+  await expect(page.getByTestId("confirm-remove-extra-media")).toBeVisible();
+  await page.getByTestId("confirm-remove-extra-media-cancel").click();
+  await expect(page.getByTestId("confirm-remove-extra-media")).toHaveCount(0);
+  await expect(page.getByTestId("track-markdown")).toContainText("keep me");
+
+  // Escape closes it too, without deleting
+  await page.getByTitle("Remove notes").click();
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId("confirm-remove-extra-media")).toHaveCount(0);
+  await expect(page.getByTestId("track-markdown")).toContainText("keep me");
 });
 
 test("a track holds one extra media: notes replace an image", async ({ page }) => {
@@ -952,7 +981,7 @@ test("a track holds one extra media: notes replace an image", async ({ page }) =
 
   // no hint strip while an image is set, so notes are added from the editor
   // reached after removing it
-  await page.getByTitle("Remove image").click();
+  await removeExtraMedia(page, "Remove image");
   await page.getByTestId("add-notes").click();
   await page.getByTestId("markdown-input").fill("chords only");
   await page.getByTestId("markdown-save").click();

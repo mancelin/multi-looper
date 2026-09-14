@@ -10,6 +10,7 @@ import {
 import { imageFileToDataUrl } from "@/lib/image";
 import type { Track } from "@/lib/types";
 import { useLibrary } from "@/store/library";
+import { useUi } from "@/store/ui";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { MarkdownView } from "./MarkdownView";
 
@@ -146,7 +147,7 @@ export function ExtraMediaPanel({ track }: { track: Track }) {
     handle.addEventListener("pointerup", up);
   };
 
-  const remove = () => patchTrack(track.id, { extraMedia: undefined });
+  const remove = () => useUi.getState().askRemoveExtraMedia(track.id);
 
   const grip = (
     <div
