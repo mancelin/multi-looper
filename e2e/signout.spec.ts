@@ -80,7 +80,7 @@ test("sign out wipes localStorage and IndexedDB and returns to the empty state",
     .poll(() => page.evaluate(() => localStorage.getItem("multilooper_guest_lib")))
     .toBeNull();
   expect(
-    await page.evaluate(() => localStorage.getItem("multilooper_image_heights")),
+    await page.evaluate(() => localStorage.getItem("multilooper_extra_media_heights")),
   ).toBeNull();
   await expect.poll(() => mediaCount(page)).toBe(0);
 

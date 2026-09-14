@@ -2,11 +2,11 @@
 
 import { ClientResponseError, type RecordModel } from "pocketbase";
 import { clearFiles, getFile, releaseFile } from "@/lib/fileRegistry";
-import { clearImageHeights } from "@/lib/imageSize";
+import { clearExtraMediaHeights } from "@/lib/extraMediaSize";
 import { clearAllMedia } from "@/lib/mediaStore";
 import { pb } from "@/lib/pb";
 import { player } from "@/lib/player/controller";
-import type { Track } from "@/lib/types";
+import { migrateExtraMedia, type ExtraMedia, type Track } from "@/lib/types";
 import { clearGuestLibrary } from "./guestPersist";
 import { useLibrary } from "./library";
 import { useUi } from "./ui";
@@ -27,9 +27,16 @@ function isQuotaError(e: unknown): e is ClientResponseError {
 
 // ---------- record mapping ----------
 
+/** PB stores extra media as JSON; an empty field means the track has none. */
+function recordExtraMedia(r: RecordModel): ExtraMedia | undefined {
+  const raw = r.extraMedia as ExtraMedia | string | null | undefined;
+  if (!raw || typeof raw === "string") return undefined;
+  return raw.type === "image" || raw.type === "markdown" ? raw : undefined;
+}
+
 function recordToTrack(r: RecordModel): Track {
   const media = r.media as string | undefined;
-  return {
+  return migrateExtraMedia({
     id: r.id,
     pbId: r.id,
     kind: r.kind as Track["kind"],
@@ -45,10 +52,12 @@ function recordToTrack(r: RecordModel): Track {
     sortOrder: (r.sortOrder as number) || 0,
     peaks: (r.peaks as number[]) ?? undefined,
     thumb: (r.thumb as string) || undefined,
+    extraMedia: recordExtraMedia(r),
+    // legacy field, folded into extraMedia by migrateExtraMedia
     image: (r.image as string) || undefined,
     videoId: (r.videoId as string) || undefined,
     url: media ? pb.files.getURL(r, media) : undefined,
-  };
+  } as Track);
 }
 
 function trackPayload(t: Track): Record<string, unknown> {
@@ -67,7 +76,9 @@ function trackPayload(t: Track): Record<string, unknown> {
     sortOrder: t.sortOrder ?? 0,
     peaks: t.peaks ?? [],
     thumb: t.thumb ?? "",
-    image: t.image ?? "",
+    extraMedia: t.extraMedia ?? null,
+    // cleared on the first write back: superseded by extraMedia
+    image: "",
     videoId: t.videoId ?? "",
   };
 }
@@ -369,7 +380,7 @@ async function wipeLocalData(): Promise<void> {
   useLibrary.getState().setLibrary([], null);
   clearFiles();
   clearGuestLibrary();
-  clearImageHeights();
+  clearExtraMediaHeights();
   await clearAllMedia();
 }
 

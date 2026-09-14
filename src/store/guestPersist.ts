@@ -2,7 +2,7 @@
 
 import { registerFile } from "@/lib/fileRegistry";
 import { getMedia, pruneMedia } from "@/lib/mediaStore";
-import type { Track } from "@/lib/types";
+import { migrateExtraMedia, type Track } from "@/lib/types";
 import { useLibrary } from "./library";
 import { useUi } from "./ui";
 
@@ -29,6 +29,7 @@ export function loadGuestLibrary(): GuestLib | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as GuestLib;
     if (!Array.isArray(parsed.tracks)) return null;
+    parsed.tracks.forEach(migrateExtraMedia);
     return parsed;
   } catch {
     return null;

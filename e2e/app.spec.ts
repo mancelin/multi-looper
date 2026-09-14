@@ -851,7 +851,7 @@ test("cover hint shows on file tracks without an image and uploads via click", a
   await expect(page.getByTitle("Rename loop")).toHaveCount(1); // wait for decode
 
   // hint strip sits above the video panel while the track has no image
-  const hint = page.getByTestId("image-drop-hint");
+  const hint = page.getByTestId("extra-media-hint");
   await expect(hint).toBeVisible();
   await expect(hint).toContainText("drag & drop, or paste");
 
@@ -866,7 +866,7 @@ test("cover hint shows on file tracks without an image and uploads via click", a
 
   // removing the image brings the hint back
   await page.getByTitle("Remove image").click();
-  await expect(page.getByTestId("image-drop-hint")).toBeVisible();
+  await expect(page.getByTestId("extra-media-hint")).toBeVisible();
 });
 
 test("cover image works on a YouTube track too", async ({ page }) => {
@@ -878,7 +878,7 @@ test("cover image works on a YouTube track too", async ({ page }) => {
   await expect(page.getByText("YouTube loop").first()).toBeVisible();
 
   // hint strip sits above the video panel, same as on file tracks
-  const hint = page.getByTestId("image-drop-hint");
+  const hint = page.getByTestId("extra-media-hint");
   await expect(hint).toBeVisible();
   await hint.locator('input[type="file"]').setInputFiles({
     name: "chart.png",
@@ -893,6 +893,99 @@ test("cover image works on a YouTube track too", async ({ page }) => {
   // data URL, so it survives the guest localStorage round-trip
   await page.reload();
   await expect(page.getByTestId("track-image")).toBeVisible();
+});
+
+test("markdown notes: toolbar, preview, save, edit and remove", async ({ page }) => {
+  await page.goto("/");
+  await uploadWav(page, 3);
+  await expect(page.getByTitle("Rename loop")).toHaveCount(1); // wait for decode
+
+  await page.getByTestId("add-notes").click();
+  const input = page.getByTestId("markdown-input");
+  await expect(input).toBeVisible();
+
+  // toolbar with an empty selection inserts the placeholder already wrapped
+  await page.getByRole("button", { name: "Bold" }).click();
+  await expect(input).toHaveValue("**bold text**");
+
+  await input.fill("## Verse riff\n\nAm - F - C - G");
+
+  // preview tab renders the markdown; the editor keeps the source
+  await page.getByTestId("markdown-preview-tab").click();
+  await expect(
+    page.getByTestId("markdown-preview").getByRole("heading", { name: "Verse riff" }),
+  ).toBeVisible();
+
+  await page.getByTestId("markdown-save").click();
+  const notes = page.getByTestId("track-markdown");
+  await expect(notes.getByRole("heading", { name: "Verse riff" })).toBeVisible();
+  await expect(notes).toContainText("Am - F - C - G");
+  await expect(page.getByTestId("markdown-editor")).toHaveCount(0);
+
+  // markdown is plain text, so it survives the guest localStorage round-trip
+  await page.reload();
+  await expect(page.getByTestId("track-markdown")).toContainText("Am - F - C - G");
+
+  // edit re-opens the editor on the saved source; cancel leaves it untouched
+  await page.getByTestId("edit-notes").click();
+  await expect(page.getByTestId("markdown-input")).toHaveValue(/Verse riff/);
+  await page.getByRole("button", { name: "Cancel" }).click();
+  await expect(page.getByTestId("track-markdown")).toContainText("Am - F - C - G");
+
+  // removing brings the hint strip back
+  await page.getByTitle("Remove notes").click();
+  await expect(page.getByTestId("track-markdown")).toHaveCount(0);
+  await expect(page.getByTestId("extra-media-hint")).toBeVisible();
+});
+
+test("a track holds one extra media: notes replace an image", async ({ page }) => {
+  await page.goto("/");
+  await uploadWav(page, 3);
+  await expect(page.getByTitle("Rename loop")).toHaveCount(1);
+
+  await page.getByTestId("extra-media-hint").locator('input[type="file"]').setInputFiles({
+    name: "cover.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(TINY_PNG, "base64"),
+  });
+  await expect(page.getByTestId("track-image")).toBeVisible();
+
+  // no hint strip while an image is set, so notes are added from the editor
+  // reached after removing it
+  await page.getByTitle("Remove image").click();
+  await page.getByTestId("add-notes").click();
+  await page.getByTestId("markdown-input").fill("chords only");
+  await page.getByTestId("markdown-save").click();
+
+  await expect(page.getByTestId("track-markdown")).toContainText("chords only");
+  await expect(page.getByTestId("track-image")).toHaveCount(0);
+});
+
+test("a legacy stored `image` field is migrated to extra media", async ({ page }) => {
+  await page.goto("/");
+  await uploadWav(page, 3);
+  await expect(page.getByTitle("Rename loop")).toHaveCount(1);
+
+  // rewrite the guest library the way a pre-extraMedia build wrote it
+  await page.evaluate((b64) => {
+    const lib = JSON.parse(localStorage.getItem("multilooper_guest_lib")!);
+    lib.tracks[0].image = `data:image/png;base64,${b64}`;
+    delete lib.tracks[0].extraMedia;
+    localStorage.setItem("multilooper_guest_lib", JSON.stringify(lib));
+  }, TINY_PNG);
+
+  await page.reload();
+  await expect(page.getByTestId("track-image")).toBeVisible();
+
+  // and it is rewritten in the new shape, so it stops round-tripping
+  await expect
+    .poll(async () =>
+      await page.evaluate(() => {
+        const lib = JSON.parse(localStorage.getItem("multilooper_guest_lib")!);
+        return [lib.tracks[0].extraMedia?.type, lib.tracks[0].image ?? null];
+      }),
+    )
+    .toEqual(["image", null]);
 });
 
 test("cover image resizes via the grip, persists, and resets on window resize", async ({
@@ -918,7 +1011,7 @@ test("cover image resizes via the grip, persists, and resets on window resize", 
 
   // drag the grip 100px up → image gets ~100px shorter, aspect kept
   await img.hover(); // reveal the grip
-  const gb = (await page.getByTestId("image-resize-grip").boundingBox())!;
+  const gb = (await page.getByTestId("extra-media-resize-grip").boundingBox())!;
   await page.mouse.move(gb.x + gb.width / 2, gb.y + gb.height / 2);
   await page.mouse.down();
   await page.mouse.move(gb.x + gb.width / 2, gb.y + gb.height / 2 - 100, { steps: 5 });
@@ -938,7 +1031,7 @@ test("cover image resizes via the grip, persists, and resets on window resize", 
   await expect
     .poll(async () => (await img.boundingBox())!.height)
     .toBeGreaterThan(resized.height + 20);
-  expect(await page.evaluate(() => localStorage.getItem("multilooper_image_heights"))).toBeNull();
+  expect(await page.evaluate(() => localStorage.getItem("multilooper_extra_media_heights"))).toBeNull();
 });
 
 test("track number in the URL: selection updates it, deep links and invalid paths resolve", async ({

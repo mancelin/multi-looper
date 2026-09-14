@@ -396,3 +396,30 @@ export function StopIcon({ size, ...rest }: P) {
     </svg>
   );
 }
+
+export function PencilIcon({ size, ...rest }: P) {
+  return (
+    <svg viewBox="0 0 16 16" {...svg(size, 13, rest)}>
+      <path
+        d="M10.6 2.4 13.6 5.4 5.9 13.1 2.4 13.6 2.9 10.1z"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinejoin="round"
+      />
+      <path d="M9.2 3.8 12.2 6.8" stroke="currentColor" strokeWidth="1.3" />
+    </svg>
+  );
+}
+
+export function TextIcon({ size, ...rest }: P) {
+  return (
+    <svg viewBox="0 0 16 16" {...svg(size, 13, rest)}>
+      <path
+        d="M2.5 3.5h11M2.5 7h11M2.5 10.5h7.5M2.5 14h5"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}

@@ -5,7 +5,7 @@ import { firstImageFile, imageFileToDataUrl } from "@/lib/image";
 import { player } from "@/lib/player/controller";
 import type { Track } from "@/lib/types";
 import { useLibrary } from "@/store/library";
-import { ImagePanel } from "./ImagePanel";
+import { ExtraMediaPanel } from "./ExtraMediaPanel";
 import { LoopStrip } from "./LoopStrip";
 import { LoopTrim } from "./LoopTrim";
 import { TrackHeader } from "./TrackHeader";
@@ -24,8 +24,8 @@ export function PlayerMain({ track }: { track: Track }) {
   const applyImage = useCallback(
     async (file: File) => {
       try {
-        const image = await imageFileToDataUrl(file);
-        useLibrary.getState().patchTrack(track.id, { image });
+        const src = await imageFileToDataUrl(file);
+        useLibrary.getState().patchTrack(track.id, { extraMedia: { type: "image", src } });
       } catch {
         // undecodable image — ignore
       }
@@ -66,7 +66,7 @@ export function PlayerMain({ track }: { track: Track }) {
       className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto bg-[radial-gradient(120%_80%_at_50%_-10%,#12161d_0%,#0c0e12_60%)]"
     >
       <TrackHeader track={track} />
-      <ImagePanel track={track} />
+      <ExtraMediaPanel track={track} />
       <VideoPanel track={track} mainRef={mainRef} />
       <Waveform track={track} />
       <Transport track={track} />

@@ -1,5 +1,16 @@
 export type TrackKind = "file" | "youtube";
 
+/**
+ * Optional companion content shown above the video/waveform — a cover image
+ * (sheet music, album art) or markdown notes (chords, lyrics, reminders).
+ * A track carries at most one; picking a kind replaces whatever was there.
+ */
+export type ExtraMedia =
+  | { type: "image"; src: string }
+  | { type: "markdown"; text: string };
+
+export type ExtraMediaType = ExtraMedia["type"];
+
 export interface Loop {
   id: string;
   name: string;
@@ -28,8 +39,8 @@ export interface Track {
   sortOrder?: number;
   peaks?: number[];
   thumb?: string;
-  /** cover image as a data URL (downscaled), shown above the waveform */
-  image?: string;
+  /** image or markdown notes shown above the video/waveform */
+  extraMedia?: ExtraMedia;
   /** playable media URL: object URL for fresh uploads, PocketBase file URL when synced */
   url?: string;
   videoId?: string;
@@ -43,6 +54,20 @@ export const ACCENTS = {
   videoFile: "#c4b5fd",
   default: "#5eead4",
 } as const;
+
+/**
+ * Tracks stored before extra media existed carry a bare `image` data URL.
+ * Rewrites them in place on the way out of localStorage / PocketBase; the
+ * legacy field is dropped so it stops round-tripping.
+ */
+export function migrateExtraMedia(track: Track): Track {
+  const legacy = track as Track & { image?: string };
+  if (!legacy.extraMedia && legacy.image) {
+    legacy.extraMedia = { type: "image", src: legacy.image };
+  }
+  delete legacy.image;
+  return track;
+}
 
 export function activeLoop(track: Track): Loop {
   return track.loops.find((l) => l.id === track.activeLoopId) ?? track.loops[0];
