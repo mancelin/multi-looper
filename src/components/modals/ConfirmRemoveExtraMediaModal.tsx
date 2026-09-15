@@ -2,22 +2,30 @@
 
 import { useEffect } from "react";
 import { TrashIcon } from "@/components/icons";
+import { clearSegmentMedia, removeSegment } from "@/lib/extraMediaEdit";
 import { useLibrary } from "@/store/library";
 import { useUi } from "@/store/ui";
 
 /**
- * Guards the × on the extra-media panel: an image is a re-upload and notes are
- * typed by hand, so neither is cheap to get back and neither is undoable.
+ * Guards both destructive extra-media actions: the × on the panel, which
+ * takes a segment's media away, and Delete in the times menu, which takes the
+ * whole segment. An image is a re-upload and notes are typed by hand, so
+ * neither is cheap to get back and neither is undoable.
  */
 export function ConfirmRemoveExtraMediaModal() {
-  const id = useUi((s) => s.confirmExtraMediaId);
+  const target = useUi((s) => s.confirmExtraMedia);
   const close = useUi((s) => s.closeExtraMediaConfirm);
-  // the media can disappear under the dialog (sync, another device) — read it
+  // the segment can disappear under the dialog (sync, another device) — read it
   // every render so a stale id closes instead of deleting something else
-  const media = useLibrary((s) => s.tracks.find((t) => t.id === id)?.extraMedia ?? null);
+  const segs = useLibrary(
+    (s) => s.tracks.find((t) => t.id === target?.trackId)?.extraMedia ?? null,
+  );
+  const seg = segs?.find((x) => x.id === target?.segId) ?? null;
+  // clearing media is only offered where there is media to clear
+  const gone = !seg || (target?.mode === "media" && !seg.media);
 
   useEffect(() => {
-    if (!id) return;
+    if (!target) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.stopPropagation();
@@ -26,20 +34,37 @@ export function ConfirmRemoveExtraMediaModal() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [id, close]);
+  }, [target, close]);
 
   useEffect(() => {
-    if (id && !media) close();
-  }, [id, media, close]);
+    if (target && gone) close();
+  }, [target, gone, close]);
 
-  if (!id || !media) return null;
+  if (!target || !seg || gone) return null;
 
-  const notes = media.type === "markdown";
+  const segment = target.mode === "segment";
+  const last = segs?.length === 1;
+  const notes = seg.media?.type === "markdown";
 
   const confirm = () => {
-    useLibrary.getState().patchTrack(id, { extraMedia: undefined });
+    if (segment) removeSegment(target.trackId, target.segId);
+    else clearSegmentMedia(target.trackId, target.segId);
     close();
   };
+
+  const title = segment
+    ? "Delete this segment?"
+    : notes
+      ? "Remove these notes?"
+      : "Remove this image?";
+
+  const body = segment
+    ? last
+      ? "This is the only segment, so the track will be left with no extra media at all. This can't be undone."
+      : "Its stretch of the track goes back to the neighbouring segment, taking its media with it. This can't be undone."
+    : notes
+      ? "The markdown text will be deleted. This can't be undone."
+      : "The image will be deleted from this segment. This can't be undone.";
 
   return (
     <div
@@ -54,14 +79,8 @@ export function ConfirmRemoveExtraMediaModal() {
         <div className="mb-[14px] flex h-11 w-11 items-center justify-center rounded-[12px] border border-[rgba(248,113,113,.25)] bg-[rgba(248,113,113,.1)] text-danger">
           <TrashIcon />
         </div>
-        <h2 className="mb-2 mt-0 text-[18px] font-bold">
-          {notes ? "Remove these notes?" : "Remove this image?"}
-        </h2>
-        <p className="mb-5 mt-0 text-[13.5px] leading-[1.55] text-muted">
-          {notes
-            ? "The markdown text will be deleted. This can't be undone."
-            : "The image will be deleted from this track. This can't be undone."}
-        </p>
+        <h2 className="mb-2 mt-0 text-[18px] font-bold">{title}</h2>
+        <p className="mb-5 mt-0 text-[13.5px] leading-[1.55] text-muted">{body}</p>
         <div className="flex gap-[10px]">
           <button
             autoFocus
@@ -76,7 +95,7 @@ export function ConfirmRemoveExtraMediaModal() {
             data-testid="confirm-remove-extra-media-ok"
             className="h-11 flex-1 cursor-pointer rounded-[9px] border-none bg-danger text-[13.5px] font-semibold text-[#2b0b0b]"
           >
-            Remove
+            {segment ? "Delete" : "Remove"}
           </button>
         </div>
       </div>

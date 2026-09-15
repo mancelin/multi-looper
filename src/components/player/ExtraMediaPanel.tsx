@@ -2,14 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CloseIcon, PencilIcon, ResizeIcon, TextIcon, UploadIcon } from "@/components/icons";
+import { segmentAt } from "@/lib/extraMedia";
+import { clearSegmentMedia, ensureSegment, setSegmentMedia } from "@/lib/extraMediaEdit";
 import {
   clearExtraMediaHeights,
   loadExtraMediaHeight,
   saveExtraMediaHeight,
 } from "@/lib/extraMediaSize";
 import { imageFileToDataUrl } from "@/lib/image";
+import { player } from "@/lib/player/controller";
 import type { Track } from "@/lib/types";
-import { useLibrary } from "@/store/library";
 import { useUi } from "@/store/ui";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { MarkdownView } from "./MarkdownView";
@@ -24,33 +26,47 @@ const hintChoice =
 
 /**
  * Extra media for any track — file or YouTube — shown above the video panel:
- * either an image (sheet music, album art) or markdown notes (chords,
- * lyrics, reminders). A track holds one at a time; adding one replaces the
- * other. With nothing set the panel is a hint strip offering both.
+ * an image (sheet music, album art) or markdown notes (chords, lyrics). Which
+ * one is showing depends on the playhead: `track.extraMedia` partitions the
+ * track into segments and this panel renders the one the playhead is inside.
+ * `ExtraMediaTimes` is where those times are edited. A segment holds one
+ * medium at a time; adding one replaces the other.
  *
  * Height: images fill the leftover column height by default, notes size to
  * their content. Dragging the corner grip pins a fixed height, remembered per
  * track until the window is resized — a resize resets every track to auto.
  */
 export function ExtraMediaPanel({ track }: { track: Track }) {
-  const patchTrack = useLibrary((s) => s.patchTrack);
   const boxRef = useRef<HTMLDivElement>(null);
+  const segs = track.extraMedia;
   const [sized, setSized] = useState<{ id: string; height: number | null }>(() => ({
     id: track.id,
     height: loadExtraMediaHeight(track.id),
   }));
-  const [edit, setEdit] = useState<{ id: string; on: boolean }>({ id: track.id, on: false });
+  const [editId, setEditId] = useState<string | null>(null);
   // Reset during render when the track changes (avoids a one-frame flash of
   // the previous track's height that an effect-based reset would show).
   if (sized.id !== track.id) {
     setSized({ id: track.id, height: loadExtraMediaHeight(track.id) });
   }
-  if (edit.id !== track.id) {
-    setEdit({ id: track.id, on: false });
-  }
   const height = sized.id === track.id ? sized.height : loadExtraMediaHeight(track.id);
-  const editing = edit.id === track.id && edit.on;
   const setHeight = (h: number | null) => setSized({ id: track.id, height: h });
+
+  // Which segment is showing follows the playhead, which moves at frame rate —
+  // so watch it imperatively and only re-render when it crosses a boundary.
+  const [activeId, setActiveId] = useState<string | null>(null);
+  useEffect(() => {
+    let last: string | null = null;
+    const update = (t: number) => {
+      const id = segmentAt(segs, t)?.id ?? null;
+      if (id !== last) {
+        last = id;
+        setActiveId(id);
+      }
+    };
+    update(player.getT());
+    return player.onTime(update);
+  }, [segs]);
 
   useEffect(() => {
     const onResize = () => {
@@ -61,23 +77,29 @@ export function ExtraMediaPanel({ track }: { track: Track }) {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  const media = track.extraMedia;
+  const seg = segs?.find((s) => s.id === activeId) ?? segs?.[0];
+  const media = seg?.media;
 
   // ---------- editing notes ----------
 
-  if (editing) {
+  if (seg && editId === seg.id) {
     const onSave = (text: string) => {
-      patchTrack(track.id, {
-        extraMedia: text.trim() ? { type: "markdown", text } : undefined,
-      });
-      setEdit({ id: track.id, on: false });
+      if (text.trim()) setSegmentMedia(track.id, seg.id, { type: "markdown", text });
+      else clearSegmentMedia(track.id, seg.id);
+      setEditId(null);
+    };
+    // Backing out of the editor on a segment the click itself created leaves
+    // nothing behind, rather than an empty segment the user never asked for.
+    const onCancel = () => {
+      if (!media) clearSegmentMedia(track.id, seg.id);
+      setEditId(null);
     };
     return (
       <div className="flex flex-none px-4 pb-1 pt-[6px] sm:px-[26px]">
         <MarkdownEditor
           initial={media?.type === "markdown" ? media.text : ""}
           onSave={onSave}
-          onCancel={() => setEdit({ id: track.id, on: false })}
+          onCancel={onCancel}
         />
       </div>
     );
@@ -92,11 +114,12 @@ export function ExtraMediaPanel({ track }: { track: Track }) {
       if (!file) return;
       try {
         const src = await imageFileToDataUrl(file);
-        patchTrack(track.id, { extraMedia: { type: "image", src } });
+        setSegmentMedia(track.id, seg?.id ?? null, { type: "image", src });
       } catch {
         // undecodable image — ignore
       }
     };
+    const startNotes = () => setEditId(seg?.id ?? ensureSegment(track.id));
     return (
       <div className="px-4 pb-1 pt-[6px] sm:px-[26px]">
         <div data-testid="extra-media-hint" className="flex w-full items-stretch gap-3">
@@ -115,7 +138,7 @@ export function ExtraMediaPanel({ track }: { track: Track }) {
             type="button"
             title="Add notes"
             data-testid="add-notes"
-            onClick={() => setEdit({ id: track.id, on: true })}
+            onClick={startNotes}
             className={hintChoice}
           >
             <span className="flex items-center gap-2 text-[12.5px] text-ink-2">
@@ -156,7 +179,7 @@ export function ExtraMediaPanel({ track }: { track: Track }) {
     handle.addEventListener("pointerup", up);
   };
 
-  const remove = () => useUi.getState().askRemoveExtraMedia(track.id);
+  const remove = () => useUi.getState().askRemoveExtraMedia(track.id, seg.id);
 
   const grip = (
     <div
@@ -189,14 +212,18 @@ export function ExtraMediaPanel({ track }: { track: Track }) {
           </div>
           <div className="absolute right-2 top-2 flex gap-1.5">
             <button
-              onClick={() => setEdit({ id: track.id, on: true })}
+              onClick={() => setEditId(seg.id)}
               title="Edit notes"
               data-testid="edit-notes"
               className={`${cornerButton} hover:text-ink`}
             >
               <PencilIcon size={11} />
             </button>
-            <button onClick={remove} title="Remove notes" className={`${cornerButton} hover:text-danger`}>
+            <button
+              onClick={remove}
+              title="Remove notes"
+              className={`${cornerButton} hover:text-danger`}
+            >
               <CloseIcon size={11} strokeWidth={1.8} />
             </button>
           </div>

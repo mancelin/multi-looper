@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
+import { clampSegments } from "@/lib/extraMedia";
 import { activeLoop, uid, type Loop, type Track } from "@/lib/types";
 
 export interface LibraryState {
@@ -96,7 +97,13 @@ export const useLibrary = create<LibraryState>()(
             const b = wasFull ? d : Math.max(a + 0.05, Math.min(l.b, d));
             return { ...l, a, b };
           });
-          return { ...t, duration: d, durationExact: true, loops };
+          return {
+            ...t,
+            duration: d,
+            durationExact: true,
+            loops,
+            extraMedia: clampSegments(t.extraMedia, d),
+          };
         }),
       })),
 

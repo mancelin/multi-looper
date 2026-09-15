@@ -40,8 +40,12 @@ export interface UiState {
   recordDenoise: boolean;
   /** track awaiting the remove confirmation, null when the dialog is closed */
   confirmRemoveId: string | null;
-  /** track whose extra media awaits the remove confirmation */
-  confirmExtraMediaId: string | null;
+  /** extra-media removal awaiting confirmation: either just the segment's
+   *  media ("media") or the whole segment and its stretch of track ("segment") */
+  confirmExtraMedia: { trackId: string; segId: string; mode: "media" | "segment" } | null;
+  /** the extra-media times menu is unfolded; folded by default so the strip
+   *  costs one header row until someone actually wants to retime something */
+  extraTimesOpen: boolean;
 
   account: Account | null;
   accountMenuOpen: boolean;
@@ -74,8 +78,9 @@ export interface UiState {
   setRecordDenoise: (v: boolean) => void;
   askRemoveTrack: (id: string) => void;
   closeRemoveConfirm: () => void;
-  askRemoveExtraMedia: (id: string) => void;
+  askRemoveExtraMedia: (trackId: string, segId: string, mode?: "media" | "segment") => void;
   closeExtraMediaConfirm: () => void;
+  toggleExtraTimes: () => void;
 
   setAccount: (a: Account | null) => void;
   setAccountMenuOpen: (v: boolean) => void;
@@ -112,7 +117,8 @@ export const useUi = create<UiState>()((set) => ({
   recordOpen: false,
   recordDenoise: true,
   confirmRemoveId: null,
-  confirmExtraMediaId: null,
+  confirmExtraMedia: null,
+  extraTimesOpen: false,
 
   account: null,
   accountMenuOpen: false,
@@ -144,8 +150,10 @@ export const useUi = create<UiState>()((set) => ({
   setRecordDenoise: (v) => set({ recordDenoise: v }),
   askRemoveTrack: (id) => set({ confirmRemoveId: id }),
   closeRemoveConfirm: () => set({ confirmRemoveId: null }),
-  askRemoveExtraMedia: (id) => set({ confirmExtraMediaId: id }),
-  closeExtraMediaConfirm: () => set({ confirmExtraMediaId: null }),
+  askRemoveExtraMedia: (trackId, segId, mode = "media") =>
+    set({ confirmExtraMedia: { trackId, segId, mode } }),
+  closeExtraMediaConfirm: () => set({ confirmExtraMedia: null }),
+  toggleExtraTimes: () => set((s) => ({ extraTimesOpen: !s.extraTimesOpen })),
 
   setAccount: (a) => set(a ? { account: a } : { account: null, storageUsed: null }),
   setAccountMenuOpen: (v) => set({ accountMenuOpen: v }),

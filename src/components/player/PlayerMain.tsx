@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
+import { setSegmentMedia } from "@/lib/extraMediaEdit";
 import { firstImageFile, imageFileToDataUrl } from "@/lib/image";
 import { player } from "@/lib/player/controller";
 import type { Track } from "@/lib/types";
-import { useLibrary } from "@/store/library";
 import { ExtraMediaPanel } from "./ExtraMediaPanel";
+import { ExtraMediaTimes } from "./ExtraMediaTimes";
 import { LoopStrip } from "./LoopStrip";
 import { LoopTrim } from "./LoopTrim";
 import { TrackHeader } from "./TrackHeader";
@@ -25,7 +26,8 @@ export function PlayerMain({ track }: { track: Track }) {
     async (file: File) => {
       try {
         const src = await imageFileToDataUrl(file);
-        useLibrary.getState().patchTrack(track.id, { extraMedia: { type: "image", src } });
+        // lands on the segment showing right now, or creates the full-track one
+        setSegmentMedia(track.id, null, { type: "image", src });
       } catch {
         // undecodable image — ignore
       }
@@ -69,6 +71,7 @@ export function PlayerMain({ track }: { track: Track }) {
       <ExtraMediaPanel track={track} />
       <VideoPanel track={track} mainRef={mainRef} />
       <Waveform track={track} />
+      <ExtraMediaTimes track={track} />
       <Transport track={track} />
       <LoopStrip track={track} />
       <LoopTrim track={track} />

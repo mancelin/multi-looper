@@ -1006,20 +1006,134 @@ test("a legacy stored `image` field is migrated to extra media", async ({ page }
   await page.reload();
   await expect(page.getByTestId("track-image")).toBeVisible();
 
-  // and it is rewritten in the new shape, so it stops round-tripping
+  // and it is rewritten as one segment spanning the whole track, so the legacy
+  // field stops round-tripping
   await expect
     .poll(async () =>
       await page.evaluate(() => {
         const lib = JSON.parse(localStorage.getItem("multilooper_guest_lib")!);
-        return [lib.tracks[0].extraMedia?.type, lib.tracks[0].image ?? null];
+        const segs = lib.tracks[0].extraMedia;
+        return [segs?.length, segs?.[0]?.media?.type, segs?.[0]?.start, lib.tracks[0].image ?? null];
       }),
     )
-    .toEqual(["image", null]);
+    .toEqual([1, "image", 0, null]);
+});
+
+/** Seek by clicking the times ruler at a fraction of the track. */
+async function seekRuler(page: Page, ratio: number) {
+  const ruler = page.getByTestId("extra-times-ruler");
+  const box = (await ruler.boundingBox())!;
+  await page.mouse.click(box.x + box.width * ratio, box.y + box.height / 2);
+}
+
+async function addImageAndOpenTimes(page: Page, seconds: number) {
+  await uploadWav(page, seconds);
+  await expect(page.getByTitle("Rename loop")).toHaveCount(1); // wait for decode
+  await page.getByTestId("extra-media-hint").locator('input[type="file"]').setInputFiles({
+    name: "cover.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(TINY_PNG, "base64"),
+  });
+  await expect(page.getByTestId("track-image")).toBeVisible();
+  await page.getByTestId("extra-times-toggle").click();
+  await expect(page.getByTestId("extra-times-strip")).toBeVisible();
+}
+
+test("the first extra media spans the whole track as one segment", async ({ page }) => {
+  await page.goto("/");
+  await addImageAndOpenTimes(page, 10);
+
+  await expect(page.getByTestId("extra-segment")).toHaveCount(1);
+  await expect(page.getByTestId("segment-start")).toHaveText("0:00.000");
+  await expect(page.getByTestId("segment-end")).toHaveText("0:10.000");
+  // the outer ends are pinned to the track, so neither nudges
+  await expect(page.getByTitle("−100ms").first()).toBeDisabled();
+});
+
+test("adding at the playhead carves the segment in two, the new half empty", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await addImageAndOpenTimes(page, 10);
+
+  await seekRuler(page, 0.5);
+  await page.getByTestId("add-extra-media").click();
+  await expect(page.getByTestId("extra-segment")).toHaveCount(2);
+
+  // the playhead sits in the new half, which has no media of its own yet
+  await expect(page.getByTestId("extra-media-hint")).toBeVisible();
+  await expect(page.getByTestId("track-image")).toHaveCount(0);
+  await expect(page.getByTestId("segment-start")).toHaveText(/^0:05\./);
+  await expect(page.getByTestId("segment-end")).toHaveText("0:10.000");
+
+  // the panel follows the playhead back into the first half
+  await seekRuler(page, 0.1);
+  await expect(page.getByTestId("track-image")).toBeVisible();
+  await expect(page.getByTestId("extra-media-hint")).toHaveCount(0);
+
+  // segments survive the guest localStorage round-trip
+  await page.reload();
+  await page.getByTestId("extra-times-toggle").click();
+  await expect(page.getByTestId("extra-segment")).toHaveCount(2);
+});
+
+test("dragging a shared edge retimes both neighbours, never opening a gap", async ({ page }) => {
+  await page.goto("/");
+  await addImageAndOpenTimes(page, 10);
+  await seekRuler(page, 0.5);
+  await page.getByTestId("add-extra-media").click();
+  await expect(page.getByTestId("extra-segment")).toHaveCount(2);
+
+  const strip = (await page.getByTestId("extra-times-strip").boundingBox())!;
+  const handle = (await page.getByTestId("extra-boundary").boundingBox())!;
+  await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(strip.x + strip.width * 0.25, handle.y + handle.height / 2, { steps: 8 });
+  await page.mouse.up();
+
+  // the selected (second) segment now starts at the new edge...
+  await expect(page.getByTestId("segment-start")).toHaveText(/^0:02\./);
+  // ...and the first segment ends there too — one edge, no gap
+  const [firstEnd, secondStart] = await page.evaluate(() => {
+    const lib = JSON.parse(localStorage.getItem("multilooper_guest_lib")!);
+    const segs = lib.tracks[0].extraMedia;
+    return [segs[0].end, segs[1].start];
+  });
+  expect(firstEnd).toBe(secondStart);
+  expect(firstEnd).toBeGreaterThan(2);
+  expect(firstEnd).toBeLessThan(3);
+});
+
+test("deleting a segment hands its time back to the neighbour, after a confirm", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await addImageAndOpenTimes(page, 10);
+  await seekRuler(page, 0.5);
+  await page.getByTestId("add-extra-media").click();
+  await expect(page.getByTestId("extra-segment")).toHaveCount(2);
+
+  // cancelling leaves both segments alone
+  await page.getByTestId("delete-segment").click();
+  await page.getByTestId("confirm-remove-extra-media-cancel").click();
+  await expect(page.getByTestId("extra-segment")).toHaveCount(2);
+
+  await page.getByTestId("delete-segment").click();
+  await expect(page.getByTestId("confirm-remove-extra-media")).toBeVisible();
+  await page.getByTestId("confirm-remove-extra-media-ok").click();
+  await expect(page.getByTestId("extra-segment")).toHaveCount(1);
+  // the survivor covers the whole track again
+  await expect(page.getByTestId("segment-start")).toHaveText("0:00.000");
+  await expect(page.getByTestId("segment-end")).toHaveText("0:10.000");
+  await expect(page.getByTestId("track-image")).toBeVisible();
 });
 
 test("cover image resizes via the grip, persists, and resets on window resize", async ({
   page,
 }) => {
+  // a taller window than the default so the auto-fitted image has room to be
+  // dragged shorter without hitting the panel's minimum height
+  await page.setViewportSize({ width: 1280, height: 1000 });
   await page.goto("/");
   await uploadWav(page, 3);
   await expect(page.getByTitle("Rename loop")).toHaveCount(1); // wait for decode

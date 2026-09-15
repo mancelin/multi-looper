@@ -6,7 +6,7 @@ import { clearExtraMediaHeights } from "@/lib/extraMediaSize";
 import { clearAllMedia } from "@/lib/mediaStore";
 import { pb } from "@/lib/pb";
 import { player } from "@/lib/player/controller";
-import { migrateExtraMedia, type ExtraMedia, type Track } from "@/lib/types";
+import { migrateExtraMedia, type Track } from "@/lib/types";
 import { clearGuestLibrary } from "./guestPersist";
 import { useLibrary } from "./library";
 import { useUi } from "./ui";
@@ -27,13 +27,6 @@ function isQuotaError(e: unknown): e is ClientResponseError {
 
 // ---------- record mapping ----------
 
-/** PB stores extra media as JSON; an empty field means the track has none. */
-function recordExtraMedia(r: RecordModel): ExtraMedia | undefined {
-  const raw = r.extraMedia as ExtraMedia | string | null | undefined;
-  if (!raw || typeof raw === "string") return undefined;
-  return raw.type === "image" || raw.type === "markdown" ? raw : undefined;
-}
-
 function recordToTrack(r: RecordModel): Track {
   const media = r.media as string | undefined;
   return migrateExtraMedia({
@@ -52,7 +45,9 @@ function recordToTrack(r: RecordModel): Track {
     sortOrder: (r.sortOrder as number) || 0,
     peaks: (r.peaks as number[]) ?? undefined,
     thumb: (r.thumb as string) || undefined,
-    extraMedia: recordExtraMedia(r),
+    // an older record can hold a single untimed object here instead of the
+    // segment array; migrateExtraMedia below settles both shapes
+    extraMedia: (r.extraMedia as Track["extraMedia"]) || undefined,
     // legacy field, folded into extraMedia by migrateExtraMedia
     image: (r.image as string) || undefined,
     videoId: (r.videoId as string) || undefined,

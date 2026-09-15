@@ -1,15 +1,30 @@
 export type TrackKind = "file" | "youtube";
 
 /**
- * Optional companion content shown above the video/waveform — an image
- * (sheet music, album art) or markdown notes (chords, lyrics, reminders).
- * A track carries at most one; picking a kind replaces whatever was there.
+ * Companion content shown above the video/waveform — an image (sheet music,
+ * album art) or markdown notes (chords, lyrics, reminders). One segment
+ * carries at most one; picking a kind replaces whatever was there.
  */
 export type ExtraMedia =
   | { type: "image"; src: string }
   | { type: "markdown"; text: string };
 
 export type ExtraMediaType = ExtraMedia["type"];
+
+/**
+ * One stretch of the track with its own extra media. Segments PARTITION the
+ * track: sorted by `start`, gapless, the first starting at 0 and the last
+ * ending at `duration`, so exactly one is showing at any moment. A segment
+ * with no `media` yet is a real segment that asks for its content.
+ */
+export interface ExtraMediaSegment {
+  id: string;
+  /** seconds, inclusive */
+  start: number;
+  /** seconds, exclusive (except on the last segment) */
+  end: number;
+  media?: ExtraMedia;
+}
 
 export interface Loop {
   id: string;
@@ -39,8 +54,8 @@ export interface Track {
   sortOrder?: number;
   peaks?: number[];
   thumb?: string;
-  /** image or markdown notes shown above the video/waveform */
-  extraMedia?: ExtraMedia;
+  /** timed extra-media segments partitioning the track; absent when it has none */
+  extraMedia?: ExtraMediaSegment[];
   /** playable media URL: object URL for fresh uploads, PocketBase file URL when synced */
   url?: string;
   videoId?: string;
@@ -56,14 +71,25 @@ export const ACCENTS = {
 } as const;
 
 /**
- * Tracks stored before extra media existed carry a bare `image` data URL.
- * Rewrites them in place on the way out of localStorage / PocketBase; the
- * legacy field is dropped so it stops round-tripping.
+ * Two older shapes reach us from localStorage / PocketBase: a bare `image`
+ * data URL (before extra media existed) and a single untimed `extraMedia`
+ * object (before segments). Both become one segment spanning the whole
+ * track. Rewritten in place, and the legacy field dropped so it stops
+ * round-tripping.
  */
 export function migrateExtraMedia(track: Track): Track {
-  const legacy = track as Track & { image?: string };
-  if (!legacy.extraMedia && legacy.image) {
-    legacy.extraMedia = { type: "image", src: legacy.image };
+  const legacy = track as Track & { image?: string; extraMedia?: unknown };
+  if (!Array.isArray(legacy.extraMedia)) {
+    const untimed = legacy.extraMedia as ExtraMedia | null | undefined;
+    const media: ExtraMedia | undefined =
+      untimed && typeof untimed === "object" && "type" in untimed
+        ? untimed
+        : legacy.image
+          ? { type: "image", src: legacy.image }
+          : undefined;
+    legacy.extraMedia = media
+      ? [{ id: uid("em"), start: 0, end: track.duration, media }]
+      : undefined;
   }
   delete legacy.image;
   return track;
