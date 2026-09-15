@@ -32,9 +32,11 @@ const hintChoice =
  * `ExtraMediaTimes` is where those times are edited. A segment holds one
  * medium at a time; adding one replaces the other.
  *
- * Height: images fill the leftover column height by default, notes size to
- * their content. Dragging the corner grip pins a fixed height, remembered per
- * track until the window is resized — a resize resets every track to auto.
+ * Height: both media kinds fill the leftover column height by default — an
+ * image and a note therefore occupy the same box, so switching between them
+ * never shifts the video, waveform or transport below. Dragging the corner
+ * grip pins a fixed height, remembered per track until the window is resized
+ * — a resize resets every track to auto.
  */
 export function ExtraMediaPanel({ track }: { track: Track }) {
   const boxRef = useRef<HTMLDivElement>(null);
@@ -95,7 +97,12 @@ export function ExtraMediaPanel({ track }: { track: Track }) {
       setEditId(null);
     };
     return (
-      <div className="flex flex-none px-4 pb-1 pt-[6px] sm:px-[26px]">
+      <div
+        style={height !== null ? { height } : undefined}
+        className={`flex min-h-0 px-4 pb-1 pt-[6px] sm:px-[26px] ${
+          height === null ? "flex-1" : "flex-none"
+        }`}
+      >
         <MarkdownEditor
           initial={media?.type === "markdown" ? media.text : ""}
           onSave={onSave}
@@ -199,13 +206,15 @@ export function ExtraMediaPanel({ track }: { track: Track }) {
 
   if (media.type === "markdown") {
     return (
-      <div className="flex flex-none justify-center px-4 pb-1 pt-[6px] sm:px-[26px]">
+      <div
+        className={`flex items-stretch justify-center px-4 pb-1 pt-[6px] sm:px-[26px] ${
+          height === null ? "min-h-[84px] flex-1" : "flex-none"
+        }`}
+      >
         <div
           ref={boxRef}
           style={height !== null ? { height } : undefined}
-          className={`group relative w-full overflow-y-auto rounded-[12px] border border-white/8 bg-panel px-3.5 py-3 ${
-            height === null ? "max-h-[40vh]" : ""
-          }`}
+          className="group relative h-full w-full overflow-y-auto rounded-[12px] border border-white/8 bg-panel px-3.5 py-3"
         >
           <div data-testid="track-markdown">
             <MarkdownView text={media.text} />

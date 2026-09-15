@@ -990,6 +990,31 @@ test("a track holds one extra media: notes replace an image", async ({ page }) =
   await expect(page.getByTestId("track-image")).toHaveCount(0);
 });
 
+test("notes take the same box as an image, so the controls don't move", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 1000 });
+  await page.goto("/");
+  await uploadWav(page, 3);
+  await expect(page.getByTitle("Rename loop")).toHaveCount(1);
+
+  await page.getByTestId("extra-media-hint").locator('input[type="file"]').setInputFiles({
+    name: "cover.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(TINY_PNG, "base64"),
+  });
+  await expect(page.getByTestId("track-image")).toBeVisible();
+  const withImage = (await page.getByTestId("time").boundingBox())!.y;
+
+  await removeExtraMedia(page, "Remove image");
+  await page.getByTestId("add-notes").click();
+  await page.getByTestId("markdown-input").fill("one short line");
+  await page.getByTestId("markdown-save").click();
+  await expect(page.getByTestId("track-markdown")).toContainText("one short line");
+
+  // a one-line note fills the same leftover height an image did
+  const withNotes = (await page.getByTestId("time").boundingBox())!.y;
+  expect(Math.abs(withNotes - withImage)).toBeLessThan(2);
+});
+
 test("a legacy stored `image` field is migrated to extra media", async ({ page }) => {
   await page.goto("/");
   await uploadWav(page, 3);
