@@ -99,10 +99,10 @@ pb-logs:
     docker compose logs -f pocketbase
 
 # Release version bump: rewrite the version files, commit them, tag it.
-# `just set_version 1.3` -> package.json 1.3.0, versionName 1.3, commit "v1.3", tag v1.3.
+# `just set-version 1.3` -> package.json 1.3.0, versionName 1.3, commit "v1.3", tag v1.3.
 # The Android versionCode is bumped by 1 — Play refuses an install/upgrade
 # that doesn't increment it.
-set_version version:
+set-version version:
     #!/usr/bin/env bash
     set -euo pipefail
 
