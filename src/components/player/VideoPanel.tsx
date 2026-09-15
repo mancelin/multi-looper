@@ -96,19 +96,16 @@ export function VideoPanel({
     for (let pass = 0; pass < 3; pass++) {
       const curH = box.getBoundingClientRect().height || (w * 9) / 16;
       const overflow = main.scrollHeight - main.clientHeight;
-      // scrollHeight never reports spare room; when content fits, the free space
-      // is absorbed by the transport's mt-auto gap — measure that gap instead.
-      // The transport's position among the children can change, so take the
-      // largest gap between consecutive children.
+      // scrollHeight never reports spare room, so when the content fits, measure
+      // it: the column packs from the top, so whatever the children don't use
+      // between the first one's top and the last one's bottom is free.
       const kids = main.children;
-      let gap = 0;
-      for (let i = 1; i < kids.length; i++) {
-        gap = Math.max(
-          gap,
-          kids[i].getBoundingClientRect().top - kids[i - 1].getBoundingClientRect().bottom,
-        );
-      }
-      const delta = overflow > 0 ? -overflow : Math.max(0, gap);
+      const packed = kids.length
+        ? kids[kids.length - 1].getBoundingClientRect().bottom -
+          kids[0].getBoundingClientRect().top
+        : 0;
+      const spare = main.clientHeight - packed;
+      const delta = overflow > 0 ? -overflow : Math.max(0, spare);
       const newH = Math.max(150, curH + delta);
       w = Math.max(240, Math.min(cw, Math.floor((newH * 16) / 9)));
       box.style.width = `${w}px`; // apply for the next measurement pass
