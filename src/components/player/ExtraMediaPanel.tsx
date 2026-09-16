@@ -18,6 +18,19 @@ import { MarkdownView } from "./MarkdownView";
 
 const MIN_HEIGHT = 72;
 
+// Phone layout: the column has no leftover height to hand out, so a panel that
+// asks to fill it (`flex-1`) is squeezed to its min-height — or, in the
+// editor's case, to nothing, leaving its content painting over the waveform.
+// Below `sm` the panel is sized by its own content and the page scrolls
+// instead; `CAP` keeps a long note or a tall image from pushing the transport
+// off-screen.
+const FILL = "flex-1 max-sm:flex-none";
+const CAP = "max-sm:max-h-[50svh]";
+// Edit/remove/resize live in the panel's corners and fade in on hover. A touch
+// screen has no hover, so there they are always on — otherwise a phone can
+// neither re-edit nor clear a note once it is saved.
+const TOUCH_SHOW = "[@media(hover:none)]:opacity-100";
+
 // Two standalone buttons rather than one strip split in half: separate
 // objects with an "or" between them read as alternatives, where a divided
 // strip reads as two slots that could both be filled.
@@ -100,7 +113,7 @@ export function ExtraMediaPanel({ track }: { track: Track }) {
       <div
         style={height !== null ? { height } : undefined}
         className={`flex min-h-0 px-4 pb-1 pt-[6px] sm:px-[26px] ${
-          height === null ? "flex-1" : "flex-none"
+          height === null ? FILL : "flex-none"
         }`}
       >
         <MarkdownEditor
@@ -193,14 +206,14 @@ export function ExtraMediaPanel({ track }: { track: Track }) {
       onPointerDown={onResizeGrip}
       title="Drag to resize"
       data-testid="extra-media-resize-grip"
-      className="absolute bottom-0 right-0 z-6 flex h-6 w-6 cursor-nwse-resize touch-none items-end justify-end rounded-br-[12px] bg-[linear-gradient(135deg,transparent_45%,rgba(0,0,0,.55))] p-1 text-white/70 opacity-0 transition-opacity group-hover:opacity-100"
+      className={`absolute bottom-0 right-0 z-6 flex h-6 w-6 cursor-nwse-resize touch-none items-end justify-end rounded-br-[12px] bg-[linear-gradient(135deg,transparent_45%,rgba(0,0,0,.55))] p-1 text-white/70 opacity-0 transition-opacity group-hover:opacity-100 ${TOUCH_SHOW}`}
     >
       <ResizeIcon />
     </div>
   );
 
   const cornerButton =
-    "flex h-6 w-6 cursor-pointer items-center justify-center rounded-[7px] border border-white/10 bg-[rgba(6,8,11,.65)] text-muted opacity-0 transition-opacity group-hover:opacity-100";
+    `flex h-6 w-6 cursor-pointer items-center justify-center rounded-[7px] border border-white/10 bg-[rgba(6,8,11,.65)] text-muted opacity-0 transition-opacity group-hover:opacity-100 ${TOUCH_SHOW}`;
 
   // ---------- saved notes ----------
 
@@ -208,13 +221,13 @@ export function ExtraMediaPanel({ track }: { track: Track }) {
     return (
       <div
         className={`flex items-stretch justify-center px-4 pb-1 pt-[6px] sm:px-[26px] ${
-          height === null ? "min-h-[84px] flex-1" : "flex-none"
+          height === null ? `min-h-[84px] ${FILL}` : "flex-none"
         }`}
       >
         <div
           ref={boxRef}
           style={height !== null ? { height } : undefined}
-          className="group relative h-full w-full overflow-y-auto rounded-[12px] border border-white/8 bg-panel px-3.5 py-3"
+          className={`group relative h-full w-full overflow-y-auto rounded-[12px] border border-white/8 bg-panel px-3.5 py-3 ${CAP}`}
         >
           <div data-testid="track-markdown">
             <MarkdownView text={media.text} />
@@ -247,20 +260,20 @@ export function ExtraMediaPanel({ track }: { track: Track }) {
   return (
     <div
       className={`flex items-center justify-center px-4 pb-1 pt-[6px] sm:px-[26px] ${
-        height === null ? "min-h-[84px] flex-1" : "flex-none"
+        height === null ? `min-h-[84px] ${FILL}` : "flex-none"
       }`}
     >
       <div
         ref={boxRef}
         style={height !== null ? { height } : undefined}
-        className="group relative h-full max-w-full overflow-hidden rounded-[12px] border border-white/8 bg-black shadow-[0_8px_30px_rgba(0,0,0,.4)]"
+        className={`group relative h-full max-w-full overflow-hidden rounded-[12px] border border-white/8 bg-black shadow-[0_8px_30px_rgba(0,0,0,.4)] ${CAP}`}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={media.src}
           alt=""
           data-testid="track-image"
-          className="block h-full w-auto max-w-full object-contain"
+          className={`block h-full w-auto max-w-full object-contain max-sm:h-auto ${CAP}`}
         />
         <button
           onClick={remove}

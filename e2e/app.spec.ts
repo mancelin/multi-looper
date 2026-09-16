@@ -1327,3 +1327,40 @@ test("A/B badges stay inside the waveform at track edges and never overlap when 
   expect(a.x).toBeGreaterThanOrEqual(wave.x - 1);
   expect(intersect(a, b)).toBe(false);
 });
+
+test("on a phone the notes editor and the saved note stay above the waveform", async ({
+  browser,
+}) => {
+  // A phone has no leftover column height to hand out: a panel that still asks
+  // for it collapsed to nothing and its content painted over the waveform.
+  const ctx = await browser.newContext({
+    viewport: { width: 360, height: 760 },
+    hasTouch: true,
+    isMobile: true,
+  });
+  const page = await ctx.newPage();
+  await page.goto("/");
+  await uploadWav(page, 24);
+  await expect(page.getByTitle("Rename loop")).toHaveCount(1);
+
+  const waveTop = async () => (await page.getByTestId("waveform").boundingBox())!.y;
+
+  await page.getByTestId("add-notes").click();
+  const area = page.getByTestId("markdown-input");
+  const editor = (await page.getByTestId("markdown-editor").boundingBox())!;
+  expect((await area.boundingBox())!.height).toBeGreaterThan(120);
+  expect(editor.y + editor.height).toBeLessThanOrEqual(await waveTop());
+
+  await area.fill("# Chords\n\nAm G F E\n\n- watch the pickup on bar 4");
+  await page.getByTestId("markdown-save").click();
+  const note = (await page.getByTestId("track-markdown").boundingBox())!;
+  await expect(page.getByTestId("track-markdown")).toContainText("watch the pickup");
+  expect(note.y + note.height).toBeLessThanOrEqual(await waveTop());
+
+  // hover-only corner buttons are always shown on a touch screen, or a saved
+  // note could never be edited or removed there
+  await expect(page.getByTestId("edit-notes")).toHaveCSS("opacity", "1");
+  await page.getByTestId("edit-notes").click();
+  await expect(page.getByTestId("markdown-editor")).toBeVisible();
+  await ctx.close();
+});
