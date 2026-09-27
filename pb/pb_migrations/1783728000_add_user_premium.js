@@ -3,7 +3,7 @@ migrate(
   (app) => {
     const users = app.findCollectionByNameOrId("users");
     // premium accounts get a bigger media quota (pb_hooks/quota.js); the flag
-    // is only settable from the PB dashboard — API rules below reject any
+    // is only settable from the PB dashboard - API rules below reject any
     // request that tries to write it
     users.fields.add(new Field({ name: "premium", type: "bool" }));
     users.createRule = "@request.body.premium:isset = false";

@@ -9,7 +9,7 @@ import { useUi } from "@/store/ui";
 export function ConfirmRemoveModal() {
   const id = useUi((s) => s.confirmRemoveId);
   const close = useUi((s) => s.closeRemoveConfirm);
-  // the row can disappear under the dialog (sync, another device) — read the
+  // the row can disappear under the dialog (sync, another device) - read the
   // track every render so a stale id closes instead of removing the wrong one
   const track = useLibrary((s) => s.tracks.find((t) => t.id === id) ?? null);
 

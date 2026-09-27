@@ -6,7 +6,7 @@ import remarkGfm from "remark-gfm";
 /**
  * Rendered markdown, shared by the editor's preview tab and the saved panel.
  * `react-markdown` ignores raw HTML by default, so the text a user types can
- * never inject markup — no sanitizer needed. Styling lives in `.md-body`
+ * never inject markup - no sanitizer needed. Styling lives in `.md-body`
  * (globals.css) rather than per-element classes so both call sites and any
  * nested element get it for free.
  */

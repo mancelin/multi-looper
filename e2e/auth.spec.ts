@@ -19,7 +19,7 @@ test("sign-up requires the verification email before signing in", async ({ page 
   await page.getByPlaceholder("Password").fill("password123");
   await page.getByRole("button", { name: "Sign up" }).click();
 
-  // account created but not signed in — modal closes so the toast is visible
+  // account created but not signed in - modal closes so the toast is visible
   await expect(
     page.getByText(`Verification email sent to ${email}. Verify, then sign in.`),
   ).toBeVisible();

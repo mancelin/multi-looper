@@ -33,7 +33,7 @@ test("a take records into a container Firefox can seek", async ({ page }) => {
   await page.getByTestId("record-save").click();
   await expect(page.locator("video")).toHaveCount(1);
 
-  // the element must know the length and accept a seek — webm gives neither
+  // the element must know the length and accept a seek - webm gives neither
   await expect
     .poll(() => page.evaluate(() => document.querySelector("video")!.seekable.length), {
       timeout: 10_000,

@@ -13,7 +13,7 @@ import {
 
 /**
  * Store-bound extra-media segment operations, shared by the panel and the
- * times menu — the counterpart to `loopEdit.ts`. Components go through these
+ * times menu - the counterpart to `loopEdit.ts`. Components go through these
  * rather than writing `extraMedia` themselves, so the partition invariants
  * live in one place.
  */
@@ -35,7 +35,7 @@ export function activeSegment(track: Track): ExtraMediaSegment | undefined {
 
 /**
  * Give a segment its media. With no segments yet the first one is created
- * spanning the whole track — that is what "extra media covers the whole
+ * spanning the whole track - that is what "extra media covers the whole
  * track by default" means.
  */
 export function setSegmentMedia(trackId: string, segId: string | null, media: ExtraMedia): void {
@@ -54,7 +54,7 @@ export function setSegmentMedia(trackId: string, segId: string | null, media: Ex
 }
 
 /**
- * Take a segment's media away. The last remaining segment goes with it —
+ * Take a segment's media away. The last remaining segment goes with it -
  * an empty partition and one empty segment look the same, and no extra media
  * at all is the honest state.
  */
@@ -74,7 +74,7 @@ export function clearSegmentMedia(trackId: string, segId: string): void {
 
 /**
  * The id of the segment to edit, creating the full-track one when the track
- * has no extra media yet — the notes editor needs something to attach to
+ * has no extra media yet - the notes editor needs something to attach to
  * before the user has typed anything.
  */
 export function ensureSegment(trackId: string): string | null {

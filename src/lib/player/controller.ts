@@ -70,7 +70,7 @@ class PlaybackController {
   private ytReady = false;
   private ytPendingPlay = false;
   private ytTrackId: string | null = null;
-  /** track id whose duration was already patched from a playing state —
+  /** track id whose duration was already patched from a playing state -
    *  getDuration() jitters between metadata and DASH values, so re-patching
    *  on every playing transition (each play press / loop wrap) makes the
    *  A/B markers drift */
@@ -78,7 +78,7 @@ class PlaybackController {
 
   /** virtual time fallback while no media is ready */
   private vt = 0;
-  /** when the last seek was issued — backends apply seeks asynchronously */
+  /** when the last seek was issued - backends apply seeks asynchronously */
   private seekIssuedAt = 0;
   /** true from seek issue until the media time lands near the target */
   private seekPending = false;
@@ -147,7 +147,7 @@ class PlaybackController {
           this.yt.cueVideoById(c.videoId!, t);
         } else {
           // note: seekTo(t, false) looks tempting for chrome-free loop wraps,
-          // but it's scrub-preview mode — playback freezes at the target
+          // but it's scrub-preview mode - playback freezes at the target
           this.yt.seekTo(t, true);
         }
       } catch {}
@@ -218,7 +218,7 @@ class PlaybackController {
     if (this.seekPending) {
       const near = Math.abs(raw - this.vt) <= 0.5;
       // YouTube: a cued video reports its cue point (then transiently 0
-      // while loading) before playback truly starts — only trust the media
+      // while loading) before playback truly starts - only trust the media
       // time once the player is actually playing.
       const landed = c.kind === "youtube" ? near && this.ytState() === 1 : near;
       if (landed || performance.now() - this.seekIssuedAt > 5000) this.seekPending = false;
@@ -287,7 +287,7 @@ class PlaybackController {
     useUi.getState().setPlaying(false);
     this.stopTick();
     // sync vt so paused seeks (which trust vt) start from where playback
-    // stopped — unless a seek is still in flight, then vt (the target) is
+    // stopped - unless a seek is still in flight, then vt (the target) is
     // the truth and the media still reports the stale pre-seek time
     if (!this.seekPending) this.vt = this.getT();
     this.emit(this.vt);
@@ -452,7 +452,7 @@ class PlaybackController {
               this.patchYtTitle();
               // the player was created cued at 0; re-issue the pending seek
               // (loadCurrent targets the active loop's A) now that the API
-              // can act on it — while paused this re-cues at the target
+              // can act on it - while paused this re-cues at the target
               if (this.seekPending && this.vt > 0) this.setT(this.vt);
               if (this.ytPendingPlay) {
                 this.ytPendingPlay = false;
@@ -492,7 +492,7 @@ class PlaybackController {
         useUi.getState().setYtSurfaceLive(false); // new video: re-cover until it plays
         try {
           // loadVideoById always autostarts; when we're not meant to play,
-          // cue instead — it loads the video without starting playback.
+          // cue instead - it loads the video without starting playback.
           if (this.ytPendingPlay) this.yt.loadVideoById(c.videoId!, activeLoop(c).a);
           else this.yt.cueVideoById(c.videoId!, activeLoop(c).a);
         } catch {}
@@ -505,13 +505,13 @@ class PlaybackController {
         this.ytPendingPlay = false;
         this.play();
       }
-      // else: player exists but onReady hasn't fired yet — leave ytPendingPlay
+      // else: player exists but onReady hasn't fired yet - leave ytPendingPlay
       // set; onReady consumes it. Calling play() here would recurse forever.
     };
     boot();
   }
 
-  /** Keeps YouTube captions off — the module reloads with every video, so
+  /** Keeps YouTube captions off - the module reloads with every video, so
    *  this must run again after each load/cue, not just at player creation. */
   private hideYtCaptions(): void {
     try {
@@ -527,7 +527,7 @@ class PlaybackController {
     try {
       const data = this.yt.getVideoData?.();
       // after cueVideoById/loadVideoById the player keeps reporting the
-      // previous video's metadata until the new one loads — without this
+      // previous video's metadata until the new one loads - without this
       // check the new track would inherit the previous video's title
       if (data?.video_id && data.video_id !== c.videoId) return;
       const title = data?.title?.trim();
@@ -544,7 +544,7 @@ class PlaybackController {
     } catch {}
   }
 
-  /** <video> loadedmetadata — patches duration when decodeAudioData couldn't. */
+  /** <video> loadedmetadata - patches duration when decodeAudioData couldn't. */
   onLoadedMetadata(): void {
     const c = this.track();
     if (!c || c.kind !== "file" || !this.videoEl) return;
@@ -555,7 +555,7 @@ class PlaybackController {
       useLibrary.getState().patchDuration(c.id, d);
     }
     // a currentTime set right after src= is clobbered when the media load
-    // algorithm runs (it resets the start position to 0) — re-issue the
+    // algorithm runs (it resets the start position to 0) - re-issue the
     // pending seek (loadCurrent targets the active loop's A) now that the
     // element can honor it
     if (this.seekPending && this.vt > 0) this.setT(this.vt);

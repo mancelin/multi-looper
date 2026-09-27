@@ -26,7 +26,7 @@ Delete the spec and `test-results/` afterwards. Standalone Playwright scripts mu
 
 - Reuse helpers from `e2e/app.spec.ts`: `makeWav` (e2e/wav.ts) + `setInputFiles` to add a local file track; block YouTube routes for YT tracks.
 - Wait for decode with `expect(page.getByTestId("loop-b")).toHaveValue(...)` before interacting.
-- Auth modal: the TopBar `Sign in` button opens it **in signup mode** ("Create your account"); there is no "Create one" toggle in that state. Buttons named "Sign in" are ambiguous (TopBar + modal) — use `.last()`.
+- Auth modal: the TopBar `Sign in` button opens it **in signup mode** ("Create your account"); there is no "Create one" toggle in that state. Buttons named "Sign in" are ambiguous (TopBar + modal), use `.last()`.
 - Import modal appears after sign-in only when guest tracks exist.
 - Signed-in state shows a `SYNCED` chip; clicking it opens the account menu with "Sign out".
 - Test runs leave PB users/records behind in the local docker volume; harmless.

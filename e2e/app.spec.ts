@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { makeWav } from "./wav";
 
-// Block YouTube so its IFrame API never patches the placeholder duration —
+// Block YouTube so its IFrame API never patches the placeholder duration -
 // keeps YouTube-track assertions deterministic and the suite offline-safe.
 async function blockYoutube(page: Page) {
   await page.route(/youtube\.com|ytimg\.com|youtube-nocookie/, (r) => r.abort());
@@ -125,7 +125,7 @@ test("switching to a YouTube track while paused does not autoplay", async ({ pag
   const url = page.getByPlaceholder("youtube.com/watch?v=…");
   await url.fill("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
   await url.press("Enter");
-  // the fake player reports a 300s duration once ready — proves API wiring
+  // the fake player reports a 300s duration once ready - proves API wiring
   await expect(page.getByTestId("loop-b")).toHaveValue("5:00.000");
 
   const topbarUrl = page.getByPlaceholder("Paste a YouTube link…");
@@ -146,7 +146,7 @@ test("switching to a YouTube track while paused does not autoplay", async ({ pag
   expect((await ytState()).state).not.toBe(1);
   await expect(page.getByRole("button", { name: "Play", exact: true })).toBeVisible();
 
-  // back to the first track via the sidebar — still no autoplay
+  // back to the first track via the sidebar - still no autoplay
   // (titles were patched from the fake player's getVideoData)
   await page.getByText("Title of dQw4w9WgXcQ").first().click();
   await expect(page.getByTestId("loop-b")).toHaveValue("5:00.000");
@@ -209,7 +209,7 @@ test("YouTube poster cover hides the iframe UI before playback and clears once s
   await page.getByRole("button", { name: "Play", exact: true }).click();
   await expect(cover).toHaveCSS("opacity", "0");
 
-  // pause freezes on the current video frame — the cover must not come back
+  // pause freezes on the current video frame - the cover must not come back
   await page.getByRole("button", { name: "Pause", exact: true }).click();
   await expect(page.getByRole("button", { name: "Play", exact: true })).toBeVisible();
   await expect(cover).toHaveCSS("opacity", "0");
@@ -257,7 +257,7 @@ test("a second YouTube track gets its own title, not the previous video's", asyn
   await topbarUrl.press("Enter");
 
   // the cue fires state changes while getVideoData() still reports the first
-  // video — the new track must wait for its own metadata instead of inheriting
+  // video - the new track must wait for its own metadata instead of inheriting
   await expect(page.getByText("Title of oHg5SJYRHA0").first()).toBeVisible();
   await expect(page.getByText("YouTube loop")).toHaveCount(0);
   await expect(page.getByText("Title of dQw4w9WgXcQ")).toHaveCount(1); // sidebar only
@@ -320,7 +320,7 @@ test("file track media survives reload and still plays", async ({ page }) => {
   await uploadWav(page, 3);
   await expect(page.getByTestId("loop-b")).toHaveValue("0:03.000");
 
-  // media blob comes back from IndexedDB — the track plays without re-upload
+  // media blob comes back from IndexedDB - the track plays without re-upload
   await page.reload();
   await expect(page.getByText("sample").first()).toBeVisible();
   await expect(page.getByTestId("loop-b")).toHaveValue("0:03.000");
@@ -657,7 +657,7 @@ test.describe("mobile (360px)", () => {
     });
     expect(overflow).toBe(0);
 
-    // exact — otherwise "Add a loop at the playhead (N)" also matches
+    // exact - otherwise "Add a loop at the playhead (N)" also matches
     await page.getByRole("button", { name: "Play", exact: true }).click();
     await expect(page.getByTestId("time")).not.toHaveText("0:00.000", { timeout: 5000 });
   });
@@ -695,7 +695,7 @@ test.describe("mobile (360px)", () => {
     for (const id of ["add-youtube", "add-file", "add-record"]) {
       await expect(page.getByTestId(id)).toBeVisible();
     }
-    // all three options fit the viewport — nothing to scroll to reach them
+    // all three options fit the viewport - nothing to scroll to reach them
     const box = (await sheet.boundingBox())!;
     expect(box.y).toBeGreaterThanOrEqual(0);
     expect(box.y + box.height).toBeLessThanOrEqual(page.viewportSize()!.height);
@@ -1118,7 +1118,7 @@ test("dragging a shared edge retimes both neighbours, never opening a gap", asyn
 
   // the selected (second) segment now starts at the new edge...
   await expect(page.getByTestId("segment-start")).toHaveText(/^0:02\./);
-  // ...and the first segment ends there too — one edge, no gap
+  // ...and the first segment ends there too - one edge, no gap
   const [firstEnd, secondStart] = await page.evaluate(() => {
     const lib = JSON.parse(localStorage.getItem("multilooper_guest_lib")!);
     const segs = lib.tracks[0].extraMedia;
@@ -1228,10 +1228,17 @@ test("track number in the URL: selection updates it, deep links and invalid path
   await page.goto("/1");
   await expect(page.getByTestId("loop-b")).toHaveValue("0:02.000");
 
-  // out-of-range number falls back to the first track and rewrites the URL
-  await page.goto("/99");
+  // out-of-range number falls back to the first track and rewrites the URL.
+  // Stay inside the pre-rendered /1../20 range: past it the dev server honours
+  // `dynamicParams = false` and 404s, while production nginx falls back to
+  // index.html (`try_files … /index.html`) and the app resolves the number.
+  await page.goto("/20");
   await expect(page.getByTestId("loop-b")).toHaveValue("0:02.000");
   await expect(page).toHaveURL(/\/1$/);
+
+  // a non-track path is a real 404, not the app
+  await page.goto("/help");
+  await expect(page.getByTestId("loop-b")).toBeHidden();
 });
 
 test("keyboard shortcut N adds a second loop", async ({ page }) => {
@@ -1246,7 +1253,7 @@ test("keyboard shortcut N adds a second loop", async ({ page }) => {
 test("keyboard shortcut S toggles the shortcuts modal", async ({ page }) => {
   await page.goto("/");
   await uploadWav(page, 3);
-  // shortcuts no-op until a track is in the store — wait for the decode
+  // shortcuts no-op until a track is in the store - wait for the decode
   await expect(page.getByTitle("Rename loop")).toHaveCount(1);
 
   const heading = page.getByRole("heading", { name: "Keyboard shortcuts" });
@@ -1295,7 +1302,7 @@ test("A/B badges stay inside the waveform at track edges and never overlap when 
   const intersect = (r: Box, s: Box) =>
     r.x < s.x + s.width && s.x < r.x + r.width && r.y < s.y + s.height && s.y < r.y + r.height;
 
-  // full-track loop: A hugs the left edge, B hugs the right edge — both badges
+  // full-track loop: A hugs the left edge, B hugs the right edge - both badges
   // must be flipped inward so they stay inside the strip
   const wave = await box("waveform");
   let a = await box("loop-label-a");

@@ -104,7 +104,7 @@ function RecordModalContent() {
     if (!supported) return;
     const rec = new Recorder();
     recRef.current = rec;
-    // live meter is driven imperatively — no React render per frame
+    // live meter is driven imperatively - no React render per frame
     rec.onTick((peaks, elapsed) => {
       // the mic runs from the moment the modal opens, but a waveform moving
       // before the take has started reads as if it were already recording
@@ -308,7 +308,7 @@ function RecordModalContent() {
           {phase === "idle" && (
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
               <span className="rounded-[8px] border border-white/8 bg-[rgba(6,8,11,.85)] px-3 py-[7px] text-[13px] text-ink">
-                Hit record and play — the take lands in your library.
+                Hit record and play. The take lands in your library.
               </span>
             </div>
           )}
@@ -362,7 +362,7 @@ function RecordModalContent() {
             <span>
               Noise suppression{" "}
               <span className="text-muted-4">
-                — cleans up a noisy room, but gates quiet instrument tails
+                cleans up a noisy room, but gates quiet instrument tails
               </span>
             </span>
           </label>

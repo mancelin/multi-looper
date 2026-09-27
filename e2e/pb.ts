@@ -39,7 +39,7 @@ export async function pbAvailable(): Promise<boolean> {
 /**
  * Marks a user as verified by writing straight into the local PocketBase
  * SQLite file (bind-mounted at pb/pb_data). Dev has no mail server, so the
- * verification link can never be clicked — this stands in for it.
+ * verification link can never be clicked - this stands in for it.
  */
 export function verifyUser(email: string): void {
   const db = path.resolve(__dirname, "../pb/pb_data/data.db");
@@ -77,7 +77,7 @@ export function verificationToken(email: string): string {
 }
 
 /**
- * Flags a user as premium (1 GB quota) straight in SQLite — stands in for an
+ * Flags a user as premium (1 GB quota) straight in SQLite - stands in for an
  * admin flipping the field in the PB dashboard.
  */
 export function setPremium(email: string): void {

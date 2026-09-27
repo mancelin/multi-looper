@@ -34,7 +34,7 @@ test("uploads stop syncing once the 20 MB account quota is hit", async ({ page }
   });
   await expect(page.getByTestId("loop-b")).toHaveValue("0:03.000");
 
-  // 240 s of 16-bit mono WAV ≈ 21.2 MB — over the quota, refused with a toast
+  // 240 s of 16-bit mono WAV ≈ 21.2 MB - over the quota, refused with a toast
   await page.setInputFiles('input[type="file"]', {
     name: "way-too-big.wav",
     mimeType: "audio/wav",
@@ -61,10 +61,10 @@ test("premium accounts get a 1 GB quota", async ({ page }) => {
 
   const email = e2eEmail("premium");
   await signUpAndIn(page, email);
-  // admin flips the flag in the PB dashboard — here straight in SQLite
+  // admin flips the flag in the PB dashboard - here straight in SQLite
   setPremium(email);
 
-  // 240 s WAV ≈ 20.2 MB — over the free 20 MB limit, fits the premium 1 GB
+  // 240 s WAV ≈ 20.2 MB - over the free 20 MB limit, fits the premium 1 GB
   await page.setInputFiles('input[type="file"]', {
     name: "premium-big.wav",
     mimeType: "audio/wav",
@@ -82,7 +82,7 @@ test("premium accounts get a 1 GB quota", async ({ page }) => {
   await page.getByText("SYNCED").click();
   await expect(page.getByTestId("storage-usage")).toContainText("20 / 1 GB");
 
-  // survives a reload — the track really lives in PB
+  // survives a reload - the track really lives in PB
   await page.reload();
   await expect(page.getByText("SYNCED")).toBeVisible();
   await expect(page.getByText("premium-big").first()).toBeVisible();

@@ -11,25 +11,25 @@ let manualVideo = false;
 
 // Stable ref callbacks: an inline `(el) => player.setYtHost(el)` gets a new
 // identity every render, so React detaches (null) and re-attaches the ref on
-// each re-render — and setYtHost(null) destroys the live YouTube player.
+// each re-render - and setYtHost(null) destroys the live YouTube player.
 const ytHostRef = (el: HTMLDivElement | null) => player.setYtHost(el);
 
 // YouTube flashes its chrome (title bar, share/watch-later, "More videos",
-// logo) inside the iframe on every seek — including our loop-restart seeks —
+// logo) inside the iframe on every seek - including our loop-restart seeks -
 // and none of it can be styled or disabled from outside. The host is made
 // taller than the visible box: a 16:9 video letterboxes inside the taller
 // iframe, so the chrome anchored to the iframe's top/bottom edges renders in
 // the letterbox strips, which the box's overflow-hidden crops away. The video
 // itself stays uncropped.
 //
-// The chrome piece that survives cropping — the center play/pause control —
+// The chrome piece that survives cropping - the center play/pause control -
 // can't be cropped or covered without hiding the video under it. Instead the
 // iframe renders oversized and is CSS-scaled back down: the video ends up at
 // its normal size while YouTube's fixed-pixel chrome shrinks by the same
 // factor, leaving the center control a faint speck. The scale is pushed as
 // high as the box width allows while keeping the iframe's internal width
 // under the GPU's texture limit (probed via WebGL; conservative fallback),
-// capped at 16x — beyond that the speck is already sub-4px.
+// capped at 16x - beyond that the speck is already sub-4px.
 let ytWidthBudget = 7680;
 if (typeof window !== "undefined") {
   try {
@@ -53,7 +53,7 @@ function ytCropFor(scale: number): number {
 // Firefox refuses to let backdrop-filter sample cross-origin iframe content
 // (privacy), so the speck-erasing disc gets no pixels to blur there. Fallback:
 // -moz-element() paints a live mirror of the player as the disc's own
-// background — aligned 1:1 with what's beneath and blurred via filter, which
+// background - aligned 1:1 with what's beneath and blurred via filter, which
 // looks identical to the backdrop-filter path.
 const MOZ_MIRROR =
   typeof CSS !== "undefined" && CSS.supports("background-image", "-moz-element(#a)");
@@ -73,7 +73,7 @@ export function VideoPanel({
   const setVideoWidth = useUi((s) => s.setVideoWidth);
   // real IFrame player state, not transport intent: the cover must stay up
   // while the video is cued/unstarted/ended even if the transport says
-  // "playing" — YouTube shows its overlay UI in those states and there is no
+  // "playing" - YouTube shows its overlay UI in those states and there is no
   // frame of ours underneath. A pause keeps the surface live so the current
   // frame stays visible.
   const ytLive = useUi((s) => s.ytSurfaceLive);
@@ -184,7 +184,7 @@ export function VideoPanel({
         />
         {/* What's left of YouTube's center play/pause control after the
             scale-down is a ~4px speck. This disc blurs the pixels beneath it,
-            smearing the speck into the surrounding video — optically gone,
+            smearing the speck into the surrounding video, optically gone,
             while the video merely gets an imperceptible soft spot. */}
         {track.kind === "youtube" && (
           <div

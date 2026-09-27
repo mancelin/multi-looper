@@ -49,7 +49,7 @@ export function Sidebar() {
   const dropRef = useRef<Drop | null>(null);
   const scrollDir = useRef(0);
   const raf = useRef(0);
-  // a drag ends with a click on the row it started from — that must not select it
+  // a drag ends with a click on the row it started from - that must not select it
   const suppressClick = useRef(false);
   const [dragId, setDragId] = useState<string | null>(null);
   const [drop, setDrop] = useState<Drop | null>(null);
@@ -89,7 +89,7 @@ export function Sidebar() {
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>, id: string) => {
     if (e.button !== 0) return;
     if ((e.target as HTMLElement).closest("button")) return; // remove button
-    // a drag that ended over another row never produces a click — clear the flag here
+    // a drag that ended over another row never produces a click - clear the flag here
     suppressClick.current = false;
     e.currentTarget.setPointerCapture(e.pointerId);
     const g: Gesture = { id, x: e.clientX, y: e.clientY, pointerId: e.pointerId, timer: null, dragging: false };

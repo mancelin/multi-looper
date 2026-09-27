@@ -11,7 +11,18 @@ import {
   TrashIcon,
   UserIcon,
 } from "@/components/icons";
-import { APP_NAME, APP_VERSION, AUTHOR_NAME, AUTHOR_URL, CONTACT_EMAIL } from "@/lib/appInfo";
+import {
+  APP_NAME,
+  APP_VERSION,
+  AUTHOR_NAME,
+  AUTHOR_URL,
+  CONTACT_EMAIL,
+  CONTRIBUTING_URL,
+  CONTRIBUTORS,
+  LICENSE_NAME,
+  LICENSE_URL,
+  REPO_URL,
+} from "@/lib/appInfo";
 import { changePassword, deleteAccount, deleteAllData } from "@/store/sync";
 import { useUi, type SettingsView } from "@/store/ui";
 
@@ -146,8 +157,8 @@ function PasswordView({ onDone }: { onDone: () => void }) {
         {busy ? "…" : "Change password"}
       </button>
       <p className="m-0 text-[11.5px] leading-[1.5] text-muted-3">
-        Signed up with Google? Your account has no password to change — keep signing in with
-        Google.
+        Signed up with Google? Your account has no password to change. Keep signing in
+        with Google.
       </p>
     </div>
   );
@@ -155,14 +166,14 @@ function PasswordView({ onDone }: { onDone: () => void }) {
 
 function InfoView() {
   return (
-    <div className="px-[4px] text-[13px] leading-[1.6] text-ink-3">
+    <div className="max-h-[50vh] overflow-y-auto px-[4px] text-[13px] leading-[1.6] text-ink-3">
       <p className="m-0 mb-2">
         <span className="font-semibold text-ink">{APP_NAME}</span>{" "}
         <span className="tno text-muted">v{APP_VERSION}</span>
       </p>
       <p className="m-0 mb-2">
-        A practice tool for musicians: loop A/B sections of any track — a YouTube link or a local
-        audio/video file — and slow them down until they sit under your fingers.
+        A practice tool for musicians: loop A/B sections of any track (a YouTube link or a local
+        audio/video file) and slow them down until they sit under your fingers.
       </p>
       <p className="m-0 mb-2 text-muted">
         Works fully offline as a guest; an optional free account syncs your library across
@@ -177,8 +188,41 @@ function InfoView() {
           {AUTHOR_NAME}
         </a>
       </p>
-      <p className="m-0 text-[11.5px] text-muted-3">
-        © {new Date().getFullYear()} {AUTHOR_NAME}. All rights reserved.
+      <p className="m-0 mb-2 text-muted">
+        Source:{" "}
+        <a href={REPO_URL} target="_blank" rel="noopener noreferrer">
+          github.com/mancelin/multi-looper
+        </a>
+      </p>
+      <h3 className="mb-1 mt-3 text-[13px] font-semibold text-ink">Contributors</h3>
+      {CONTRIBUTORS.length > 0 ? (
+        <p className="m-0 mb-2 text-muted">
+          {CONTRIBUTORS.map((c, i) => (
+            <span key={c.url}>
+              {i > 0 && ", "}
+              <a href={c.url} target="_blank" rel="noopener noreferrer">
+                {c.name}
+              </a>
+            </span>
+          ))}
+        </p>
+      ) : (
+        <p className="m-0 mb-2 text-muted">
+          Nobody but the author yet. Everyone with a merged pull request is listed here.
+        </p>
+      )}
+      <p className="m-0 mb-2 text-muted">
+        Want your name here?{" "}
+        <a href={CONTRIBUTING_URL} target="_blank" rel="noopener noreferrer">
+          Contributing guide
+        </a>
+      </p>
+      <p className="m-0 text-[11.5px] leading-[1.5] text-muted-3">
+        © {new Date().getFullYear()} {AUTHOR_NAME} and contributors. Free software under the{" "}
+        <a href={LICENSE_URL} target="_blank" rel="noopener noreferrer">
+          {LICENSE_NAME}
+        </a>
+        .
       </p>
     </div>
   );
@@ -364,7 +408,7 @@ export function SettingsModal() {
             {account &&
               (confirm === "account" ? (
                 <ConfirmRow
-                  message="Permanently deletes your account and everything stored with it — synced tracks, uploaded media, all of it. This cannot be undone."
+                  message="Permanently deletes your account and everything stored with it: synced tracks, uploaded media, all of it. This cannot be undone."
                   confirmLabel="Delete account"
                   busy={busy}
                   onConfirm={() => runDelete(deleteAccount)}

@@ -42,7 +42,22 @@ test("settings modal shows app info, privacy policy and terms of service", async
   await expect(page.getByRole("link", { name: "multilooper@gmail.com" })).toBeVisible();
   const author = page.getByRole("link", { name: "Maxime Ancelin" });
   await expect(author).toHaveAttribute("href", "https://maxime-ancelin.com");
-  await expect(page.getByText(/^© \d{4} Maxime Ancelin\. All rights reserved\.$/)).toBeVisible();
+  await expect(page.getByRole("link", { name: "github.com/mancelin/multi-looper" })).toHaveAttribute(
+    "href",
+    "https://github.com/mancelin/multi-looper",
+  );
+
+  // open-source credit block: contributors section + license, never "all rights reserved"
+  await expect(page.getByRole("heading", { name: "Contributors" })).toBeVisible();
+  await expect(page.getByText("everyone with a merged pull request is listed here")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Contributing guide" })).toHaveAttribute(
+    "href",
+    "https://github.com/mancelin/multi-looper/blob/main/CONTRIBUTING.md",
+  );
+  const license = page.getByRole("link", { name: "AGPL-3.0-or-later" });
+  await expect(license).toHaveAttribute("href", "https://www.gnu.org/licenses/agpl-3.0.html");
+  await expect(page.getByText(/© \d{4} Maxime Ancelin and contributors/)).toBeVisible();
+  await expect(page.getByText("All rights reserved")).toBeHidden();
 
   await page.getByTitle("Back").click();
   await page.getByRole("button", { name: "Privacy policy" }).click();
@@ -74,7 +89,7 @@ test("delete all data wipes the guest library after a confirmation", async ({ pa
   await page.getByTitle("Settings").click();
   await page.getByRole("button", { name: "Delete all data" }).click();
 
-  // first click only arms the inline confirmation — cancel keeps everything
+  // first click only arms the inline confirmation - cancel keeps everything
   await expect(page.getByText("Deletes every track stored on this device.")).toBeVisible();
   await page.getByRole("button", { name: "Cancel" }).click();
   await expect(page.getByText("Deletes every track stored on this device.")).toBeHidden();

@@ -37,12 +37,12 @@ const nameOf = (s: ExtraMediaSegment) =>
  * The foldable "extra media times" menu: the track's extra-media segments as
  * a proportional strip whose shared edges are dragged to retime them. Because
  * the segments partition the track, an edge belongs to the two segments it
- * separates and moving it retimes both — there is no way to open a gap or an
+ * separates and moving it retimes both - there is no way to open a gap or an
  * overlap, which is the whole point of editing it here rather than with two
  * independent handles per segment.
  *
  * The playhead moves at frame rate, so it is positioned imperatively through
- * `player.onTime()` and never via React state — same rule as the waveform.
+ * `player.onTime()` and never via React state - same rule as the waveform.
  */
 export function ExtraMediaTimes({ track }: { track: Track }) {
   const open = useUi((s) => s.extraTimesOpen);
@@ -244,7 +244,7 @@ export function ExtraMediaTimes({ track }: { track: Track }) {
                 <div
                   key={`b${s.id}`}
                   onPointerDown={(e) => startDrag(i, e)}
-                  title={`Drag to retime — ${fmtS(s.end)}`}
+                  title={`Drag to retime: ${fmtS(s.end)}`}
                   data-testid="extra-boundary"
                   className="group absolute -top-[6px] bottom-[-6px] z-2 -ml-2 flex w-4 touch-none cursor-col-resize items-center justify-center"
                   style={{ left: `${(s.end / d) * 100}%` }}
@@ -351,8 +351,8 @@ export function ExtraMediaTimes({ track }: { track: Track }) {
                   data-testid="delete-segment"
                   title={
                     segs.length === 1
-                      ? "Delete this segment — the track keeps no extra media"
-                      : "Delete this segment — its time goes back to the neighbour"
+                      ? "Delete this segment: the track keeps no extra media"
+                      : "Delete this segment: its time goes back to the neighbour"
                   }
                   className="h-[28px] flex-none cursor-pointer rounded-[8px] border border-white/10 bg-white/4 px-[11px] text-[11.5px] font-semibold text-ink-2 hover:border-danger hover:text-danger"
                 >

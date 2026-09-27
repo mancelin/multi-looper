@@ -29,7 +29,7 @@ export function PlayerMain({ track }: { track: Track }) {
         // lands on the segment showing right now, or creates the full-track one
         setSegmentMedia(track.id, null, { type: "image", src });
       } catch {
-        // undecodable image — ignore
+        // undecodable image - ignore
       }
     },
     [track.id],

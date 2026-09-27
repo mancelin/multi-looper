@@ -6,7 +6,7 @@ import path from "node:path";
  * Global teardown: delete the throwaway PocketBase accounts the e2e suite
  * signed up (emails from `e2eEmail()` in pb.ts), plus their track records
  * and uploaded media files. Works straight on the SQLite file, same as the
- * other pb.ts helpers — dev PB has no superuser credentials to use the API.
+ * other pb.ts helpers - dev PB has no superuser credentials to use the API.
  */
 export default function teardown(): void {
   const db = path.resolve(__dirname, "../pb/pb_data/data.db");

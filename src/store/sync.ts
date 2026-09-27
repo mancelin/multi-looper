@@ -13,7 +13,7 @@ import { useUi } from "./ui";
 
 const COLLECTION = "tracks";
 
-// server quota rejection (pb_hooks/quota.pb.js) — matched by message prefix
+// server quota rejection (pb_hooks/quota.pb.js) - matched by message prefix
 const QUOTA_PREFIX = "Storage limit reached";
 
 function isQuotaError(e: unknown): e is ClientResponseError {
@@ -78,7 +78,7 @@ function trackPayload(t: Track): Record<string, unknown> {
   };
 }
 
-/** Comparable fingerprint — runtime-only fields excluded. */
+/** Comparable fingerprint - runtime-only fields excluded. */
 function fingerprint(t: Track): string {
   const copy: Partial<Track> = { ...t };
   delete copy.url;
@@ -125,7 +125,7 @@ async function flush(): Promise<void> {
       synced.delete(localId);
       freedSpace = true;
     }
-    if (freedSpace) quotaBlocked.clear(); // deletions free quota — retry refused uploads
+    if (freedSpace) quotaBlocked.clear(); // deletions free quota, retry refused uploads
 
     for (const t of tracks) {
       const fp = fingerprint(t);
@@ -152,7 +152,7 @@ async function flush(): Promise<void> {
         } catch (e) {
           if (isQuotaError(e)) {
             quotaBlocked.add(t.id);
-            useUi.getState().pushToast(`"${t.title}" was not synced — ${e.response.message}`);
+            useUi.getState().pushToast(`"${t.title}" was not synced: ${e.response.message}`);
             continue;
           }
           throw e;
@@ -172,20 +172,20 @@ async function flush(): Promise<void> {
 }
 
 /**
- * Refresh the account's media storage usage (bytes) from the server — the
+ * Refresh the account's media storage usage (bytes) from the server - the
  * server-owned mediaSize field is the source of truth across devices.
  */
 export async function refreshStorageUsed(): Promise<void> {
   const account = useUi.getState().account;
   if (!account || !pb.authStore.isValid) return;
   try {
-    // premium can be toggled from the PB dashboard at any time — re-read it
+    // premium can be toggled from the PB dashboard at any time - re-read it
     const auth = await pb.collection("users").authRefresh();
     const premium = !!auth.record.premium;
     if (premium !== account.premium) {
       useUi.getState().setAccount({ ...account, premium });
       if (premium) {
-        quotaBlocked.clear(); // bigger quota — retry refused uploads
+        quotaBlocked.clear(); // bigger quota, retry refused uploads
         scheduleFlush();
       }
     }
@@ -193,7 +193,7 @@ export async function refreshStorageUsed(): Promise<void> {
     const used = records.reduce((sum, r) => sum + ((r.mediaSize as number) || 0), 0);
     useUi.getState().setStorageUsed(used);
   } catch {
-    // offline — keep whatever value we last showed
+    // offline - keep whatever value we last showed
   }
 }
 
@@ -322,7 +322,7 @@ export async function consumeVerificationLink(): Promise<void> {
   try {
     await pb.collection("users").confirmVerification(token);
     useUi.getState().openAuth("signin");
-    useUi.getState().pushToast("Email verified — sign in to continue.");
+    useUi.getState().pushToast("Email verified. Sign in to continue.");
   } catch {
     useUi.getState().pushToast("Verification link is invalid or expired.");
   }
@@ -379,7 +379,7 @@ async function wipeLocalData(): Promise<void> {
   await clearAllMedia();
 }
 
-/** Sign out and wipe all local data — the app restarts as new. */
+/** Sign out and wipe all local data - the app restarts as new. */
 export async function signOut(): Promise<void> {
   if (timer) clearTimeout(timer);
   await flush().catch(() => {});
@@ -417,7 +417,7 @@ export async function changePassword(oldPassword: string, password: string): Pro
 }
 
 /**
- * Delete every track — synced records and local data. The account (if any)
+ * Delete every track - synced records and local data. The account (if any)
  * stays. Returns an error message, or null on success.
  */
 export async function deleteAllData(): Promise<string | null> {
@@ -472,7 +472,7 @@ export async function bootAuth(): Promise<boolean> {
       pb.authStore.clear();
       return false;
     }
-    // server unreachable — keep the cached session and try to work offline
+    // server unreachable - keep the cached session and try to work offline
   }
   const record = pb.authStore.record;
   useUi

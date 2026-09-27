@@ -19,7 +19,7 @@ import { MarkdownView } from "./MarkdownView";
 const MIN_HEIGHT = 72;
 
 // Phone layout: the column has no leftover height to hand out, so a panel that
-// asks to fill it (`flex-1`) is squeezed to its min-height — or, in the
+// asks to fill it (`flex-1`) is squeezed to its min-height - or, in the
 // editor's case, to nothing, leaving its content painting over the waveform.
 // Below `sm` the panel is sized by its own content and the page scrolls
 // instead; `CAP` keeps a long note or a tall image from pushing the transport
@@ -27,7 +27,7 @@ const MIN_HEIGHT = 72;
 const FILL = "flex-1 max-sm:flex-none";
 const CAP = "max-sm:max-h-[50svh]";
 // Edit/remove/resize live in the panel's corners and fade in on hover. A touch
-// screen has no hover, so there they are always on — otherwise a phone can
+// screen has no hover, so there they are always on - otherwise a phone can
 // neither re-edit nor clear a note once it is saved.
 const TOUCH_SHOW = "[@media(hover:none)]:opacity-100";
 
@@ -38,18 +38,18 @@ const hintChoice =
   "flex flex-1 cursor-pointer flex-col items-center justify-center gap-1 rounded-[10px] border border-white/10 bg-field px-4 py-3 text-center transition-colors hover:border-white/25 hover:bg-field-2";
 
 /**
- * Extra media for any track — file or YouTube — shown above the video panel:
+ * Extra media for any track - file or YouTube - shown above the video panel:
  * an image (sheet music, album art) or markdown notes (chords, lyrics). Which
  * one is showing depends on the playhead: `track.extraMedia` partitions the
  * track into segments and this panel renders the one the playhead is inside.
  * `ExtraMediaTimes` is where those times are edited. A segment holds one
  * medium at a time; adding one replaces the other.
  *
- * Height: both media kinds fill the leftover column height by default — an
+ * Height: both media kinds fill the leftover column height by default - an
  * image and a note therefore occupy the same box, so switching between them
  * never shifts the video, waveform or transport below. Dragging the corner
  * grip pins a fixed height, remembered per track until the window is resized
- * — a resize resets every track to auto.
+ * - a resize resets every track to auto.
  */
 export function ExtraMediaPanel({ track }: { track: Track }) {
   const boxRef = useRef<HTMLDivElement>(null);
@@ -67,7 +67,7 @@ export function ExtraMediaPanel({ track }: { track: Track }) {
   const height = sized.id === track.id ? sized.height : loadExtraMediaHeight(track.id);
   const setHeight = (h: number | null) => setSized({ id: track.id, height: h });
 
-  // Which segment is showing follows the playhead, which moves at frame rate —
+  // Which segment is showing follows the playhead, which moves at frame rate -
   // so watch it imperatively and only re-render when it crosses a boundary.
   const [activeId, setActiveId] = useState<string | null>(null);
   useEffect(() => {
@@ -136,7 +136,7 @@ export function ExtraMediaPanel({ track }: { track: Track }) {
         const src = await imageFileToDataUrl(file);
         setSegmentMedia(track.id, seg?.id ?? null, { type: "image", src });
       } catch {
-        // undecodable image — ignore
+        // undecodable image - ignore
       }
     };
     const startNotes = () => setEditId(seg?.id ?? ensureSegment(track.id));

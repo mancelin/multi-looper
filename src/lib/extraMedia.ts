@@ -3,7 +3,7 @@ import { uid, type ExtraMedia, type ExtraMediaSegment } from "./types";
 /**
  * Pure segment math for the extra-media partition. Segments always cover
  * `[0, duration]` with no gaps and no overlaps, so every operation here takes
- * a partition and returns a partition — callers never patch `start`/`end`
+ * a partition and returns a partition - callers never patch `start`/`end`
  * directly. Store-bound wrappers live in `extraMediaEdit.ts`.
  */
 
@@ -31,7 +31,7 @@ export function segmentIndexAt(segs: ExtraMediaSegment[] | undefined, t: number)
   return i === -1 ? segs.length - 1 : i;
 }
 
-/** The whole track as a single segment — what the first added media gets. */
+/** The whole track as a single segment - what the first added media gets. */
 export function fullSpan(duration: number, media?: ExtraMedia): ExtraMediaSegment[] {
   return [{ id: uid("em"), start: 0, end: Math.max(MIN_SEGMENT, duration), media }];
 }
@@ -91,7 +91,7 @@ export function mergeSegment(segs: ExtraMediaSegment[], id: string): ExtraMediaS
 }
 
 /**
- * Re-span the partition onto a new duration — real durations arrive late
+ * Re-span the partition onto a new duration - real durations arrive late
  * (YouTube placeholder, failed decode), so this runs from `patchDuration` and
  * doubles as the repair for anything that reaches us mis-shaped. Inner
  * boundaries stay where they are; the last segment takes up the slack.

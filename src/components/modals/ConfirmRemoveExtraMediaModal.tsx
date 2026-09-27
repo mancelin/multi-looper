@@ -15,7 +15,7 @@ import { useUi } from "@/store/ui";
 export function ConfirmRemoveExtraMediaModal() {
   const target = useUi((s) => s.confirmExtraMedia);
   const close = useUi((s) => s.closeExtraMediaConfirm);
-  // the segment can disappear under the dialog (sync, another device) — read it
+  // the segment can disappear under the dialog (sync, another device) - read it
   // every render so a stale id closes instead of deleting something else
   const segs = useLibrary(
     (s) => s.tracks.find((t) => t.id === target?.trackId)?.extraMedia ?? null,

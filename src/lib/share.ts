@@ -7,7 +7,7 @@ import { useLibrary } from "@/store/library";
 /**
  * Share links encode one loop of a YouTube track as query params on the app
  * root (`/?share=<videoId>&a=…&b=…&name=…&title=…`). File tracks can't be
- * shared — the media itself never leaves the sender's machine.
+ * shared - the media itself never leaves the sender's machine.
  */
 
 export interface SharedLoop {

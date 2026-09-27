@@ -54,7 +54,7 @@ test("sign out wipes localStorage and IndexedDB and returns to the empty state",
   await page.getByPlaceholder("Password").fill("password123");
   await page.getByRole("button", { name: "Sign up" }).click();
 
-  // no mail server in dev — mark the account verified and sign in
+  // no mail server in dev - mark the account verified and sign in
   await expect(
     page.getByText(`Verification email sent to ${email}. Verify, then sign in.`),
   ).toBeVisible();
@@ -91,7 +91,7 @@ test("sign out wipes localStorage and IndexedDB and returns to the empty state",
   ).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem("multilooper_guest_lib"))).toBeNull();
 
-  // the wipe is local-only — signing back in restores the synced track
+  // the wipe is local-only - signing back in restores the synced track
   await page.getByTitle("Sign in").click();
   await page.getByRole("button", { name: "Sign in", exact: true }).last().click(); // toggle to signin mode
   await page.getByPlaceholder("you@example.com").fill(email);

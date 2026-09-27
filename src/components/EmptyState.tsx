@@ -31,8 +31,8 @@ export function EmptyState() {
           <LoopIcon size={26} aria-hidden className="text-accent" />
         </h1>
         <p className="mb-0 mt-3 max-w-[460px] text-[15px] leading-[1.6] text-muted">
-          Drop in a track, mark an A–B section, and practice it on repeat — slowed down, pitch
-          intact. Start with a YouTube link, your own audio, or a take straight from your mic.
+          Drop in a track, mark an A–B section, and practice it on repeat, slowed
+          down, pitch intact. Start with a YouTube link, your own audio, or a take straight from your mic.
         </p>
 
         <div className="mt-[34px] flex w-full flex-wrap justify-center gap-4">
@@ -44,7 +44,7 @@ export function EmptyState() {
               <span className="text-[15px] font-semibold text-ink">Paste a link</span>
             </div>
             <p className="mb-[14px] mt-0 text-[12.5px] leading-[1.5] text-muted-3">
-              Any YouTube video — backing tracks, solos, lessons.
+              Any YouTube video: backing tracks, solos, lessons.
             </p>
             <div className="flex h-10 w-full items-center gap-2 rounded-[9px] border border-white/9 bg-field px-[11px]">
               <input

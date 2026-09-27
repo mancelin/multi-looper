@@ -1,4 +1,4 @@
-# multi-looper tasks — run `just` to list
+# multi-looper tasks: run `just` to list
 
 # Android builds need JDK 17+; prefer a ~/.jdks install over a possibly stale shell JAVA_HOME
 export JAVA_HOME := `ls -d ~/.jdks/jdk-21* 2>/dev/null | head -1 || echo "${JAVA_HOME:-}"`
@@ -73,7 +73,7 @@ pb-up:
     for id in $(docker ps -q --filter 'publish=8090'); do
         name=$(docker inspect -f '{{{{ .Name }}' "$id" | sed 's|^/||')
         if [ "$name" != "multilooper-pocketbase" ]; then
-            echo "Stopping $name — it owns :8090"
+            echo "Stopping $name, it owns :8090"
             docker stop "$id" >/dev/null
         fi
     done
@@ -87,7 +87,7 @@ pb-up:
         fi
         sleep 0.5
     done
-    echo "PocketBase never got healthy — check: just pb-logs" >&2
+    echo "PocketBase never got healthy. Check: just pb-logs" >&2
     exit 1
 
 # Stop PocketBase
@@ -100,7 +100,7 @@ pb-logs:
 
 # Release version bump: rewrite the version files, commit them, tag it.
 # `just set-version 1.3` -> package.json 1.3.0, versionName 1.3, commit "v1.3", tag v1.3.
-# The Android versionCode is bumped by 1 — Play refuses an install/upgrade
+# The Android versionCode is bumped by 1, because Play refuses an install/upgrade
 # that doesn't increment it.
 set-version version:
     #!/usr/bin/env bash
@@ -119,7 +119,7 @@ set-version version:
     # checked before anything is written, so a clash leaves the tree untouched
     tag="v$name"
     if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
-        echo "tag $tag already exists — nothing changed" >&2
+        echo "tag $tag already exists, nothing changed" >&2
         exit 1
     fi
 
@@ -134,7 +134,7 @@ set-version version:
     # staged or dirty stays untouched in the working tree
     files="package.json android/app/build.gradle"
     if git diff --quiet -- $files && git diff --cached --quiet -- $files; then
-        echo "commit            skipped — version files already at $pkg"
+        echo "commit            skipped: version files already at $pkg"
     else
         git commit -q -m "$tag" -- $files
         echo "commit            $tag"
@@ -159,7 +159,7 @@ pb-deploy:
     ssh $DEPLOY_HOST 'cd ~/multi-looper && git pull --ff-only && docker compose up -d --build'
     @echo "waiting for PocketBase…"
     @for i in $(seq 30); do curl -sf https://pb.multi-looper.com/api/health >/dev/null && exit 0; sleep 2; done; echo "PocketBase never came back healthy"; exit 1
-    @test "$(ls pb/pb_migrations | sort | md5sum)" = "$(ssh $DEPLOY_HOST 'ls ~/multi-looper/pb/pb_migrations | sort | md5sum')" || { echo "VPS migrations differ from local — the frontend was NOT deployed"; exit 1; }
+    @test "$(ls pb/pb_migrations | sort | md5sum)" = "$(ssh $DEPLOY_HOST 'ls ~/multi-looper/pb/pb_migrations | sort | md5sum')" || { echo "VPS migrations differ from local, the frontend was NOT deployed"; exit 1; }
     @echo "PocketBase up to date"
 
 # Full release: migrate PocketBase first, then ship the frontend (a frontend expecting new PB fields breaks against an un-migrated server)

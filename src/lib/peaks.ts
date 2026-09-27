@@ -7,7 +7,7 @@ export function syntheticFilePeaks(n = PEAK_COUNT): number[] {
 
 export interface DecodedPeaks {
   peaks: number[];
-  /** 0 when decoding failed — caller should patch duration from the media element */
+  /** 0 when decoding failed - caller should patch duration from the media element */
   duration: number;
 }
 

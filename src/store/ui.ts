@@ -20,7 +20,7 @@ export interface Toast {
 
 export interface UiState {
   playing: boolean;
-  /** true while the YouTube IFrame player actually plays/buffers — unlike
+  /** true while the YouTube IFrame player actually plays/buffers - unlike
    *  `playing` (transport intent) this follows the player's real state, so
    *  the poster cover only lifts when YouTube truly renders video frames */
   ytSurfaceLive: boolean;

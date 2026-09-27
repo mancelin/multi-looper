@@ -16,10 +16,10 @@ export const LIVE_PEAKS = 200;
 export const LIVE_MIN_SLOTS = 45;
 /** one live peak is emitted per this many ms of audio */
 const PEAK_INTERVAL_MS = 45;
-/** gain ramp at both ends of the take, seconds — long enough to kill the
+/** gain ramp at both ends of the take, seconds - long enough to kill the
  *  sample-zero click, short enough that no playing is audibly lost */
 const FADE_S = 0.02;
-/** subsonic cutoff, Hz — below the lowest note of a 4-string bass (41 Hz), so
+/** subsonic cutoff, Hz - below the lowest note of a 4-string bass (41 Hz), so
  *  it strips rumble, handling thumps and DC offset without touching pitch */
 const RUMBLE_HZ = 30;
 
@@ -27,7 +27,7 @@ const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
  * Ordered by preference. Ogg comes first because Firefox's webm output is a
- * live stream — no duration, empty `seekable`, every seek snaps back to 0, so
+ * live stream - no duration, empty `seekable`, every seek snaps back to 0, so
  * the transport and the A/B shortcuts have nothing to move. Its ogg output
  * carries both. Chrome has no ogg encoder and falls through to webm, which it
  * does write seekably; Safari lands on mp4.
@@ -60,7 +60,7 @@ function extFor(mime: string): string {
 
 export interface RecordResult {
   file: File;
-  /** wall-clock recording length, seconds — fallback when decoding fails */
+  /** wall-clock recording length, seconds - fallback when decoding fails */
   elapsed: number;
 }
 
@@ -112,13 +112,13 @@ export class Recorder {
    * Brings the mic up and leaves it running, muted, with the meter live.
    *
    * This is deliberately not tied to the record button. Opening a capture
-   * stream is what makes the noise we keep chasing — a Bluetooth headset beeps
-   * as it switches to its headset profile, interfaces pop — so the stream has
+   * stream is what makes the noise we keep chasing - a Bluetooth headset beeps
+   * as it switches to its headset profile, interfaces pop - so the stream has
    * to be open well before the encoder starts. Held open across takes too, so
    * "record again" never triggers a second profile switch.
    *
    * Rejects when the mic is unavailable or the user denies permission.
-   * `noiseSuppression` hands the take to the browser's speech denoiser — good
+   * `noiseSuppression` hands the take to the browser's speech denoiser - good
    * on a noisy room, but it gates quiet note tails, so instrument takes want
    * it off.
    */
@@ -131,7 +131,7 @@ export class Recorder {
       audio: { echoCancellation: false, autoGainControl: false, noiseSuppression },
     });
     if (this.disposed) {
-      // cancelled while the permission prompt was up — don't hold the mic open
+      // cancelled while the permission prompt was up - don't hold the mic open
       stream.getTracks().forEach((t) => t.stop());
       return;
     }
@@ -144,7 +144,7 @@ export class Recorder {
 
     // Record a gain-ramped copy of the mic rather than the raw track: a
     // freshly opened capture device puts a click in its first frames, and
-    // starting from silence keeps it out of the file. Best effort — without
+    // starting from silence keeps it out of the file. Best effort - without
     // Web Audio we fall back to the raw stream and a dark meter.
     let source = this.stream;
     try {
@@ -163,7 +163,7 @@ export class Recorder {
       src.connect(this.hp);
       this.hp.connect(this.analyser); // ahead of the ramp: arming must hear the real input
       this.hp.connect(this.gain);
-      this.gain.connect(this.dest); // never reaches ac.destination — no monitoring/feedback
+      this.gain.connect(this.dest); // never reaches ac.destination, no monitoring/feedback
       this.data = new Uint8Array(new ArrayBuffer(this.analyser.fftSize));
       source = this.dest.stream;
     } catch {
@@ -287,7 +287,7 @@ export class Recorder {
       try {
         this.rec.stop();
       } catch {
-        // already stopping — nothing to clean up beyond the teardown below
+        // already stopping - nothing to clean up beyond the teardown below
       }
     }
     this.teardown();

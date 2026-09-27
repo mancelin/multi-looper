@@ -2,7 +2,7 @@
  * IndexedDB store for the media blobs of file tracks, keyed by track id.
  * localStorage can't hold audio/video, so guest file tracks persist here and
  * get re-attached (object URL + file registry) on boot. Failures don't break
- * the session — the app keeps working in memory — but they are surfaced to
+ * the session - the app keeps working in memory - but they are surfaced to
  * the user as an error toast.
  */
 
@@ -49,7 +49,7 @@ export async function putMedia(trackId: string, file: File): Promise<void> {
   try {
     await inStore("readwrite", (s) => s.put(file, trackId));
   } catch (e) {
-    reportError("Saving track media failed — it won't survive a reload", e);
+    reportError("Saving track media failed: it won't survive a reload", e);
   }
 }
 
@@ -57,7 +57,7 @@ export async function getMedia(trackId: string): Promise<File | undefined> {
   try {
     return (await inStore("readonly", (s) => s.get(trackId))) as File | undefined;
   } catch (e) {
-    reportError("Loading track media failed — re-add the file to play it", e);
+    reportError("Loading track media failed: re-add the file to play it", e);
     return undefined;
   }
 }

@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-// Block YouTube so its IFrame API never patches the placeholder duration —
+// Block YouTube so its IFrame API never patches the placeholder duration -
 // keeps YouTube-track assertions deterministic and the suite offline-safe.
 async function blockYoutube(page: Page) {
   await page.route(/youtube\.com|ytimg\.com|youtube-nocookie/, (r) => r.abort());

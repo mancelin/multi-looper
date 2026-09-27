@@ -41,7 +41,7 @@ export function saveExtraMediaHeight(trackId: string, height: number): void {
       JSON.stringify({ win: { w: window.innerWidth, h: window.innerHeight }, heights }),
     );
   } catch {
-    // storage unavailable — the resize still applies for this session
+    // storage unavailable - the resize still applies for this session
   }
 }
 

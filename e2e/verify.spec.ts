@@ -16,7 +16,7 @@ test("verification link verifies the email and opens sign-in", async ({ page }) 
   expect(res.ok).toBe(true);
 
   await page.goto(`/?verify=${verificationToken(email)}`);
-  await expect(page.getByText("Email verified — sign in to continue.")).toBeVisible();
+  await expect(page.getByText("Email verified. Sign in to continue.")).toBeVisible();
   await expect(page.getByText("Welcome back")).toBeVisible();
   // token consumed from the URL
   expect(new URL(page.url()).searchParams.get("verify")).toBeNull();

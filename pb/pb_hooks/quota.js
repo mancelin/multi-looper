@@ -15,7 +15,7 @@ function limitBytes(app, userId) {
   try {
     premium = app.findRecordById("users", userId).getBool("premium");
   } catch (_) {
-    // user record not found — fall back to the free limit
+    // user record not found - fall back to the free limit
   }
   const env = parseInt(
     $os.getenv(premium ? "MAX_PREMIUM_DATA_BYTES" : "MAX_USER_DATA_BYTES"),
@@ -40,7 +40,7 @@ function enforceQuota(e) {
   } else if (!e.record.getString("media")) {
     size = 0; // no media, or media removed by this update
   } else {
-    // media kept as-is — carry the stored size over
+    // media kept as-is - carry the stored size over
     size = e.record.isNew() ? 0 : e.record.original().getInt("mediaSize");
   }
   e.record.set("mediaSize", size);

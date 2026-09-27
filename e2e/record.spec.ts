@@ -176,7 +176,7 @@ test("a saved take behaves like any local file track", async ({ page }) => {
   await page.waitForTimeout(600);
   expect(Number((await page.getByTestId("loop-b").inputValue()).split(":")[1])).toBeGreaterThan(2.5);
 
-  // same source label and accent as a local file — only the tag differs
+  // same source label and accent as a local file - only the tag differs
   await expect(page.getByText("Local file").first()).toBeVisible();
   await expect(page.getByText("REC").first()).toBeVisible();
 });
@@ -275,7 +275,7 @@ test("cancelling a recording adds no track and releases the mic", async ({ page 
 
   await page.getByTestId("record-cancel").click();
   await expect(page.getByTestId("record-modal")).toHaveCount(0);
-  // library stayed empty — the empty state is still the only thing on screen
+  // library stayed empty - the empty state is still the only thing on screen
   await expect(page.getByRole("heading", { name: "Loop anything" })).toBeVisible();
   // the captured track was stopped, so nothing holds the microphone open
   await expect

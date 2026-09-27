@@ -40,7 +40,7 @@ export function clearGuestLibrary(): void {
   try {
     localStorage.removeItem(KEY);
   } catch {
-    // storage unavailable — nothing to clear
+    // storage unavailable - nothing to clear
   }
 }
 
@@ -48,7 +48,7 @@ export function saveGuestLibrary(tracks: Track[], currentId: string | null): voi
   try {
     localStorage.setItem(KEY, JSON.stringify({ tracks: serializable(tracks), currentId }));
   } catch {
-    // storage full / unavailable — guest persistence is best-effort
+    // storage full / unavailable - guest persistence is best-effort
   }
 }
 
@@ -62,7 +62,7 @@ export async function restoreFileMedia(tracks: Track[]): Promise<void> {
     tracks.map(async (t) => {
       if (t.kind !== "file" || t.url) return;
       const file = await getMedia(t.id);
-      if (!file) return; // pre-IndexedDB track — still needs re-upload
+      if (!file) return; // pre-IndexedDB track, still needs re-upload
       registerFile(t.id, file);
       t.url = URL.createObjectURL(file);
     }),

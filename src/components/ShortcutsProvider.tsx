@@ -18,10 +18,10 @@ export function ShortcutsProvider() {
       const tag = ((e.target as HTMLElement)?.tagName || "").toLowerCase();
       if (tag === "input" || tag === "textarea") return;
       if (!useLibrary.getState().tracks.length) return;
-      // the record modal owns the keyboard while it is open — its preview
+      // the record modal owns the keyboard while it is open - its preview
       // transport is separate from the app player behind the overlay
       if (useUi.getState().recordOpen) return;
-      // the remove confirmation owns the keyboard too — Space must not reach
+      // the remove confirmation owns the keyboard too - Space must not reach
       // the transport behind it
       if (useUi.getState().confirmRemoveId) return;
       if (useUi.getState().confirmExtraMedia) return;
