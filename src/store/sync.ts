@@ -322,7 +322,8 @@ export async function submitAuth(email: string, password: string): Promise<void>
 
 /**
  * Consume a `?verify=<token>` link at boot. The PB verification email points
- * here instead of PB's own confirm page (see DEPLOY.md) so the flow ends in
+ * here instead of PB's own confirm page (users collection → Verification
+ * template, link set to `<app url>/?verify={TOKEN}`) so the flow ends in
  * the app: confirm the token, then open sign-in. The token is stripped from
  * the URL either way so reloads don't re-submit it.
  */

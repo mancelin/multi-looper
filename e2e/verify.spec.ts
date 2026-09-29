@@ -2,7 +2,8 @@ import { expect, test } from "@playwright/test";
 import { e2eEmail, PB_URL, pbAvailable, verificationToken } from "./pb";
 
 // The PB verification email links to `/?verify=<token>` on the app domain
-// (see DEPLOY.md); the app confirms the token at boot and opens sign-in.
+// (set in the users collection's verification template); the app confirms
+// the token at boot and opens sign-in.
 
 test("verification link verifies the email and opens sign-in", async ({ page }) => {
   test.skip(!(await pbAvailable()), "PocketBase not running (just pb-up)");
