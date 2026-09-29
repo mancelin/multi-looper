@@ -141,8 +141,8 @@ pb-down:
 pb-logs:
     docker compose logs -f pocketbase
 
-# Release version bump: rewrite the version files, commit them, tag it.
-# `just set-version 1.3` -> package.json 1.3.0, versionName 1.3, commit "v1.3", tag v1.3.
+# Release version bump: rewrite the version files, commit them, tag it, push the tag.
+# `just set-version 1.3` -> package.json 1.3.0, versionName 1.3, commit "v1.3", tag v1.3 (pushed to origin).
 # The Android versionCode is bumped by 1, because Play refuses an install/upgrade
 # that doesn't increment it.
 set-version version:
@@ -186,6 +186,10 @@ set-version version:
     # tags the version commit itself, so `git show $tag` is the bump
     git tag "$tag"
     echo "tag               $tag -> $(git rev-parse --short HEAD)"
+
+    # only the tag: the branch itself is left for the next `git push`
+    git push -q origin "$tag"
+    echo "pushed            $tag -> origin"
 
 # Create/refresh the .env from the example
 env:
