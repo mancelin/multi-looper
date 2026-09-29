@@ -70,13 +70,17 @@ android-keystore:
     [ ! -e "$store" ] || { echo "$store already exists; write $props by hand to point at it" >&2; exit 1; }
     mkdir -p "$(dirname "$store")"
 
+    # keytool ships with the JDK but is often not on PATH; use the exported JAVA_HOME's
+    keytool="${JAVA_HOME:+$JAVA_HOME/bin/}keytool"
+    command -v "$keytool" >/dev/null || { echo "keytool not found: install a JDK 17+ in ~/.jdks or set JAVA_HOME" >&2; exit 1; }
+
     read -rsp "Keystore password (6+ chars): " pass; echo
     read -rsp "Repeat: " pass2; echo
     [ "$pass" = "$pass2" ] || { echo "passwords differ" >&2; exit 1; }
     [ ${#pass} -ge 6 ] || { echo "password too short" >&2; exit 1; }
 
     # PKCS12 keystores use one password for the store and the key
-    KS_PASS="$pass" keytool -genkeypair -v -keystore "$store" -alias release \
+    KS_PASS="$pass" "$keytool" -genkeypair -v -keystore "$store" -alias release \
         -keyalg RSA -keysize 4096 -validity 10000 \
         -storepass:env KS_PASS -keypass:env KS_PASS
 

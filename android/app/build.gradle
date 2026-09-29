@@ -13,7 +13,7 @@ android {
     namespace = "com.multilooper.app"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.multilooper.app"
+        applicationId "com.maxime_ancelin.multilooper"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 8
