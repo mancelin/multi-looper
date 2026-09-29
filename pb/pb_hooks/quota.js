@@ -1,10 +1,12 @@
 /// <reference path="../pb_data/types.d.ts" />
 
-// Per-user storage quota. Uploaded media files count against the limit:
-// MAX_USER_DATA_BYTES env (default 20 MB), or MAX_PREMIUM_DATA_BYTES env
-// (default 1 GB) for users with the premium flag (set from the PB dashboard).
-// The mediaSize field is server-owned and always overwritten here so clients
-// cannot fake it.
+// Per-user storage quota. Everything a track stores counts against the limit:
+// the uploaded media file plus its text/JSON fields (peaks, loops, notes,
+// images as data URLs), otherwise an account could fill the disk with many
+// file-less records. MAX_USER_DATA_BYTES env (default 20 MB), or
+// MAX_PREMIUM_DATA_BYTES env (default 1 GB) for users with the premium flag
+// (set from the PB dashboard). The mediaSize field holds that per-track total;
+// it is server-owned and always overwritten here so clients cannot fake it.
 
 const GB = 1024 * 1024 * 1024;
 const DEFAULT_LIMIT = 20 * 1024 * 1024; // 20 MB
@@ -31,18 +33,57 @@ function limitLabel(limit) {
     : `${Math.round(limit / 1024 / 1024)} MB`;
 }
 
+// Fields that don't hold user data (or, for the file, are measured apart).
+const UNCOUNTED_TYPES = ["file", "relation", "autodate"];
+const UNCOUNTED_NAMES = ["mediaSize"];
+
+/** UTF-8 byte length of a string. */
+function utf8Bytes(str) {
+  let n = 0;
+  for (let i = 0; i < str.length; i++) {
+    const c = str.charCodeAt(i);
+    if (c < 0x80) n += 1;
+    else if (c < 0x800) n += 2;
+    else if (c >= 0xd800 && c <= 0xdbff) {
+      n += 4; // surrogate pair: one 4-byte code point
+      i++;
+    } else n += 3;
+  }
+  return n;
+}
+
+/** Bytes a record's text/JSON fields take, as stored. */
+function dataBytes(record) {
+  let n = 0;
+  for (const field of record.collection().fields) {
+    const name = field.getName();
+    if (UNCOUNTED_TYPES.indexOf(field.type()) !== -1) continue;
+    if (UNCOUNTED_NAMES.indexOf(name) !== -1) continue;
+    n += utf8Bytes(record.getString(name));
+  }
+  return n;
+}
+
+/** Size of the media file after this request, in bytes. */
+function fileBytes(app, record) {
+  const uploaded = record.getUnsavedFiles("media");
+  if (uploaded.length > 0) return uploaded[0].size;
+  const name = record.getString("media");
+  if (!name || record.isNew()) return 0; // no media, or removed by this update
+  // media kept as-is: read the stored file's real size
+  const fsys = app.newFilesystem();
+  try {
+    return fsys.attributes(record.baseFilesPath() + "/" + name).size;
+  } catch (_) {
+    return 0; // file missing from storage - nothing to count
+  } finally {
+    fsys.close();
+  }
+}
+
 /** Throws BadRequestError when the request would push the user over the quota. */
 function enforceQuota(e) {
-  const uploaded = e.record.getUnsavedFiles("media");
-  let size;
-  if (uploaded.length > 0) {
-    size = uploaded[0].size;
-  } else if (!e.record.getString("media")) {
-    size = 0; // no media, or media removed by this update
-  } else {
-    // media kept as-is - carry the stored size over
-    size = e.record.isNew() ? 0 : e.record.original().getInt("mediaSize");
-  }
+  const size = fileBytes(e.app, e.record) + dataBytes(e.record);
   e.record.set("mediaSize", size);
 
   const row = new DynamicModel({ total: 0 });

@@ -20,7 +20,7 @@ By opening a pull request you agree that your contribution is licensed under AGP
 
 `multi-looper.com` is run and paid for by the author, and media storage is the cost that grows with every user. The hosted service is free with a per-account quota today and may get a paid tier for larger quotas. Your contribution will therefore run on a service that someone may pay for. That is how AGPL hosting works, and it is written here so you know it before you start.
 
-In exchange: the code stays AGPL, no feature is ever held back from the repo to be sold, and the quota is a server-side setting (`pb/pb_hooks/quota.pb.js`) that any self-hosted instance chooses for itself. If that trade doesn't suit you, better to know now than after writing a patch.
+In exchange: the code stays AGPL, no feature is ever held back from the repo to be sold, and the quota is a server-side setting (`pb/pb_hooks/quota.pb.js`) that any self-hosted instance chooses for itself. If that doesn't sit right with you, no hard feelings; better to know before you spend time on a patch.
 
 The name, logo and domain are not covered by the AGPL. See [Name and branding](README.md#name-and-branding) in the README before forking under the same name.
 
