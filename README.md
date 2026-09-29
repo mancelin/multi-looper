@@ -1,4 +1,4 @@
-# multi-looper
+<h1><img src="src/app/icon.svg" alt="" width="32" height="32" align="top"> multi-looper</h1>
 
 Dark, DAW-style web app for practicing along to music by looping sections of a track. Load a YouTube link or a local audio/video file, set precise A/B loop points on a real waveform, and repeat the section indefinitely, optionally slowed down with pitch preserved.
 
