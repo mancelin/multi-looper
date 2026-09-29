@@ -1153,6 +1153,70 @@ test("deleting a segment hands its time back to the neighbour, after a confirm",
   await expect(page.getByTestId("track-image")).toBeVisible();
 });
 
+test("only one empty segment at a time: add at playhead waits for it to be filled", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await addImageAndOpenTimes(page, 10);
+  await seekRuler(page, 0.5);
+  await page.getByTestId("add-extra-media").click();
+  await expect(page.getByTestId("extra-segment")).toHaveCount(2);
+
+  // the new half is empty, so carving another one is refused
+  await seekRuler(page, 0.8);
+  await expect(page.getByTestId("add-extra-media")).toBeDisabled();
+  // ...until it gets media of its own
+  await page.getByTestId("extra-media-hint").locator('input[type="file"]').setInputFiles({
+    name: "second.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(TINY_PNG, "base64"),
+  });
+  await expect(page.getByTestId("track-image")).toBeVisible();
+  await expect(page.getByTestId("add-extra-media")).toBeEnabled();
+});
+
+test("removing a segment's media hands its time to the left, or right for the first", async ({
+  page,
+}) => {
+  const segs = () =>
+    page.evaluate(() => {
+      const lib = JSON.parse(localStorage.getItem("multilooper_guest_lib")!);
+      return (lib.tracks[0].extraMedia ?? []).map((s: { start: number; end: number }) => [
+        s.start,
+        s.end,
+      ]);
+    });
+  const fill = (name: string) =>
+    page.getByTestId("extra-media-hint").locator('input[type="file"]').setInputFiles({
+      name,
+      mimeType: "image/png",
+      buffer: Buffer.from(TINY_PNG, "base64"),
+    });
+
+  await page.goto("/");
+  await addImageAndOpenTimes(page, 10);
+  await seekRuler(page, 0.5);
+  await page.getByTestId("add-extra-media").click();
+  await fill("second.png");
+  await expect(page.getByTestId("track-image")).toBeVisible();
+  await expect(page.getByTestId("extra-segment")).toHaveCount(2);
+
+  // × on the second segment: it goes, the first stretches to the end
+  await removeExtraMedia(page, "Remove image");
+  await expect(page.getByTestId("extra-segment")).toHaveCount(1);
+  await expect.poll(segs).toEqual([[0, 10]]);
+  await expect(page.getByTestId("extra-media-hint")).toHaveCount(0);
+
+  // split again, fill, then × on the first: the second takes over from 0
+  await page.getByTestId("add-extra-media").click();
+  await fill("third.png");
+  await expect(page.getByTestId("extra-segment")).toHaveCount(2);
+  await seekRuler(page, 0.1);
+  await removeExtraMedia(page, "Remove image");
+  await expect(page.getByTestId("extra-segment")).toHaveCount(1);
+  await expect.poll(segs).toEqual([[0, 10]]);
+});
+
 test("cover image resizes via the grip, persists, and resets on window resize", async ({
   page,
 }) => {

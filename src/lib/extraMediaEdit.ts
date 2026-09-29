@@ -5,6 +5,7 @@ import type { ExtraMedia, ExtraMediaSegment, Track } from "@/lib/types";
 import { currentTrack, useLibrary } from "@/store/library";
 import {
   fullSpan,
+  mergeEmpty,
   mergeSegment,
   moveBoundary,
   segmentAt,
@@ -25,7 +26,8 @@ function ctx(trackId?: string) {
 }
 
 function apply(trackId: string, segs: ExtraMediaSegment[] | undefined): void {
-  useLibrary.getState().patchTrack(trackId, { extraMedia: segs?.length ? segs : undefined });
+  const out = segs?.length ? mergeEmpty(segs) : undefined;
+  useLibrary.getState().patchTrack(trackId, { extraMedia: out });
 }
 
 /** The segment showing right now, at the playhead. */
@@ -54,22 +56,17 @@ export function setSegmentMedia(trackId: string, segId: string | null, media: Ex
 }
 
 /**
- * Take a segment's media away. The last remaining segment goes with it -
- * an empty partition and one empty segment look the same, and no extra media
- * at all is the honest state.
+ * Take a segment's media away, and the segment with it: its time goes to the
+ * neighbour before it (after it, for the first), the same as deleting it.
+ * Leaving an empty stretch behind would only pile up "No media yet" segments.
+ * The last remaining segment goes too - no extra media at all is the honest
+ * state.
  */
 export function clearSegmentMedia(trackId: string, segId: string): void {
   const c = ctx(trackId);
   const segs = c?.track.extraMedia;
   if (!segs?.length) return;
-  if (segs.length === 1) {
-    apply(trackId, undefined);
-    return;
-  }
-  apply(
-    trackId,
-    segs.map((s) => (s.id === segId ? { ...s, media: undefined } : s)),
-  );
+  apply(trackId, mergeSegment(segs, segId));
 }
 
 /**
@@ -87,11 +84,14 @@ export function ensureSegment(trackId: string): string | null {
   return segs[0].id;
 }
 
-/** Carve the segment under the playhead in two; the new half starts empty. */
+/**
+ * Carve the segment under the playhead in two; the new half starts empty.
+ * Only one empty segment at a time: fill it before carving another.
+ */
 export function splitAtPlayhead(trackId: string): void {
   const c = ctx(trackId);
   const segs = c?.track.extraMedia;
-  if (!segs?.length) return;
+  if (!segs?.length || segs.some((s) => !s.media)) return;
   apply(trackId, splitAt(segs, player.getT()));
 }
 

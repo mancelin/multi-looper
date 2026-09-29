@@ -62,9 +62,9 @@ export function ConfirmRemoveExtraMediaModal() {
     ? last
       ? "This is the only segment, so the track will be left with no extra media at all. This can't be undone."
       : "Its stretch of the track goes back to the neighbouring segment, taking its media with it. This can't be undone."
-    : notes
-      ? "The markdown text will be deleted. This can't be undone."
-      : "The image will be deleted from this segment. This can't be undone.";
+    : `${notes ? "The markdown text" : "The image"} will be deleted${
+        last ? "" : " and its stretch of the track goes back to the neighbouring segment"
+      }. This can't be undone.`;
 
   return (
     <div

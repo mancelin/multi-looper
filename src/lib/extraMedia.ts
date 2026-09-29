@@ -91,6 +91,21 @@ export function mergeSegment(segs: ExtraMediaSegment[], id: string): ExtraMediaS
 }
 
 /**
+ * Fold runs of media-less neighbours into one: two "No media yet" stretches
+ * side by side show the same thing, so they are one segment. The survivor is
+ * the leftmost, stretched over the run.
+ */
+export function mergeEmpty(segs: ExtraMediaSegment[]): ExtraMediaSegment[] {
+  const out: ExtraMediaSegment[] = [];
+  for (const s of segs) {
+    const prev = out[out.length - 1];
+    if (prev && !prev.media && !s.media) out[out.length - 1] = { ...prev, end: s.end };
+    else out.push(s);
+  }
+  return out.length === segs.length ? segs : out;
+}
+
+/**
  * Re-span the partition onto a new duration - real durations arrive late
  * (YouTube placeholder, failed decode), so this runs from `patchDuration` and
  * doubles as the repair for anything that reaches us mis-shaped. Inner

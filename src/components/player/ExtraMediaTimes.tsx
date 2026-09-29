@@ -59,6 +59,7 @@ export function ExtraMediaTimes({ track }: { track: Track }) {
   // what React renders: which segment it is inside (the default selection)
   // and whether there is room to split where it stands. Watch for those two
   // and paint the marker itself straight onto the node.
+  const hasEmpty = !!segs?.some((s) => !s.media);
   const [head, setHead] = useState<{ id: string | null; canSplit: boolean }>({
     id: null,
     canSplit: false,
@@ -161,12 +162,14 @@ export function ExtraMediaTimes({ track }: { track: Track }) {
           </button>
           <button
             onClick={() => splitAtPlayhead(track.id)}
-            disabled={!head.canSplit}
+            disabled={!head.canSplit || hasEmpty}
             data-testid="add-extra-media"
             title={
-              head.canSplit
-                ? "Add a segment starting at the playhead"
-                : "Too close to an edge to add a segment here"
+              hasEmpty
+                ? "Give the empty segment some media before adding another"
+                : head.canSplit
+                  ? "Add a segment starting at the playhead"
+                  : "Too close to an edge to add a segment here"
             }
             className="flex h-[27px] flex-none cursor-pointer items-center gap-[6px] whitespace-nowrap rounded-[9px] border border-dashed border-[rgba(94,234,212,.4)] bg-[rgba(94,234,212,.05)] px-[12px] text-[12px] font-semibold text-accent disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-muted-3"
           >
