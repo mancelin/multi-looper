@@ -1,5 +1,14 @@
 apply plugin: 'com.android.application'
 
+// Release signing reads android/keystore.properties (gitignored, created by
+// `just android-keystore`). Without it the release build stays unsigned, and
+// `just android-bundle` refuses to run.
+def keystoreProps = new Properties()
+def keystoreFile = rootProject.file('keystore.properties')
+if (keystoreFile.exists()) {
+    keystoreFile.withInputStream { keystoreProps.load(it) }
+}
+
 android {
     namespace = "com.multilooper.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -16,8 +25,21 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        if (keystoreFile.exists()) {
+            release {
+                storeFile = file(keystoreProps['storeFile'])
+                storePassword = keystoreProps['storePassword']
+                keyAlias = keystoreProps['keyAlias']
+                keyPassword = keystoreProps['keyPassword']
+            }
+        }
+    }
     buildTypes {
         release {
+            if (keystoreFile.exists()) {
+                signingConfig = signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

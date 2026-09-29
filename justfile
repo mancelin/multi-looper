@@ -55,6 +55,44 @@ android-sync:
 android-apk: android-sync
     cd android && ./gradlew assembleDebug
 
+# One-time: create the release keystore and android/keystore.properties.
+# The keystore lives outside the repo so `git clean` can't take it. Back it up:
+# losing it means Play won't accept updates signed with a new key (unless
+# Play App Signing is on, where this is only the resettable upload key).
+android-keystore:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    props=android/keystore.properties
+    [ ! -e "$props" ] || { echo "$props already exists, nothing changed" >&2; exit 1; }
+
+    store="$HOME/.android-keystores/multi-looper-release.jks"
+    [ ! -e "$store" ] || { echo "$store already exists; write $props by hand to point at it" >&2; exit 1; }
+    mkdir -p "$(dirname "$store")"
+
+    read -rsp "Keystore password (6+ chars): " pass; echo
+    read -rsp "Repeat: " pass2; echo
+    [ "$pass" = "$pass2" ] || { echo "passwords differ" >&2; exit 1; }
+    [ ${#pass} -ge 6 ] || { echo "password too short" >&2; exit 1; }
+
+    # PKCS12 keystores use one password for the store and the key
+    KS_PASS="$pass" keytool -genkeypair -v -keystore "$store" -alias release \
+        -keyalg RSA -keysize 4096 -validity 10000 \
+        -storepass:env KS_PASS -keypass:env KS_PASS
+
+    umask 077
+    printf 'storeFile=%s\nstorePassword=%s\nkeyAlias=release\nkeyPassword=%s\n' \
+        "$store" "$pass" "$pass" > "$props"
+    echo "keystore   $store"
+    echo "properties $props (gitignored)"
+
+# Signed release bundle for Play → android/app/build/outputs/bundle/release/app-release.aab
+android-bundle:
+    @test -f android/keystore.properties || { echo "android/keystore.properties missing. Run: just android-keystore"; exit 1; }
+    just android-sync
+    cd android && ./gradlew bundleRelease
+    @echo "→ android/app/build/outputs/bundle/release/app-release.aab"
+
 # Build + install + launch on connected device/emulator
 android-run: android-sync
     bunx cap run android

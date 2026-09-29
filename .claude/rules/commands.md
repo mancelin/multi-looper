@@ -17,8 +17,12 @@ just pb-up      # PocketBase at http://127.0.0.1:8090 (optional; app works witho
 just env        # cp .env.example .env (NEXT_PUBLIC_POCKETBASE_URL)
 just android-apk   # debug APK via Capacitor (android/app/build/outputs/apk/debug/)
 just android-run   # build + install + launch on connected device/emulator
+just android-keystore  # one-time: release keystore (~/.android-keystores/) + android/keystore.properties
+just android-bundle    # signed release AAB for Play (android/app/build/outputs/bundle/release/)
 ```
 
 Stack: Next.js app router + TypeScript, Tailwind CSS v4, Zustand, PocketBase (auth + library sync, optional).
 
 Android: Capacitor wraps the static export (`output: "export"` → `out/`, see `capacitor.config.ts`); native project lives in `android/`. Web changes need `just android-sync` (or `-apk`/`-run`, which include it) to reach the native app. Requires JDK 17+ (justfile picks up `~/.jdks/jdk-21*`) and the Android SDK at `~/Android/Sdk`.
+
+Release: `just set-version X.Y` (bumps, commits, tags), `/release-notes X.Y` (CHANGELOG.md section + Play "What's new"), `just android-bundle`. `android-sync` pins the production PocketBase URL, since `.env` points at 127.0.0.1.
