@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.1 (2026-09-29)
+
+### Fixes
+- Android app: sign-in and library sync reach the online server
+- Android app: recording from the microphone works
+
 ## v1.6 (2026-09-29)
 
 ### Features
