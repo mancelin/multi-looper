@@ -32,7 +32,7 @@ just env                     # cp .env.example .env
 just dev                     # PocketBase (docker) + dev server at http://localhost:3000
 ```
 
-`just` (with no recipe) lists everything. PocketBase is **optional**: the app is fully usable as a guest, with the library in `localStorage` and file blobs in IndexedDB. Only auth and cross-device sync need it (`just pb-up`).
+Tasks run through [just](https://github.com/casey/just); `just` with no recipe lists everything. PocketBase is **optional**: the app is fully usable as a guest, with the library in `localStorage` and file blobs in IndexedDB. Only auth and cross-device sync need it (`just pb-up`).
 
 Node/bun: the project builds with [bun](https://bun.sh). Android builds also need JDK 17+ and the Android SDK at `~/Android/Sdk` (see [`.claude/rules/commands.md`](.claude/rules/commands.md)).
 

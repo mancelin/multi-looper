@@ -2,7 +2,7 @@
 
 Dark, DAW-style web app for practicing along to music by looping A/B sections of a track (YouTube link or local audio/video file), optionally slowed down. Single-page client app: everything under `src/` is `"use client"`; there is no server code besides the optional PocketBase backend.
 
-A `justfile` wraps all tasks (`just` lists recipes):
+A `justfile` ([just](https://github.com/casey/just)) wraps all tasks (`just` lists recipes):
 
 ```bash
 just install    # bun install

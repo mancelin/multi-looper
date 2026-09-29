@@ -51,7 +51,7 @@ The same list is in the app behind the ⌨ button in the top bar. Shortcuts are 
 
 ## Contributing
 
-Pull requests welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first (setup, `just ci`, the e2e-test requirement, and the invariants around the player clock and loop editing).
+Pull requests welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first (setup, `just ci` via [just](https://github.com/casey/just), the e2e-test requirement, and the invariants around the player clock and loop editing).
 
 **Every merged contributor is credited in the app**: your GitHub account goes into [CONTRIBUTORS.md](CONTRIBUTORS.md) and shows up in the Contributors list under Settings → App info.
 
