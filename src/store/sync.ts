@@ -255,7 +255,21 @@ async function handleAuthed(): Promise<void> {
   startSync();
 }
 
+// server account cap (pb_hooks/signup_cap.pb.js) - matched by message prefix
+const SIGNUP_CLOSED_PREFIX = "Sign-ups are closed";
+const SIGNUP_CLOSED_MESSAGE =
+  "Sign-ups are closed for now. Guest mode still works: your library stays on this device.";
+
+function isSignupClosed(e: unknown): boolean {
+  return (
+    e instanceof ClientResponseError &&
+    typeof e.response?.message === "string" &&
+    (e.response.message as string).startsWith(SIGNUP_CLOSED_PREFIX)
+  );
+}
+
 function authErrorMessage(e: unknown, mode: "signup" | "signin"): string {
+  if (isSignupClosed(e)) return SIGNUP_CLOSED_MESSAGE;
   if (e instanceof ClientResponseError) {
     const data = e.response?.data as Record<string, { message?: string }> | undefined;
     const field = data && Object.values(data)[0]?.message;
@@ -338,7 +352,9 @@ export async function signInWithGoogle(): Promise<void> {
     useUi.getState().setAccountMenuOpen(false);
     await handleAuthed();
   } catch (e) {
-    if (e instanceof ClientResponseError && e.status === 0) {
+    if (isSignupClosed(e)) {
+      ui.setAuthError(SIGNUP_CLOSED_MESSAGE);
+    } else if (e instanceof ClientResponseError && e.status === 0) {
       ui.setAuthError("Cannot reach the sync server.");
     } else {
       ui.setAuthError("Google sign-in was cancelled or failed.");

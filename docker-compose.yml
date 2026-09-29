@@ -12,4 +12,7 @@ services:
     environment:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      MAX_USERS: ${MAX_USERS:-}
+      MAX_USER_DATA_BYTES: ${MAX_USER_DATA_BYTES:-}
+      MAX_PREMIUM_DATA_BYTES: ${MAX_PREMIUM_DATA_BYTES:-}
     restart: unless-stopped

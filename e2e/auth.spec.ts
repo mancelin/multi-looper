@@ -29,3 +29,30 @@ test("sign-up requires the verification email before signing in", async ({ page 
   await signIn(page, email, "password123");
   await expect(page.getByText("Please verify your email before signing in.")).toBeVisible();
 });
+
+test("sign-up explains the account cap and leaves guest mode usable", async ({ page }) => {
+  // stand-in for pb_hooks/signup_cap.pb.js refusing the create once MAX_USERS
+  // accounts exist, so this runs without PocketBase (and without a full server)
+  await page.route("**/api/collections/users/records*", async (route) => {
+    if (route.request().method() !== "POST") return route.fallback();
+    await route.fulfill({
+      status: 400,
+      contentType: "application/json",
+      body: JSON.stringify({ status: 400, message: "Sign-ups are closed for now.", data: {} }),
+    });
+  });
+
+  await page.goto("/");
+  await page.getByTitle("Sign in").click();
+  await expect(page.getByText("Create your account")).toBeVisible();
+  await page.getByPlaceholder("you@example.com").fill(e2eEmail("capped"));
+  await page.getByPlaceholder("Password").fill("password123");
+  await page.getByRole("button", { name: "Sign up" }).click();
+
+  await expect(
+    page.getByText("Sign-ups are closed for now. Guest mode still works: your library stays on this device."),
+  ).toBeVisible();
+  // still a guest, modal open, nothing else broken
+  await expect(page.getByText("Create your account")).toBeVisible();
+  await expect(page.getByTitle("Sign in")).toBeVisible();
+});
