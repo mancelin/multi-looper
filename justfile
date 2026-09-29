@@ -44,9 +44,11 @@ e2e-one pattern:
 # Lint + typecheck + e2e
 ci: lint check e2e
 
-# Build web assets and sync them into the Android project
+# Build web assets and sync them into the Android project.
+# The PB URL is pinned to production: .env points at 127.0.0.1, which on a
+# phone is the phone itself.
 android-sync:
-    bun run build
+    NEXT_PUBLIC_POCKETBASE_URL=https://pb.multi-looper.com bun run build
     bunx cap sync android
 
 # Debug APK → android/app/build/outputs/apk/debug/app-debug.apk
