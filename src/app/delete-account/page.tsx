@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { LegalPage } from "@/components/legal/LegalPage";
-import { APP_NAME, AUTHOR_NAME, CONTACT_EMAIL } from "@/lib/appInfo";
+import { APP_NAME, AUTHOR_NAME } from "@/lib/appInfo";
 
 export const metadata: Metadata = { title: "Delete your account · multi-looper" };
 
@@ -13,27 +12,23 @@ function H({ children }: { children: React.ReactNode }) {
 }
 
 export default function Page() {
-  const mail = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(`Delete my ${APP_NAME} account`)}`;
   return (
-    <LegalPage title="Delete your account">
+    <LegalPage path="/delete-account" title="Delete your account">
       <p className="m-0 mb-2">
-        How to delete your {APP_NAME} account and its data (app by {AUTHOR_NAME}). This works the
-        same on the web and in the Android app.
+        How to delete your {APP_NAME} account and its data (app by {AUTHOR_NAME}). It works the
+        same in the Android app and on the web at <a href="https://multi-looper.com">
+          multi-looper.com
+        </a>
+        , so you don&apos;t need the app installed.
       </p>
 
-      <H>From the app</H>
+      <H>Steps</H>
       <ol className="m-0 mb-2 list-decimal pl-6">
         <li>Sign in to the account you want to delete.</li>
         <li>Open Settings (gear icon, top right).</li>
         <li>Tap &quot;Delete account&quot;, then confirm.</li>
       </ol>
       <p className="m-0 mb-2">The deletion is immediate.</p>
-
-      <H>Without the app</H>
-      <p className="m-0 mb-2">
-        Email <a href={mail}>{CONTACT_EMAIL}</a> from the address you signed up with, asking for
-        your account to be deleted. We delete it within 7 days and reply to confirm.
-      </p>
 
       <H>What gets deleted</H>
       <ul className="m-0 mb-2 list-disc pl-6">
@@ -55,10 +50,6 @@ export default function Page() {
       <p className="m-0 mb-2">
         Without an account nothing leaves your device. Settings → &quot;Delete all data&quot;, or
         uninstalling the app / clearing the site&apos;s data, removes it all.
-      </p>
-
-      <p className="m-0 mt-6 text-muted">
-        See also the <Link href="/privacy">privacy policy</Link>.
       </p>
     </LegalPage>
   );

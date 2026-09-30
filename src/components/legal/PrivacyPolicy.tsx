@@ -57,7 +57,7 @@ export function PrivacyPolicy() {
         stored with it. See <a href="https://multi-looper.com/delete-account">
           multi-looper.com/delete-account
         </a>{" "}
-        for the steps, or to request deletion by email.
+        for the steps.
       </P>
       <p className="m-0 text-muted">
         Questions: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>

@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Privacy policy · multi-looper" };
 
 export default function Page() {
   return (
-    <LegalPage title="Privacy policy">
+    <LegalPage path="/privacy" title="Privacy policy">
       <PrivacyPolicy />
     </LegalPage>
   );

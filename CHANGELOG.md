@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.7 (2026-09-30)
+
+### Features
+- **Public privacy and account deletion pages**: multi-looper.com/privacy and multi-looper.com/delete-account, readable without opening the app. Account deletion can also be requested by email
+- The privacy policy now covers the Android app and microphone recordings
+
+### Dev
+- Android app id is now `com.maxime_ancelin.multilooper`, the Play Store package name
+- `just android-keystore` finds `keytool` in `JAVA_HOME` when it is not on `PATH`
+
 ## v1.6.1 (2026-09-29)
 
 ### Fixes

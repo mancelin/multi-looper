@@ -11,14 +11,38 @@ test("privacy policy page loads standalone", async ({ page }) => {
   await expect(page.getByRole("link", { name: "multi-looper.com/delete-account" })).toBeVisible();
 });
 
-test("delete-account page explains in-app and email deletion", async ({ page }) => {
+test("delete-account page explains in-app deletion", async ({ page }) => {
   await page.goto("/delete-account");
   await expect(page.getByRole("heading", { name: "Delete your account", level: 1 })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "From the app" })).toBeVisible();
-  const mail = page.getByRole("link", { name: "multilooper@gmail.com" });
-  await expect(mail).toHaveAttribute("href", /^mailto:multilooper@gmail\.com\?subject=/);
+  await expect(page.getByRole("heading", { name: "Steps" })).toBeVisible();
+  await expect(page.getByText('Tap "Delete account", then confirm.')).toBeVisible();
+  // deleting must not require the installed app: the web app has the same button
+  await expect(page.getByRole("link", { name: "multi-looper.com", exact: true })).toHaveAttribute(
+    "href",
+    "https://multi-looper.com",
+  );
 
-  await page.getByRole("link", { name: "privacy policy" }).click();
+  // footer links to the other legal pages, not to itself
+  const footer = page.getByRole("navigation", { name: "Legal" });
+  await expect(footer.getByRole("link", { name: "How to delete account" })).toHaveCount(0);
+  await footer.getByRole("link", { name: "Privacy policy" }).click();
   await expect(page).toHaveURL(/\/privacy$/);
+  await expect(page.getByRole("heading", { name: "Privacy policy", level: 1 })).toBeVisible();
+});
+
+test("terms of service page loads standalone", async ({ page }) => {
+  await page.goto("/terms");
+  await expect(page.getByRole("heading", { name: "Terms of service", level: 1 })).toBeVisible();
+  await expect(page.getByText("YouTube's Terms of Service.")).toBeVisible();
+});
+
+test("home screen links to the privacy policy and terms of service", async ({ page }) => {
+  await page.goto("/");
+  const legal = page.getByRole("navigation", { name: "Legal" });
+  await legal.getByRole("link", { name: "Terms of service" }).click();
+  await expect(page.getByRole("heading", { name: "Terms of service", level: 1 })).toBeVisible();
+
+  await page.goto("/");
+  await legal.getByRole("link", { name: "Privacy policy" }).click();
   await expect(page.getByRole("heading", { name: "Privacy policy", level: 1 })).toBeVisible();
 });

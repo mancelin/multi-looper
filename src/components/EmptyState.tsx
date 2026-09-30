@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRef, useState } from "react";
 import { LoopIcon, MicIcon, PlusIcon, UploadIcon, YoutubeIcon } from "@/components/icons";
 import { addFiles, addYoutubeUrl } from "@/store/ingest";
@@ -114,6 +115,15 @@ export function EmptyState() {
             </div>
           </div>
         </div>
+
+        <nav aria-label="Legal" className="mt-[34px] flex gap-5 text-[12px]">
+          <Link href="/privacy" className="opacity-70 hover:opacity-100">
+            Privacy policy
+          </Link>
+          <Link href="/terms" className="opacity-70 hover:opacity-100">
+            Terms of service
+          </Link>
+        </nav>
       </div>
     </div>
   );

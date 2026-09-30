@@ -24,6 +24,7 @@ import {
   REPO_URL,
 } from "@/lib/appInfo";
 import { PrivacyPolicy } from "@/components/legal/PrivacyPolicy";
+import { TermsOfService } from "@/components/legal/TermsOfService";
 import { changePassword, deleteAccount, deleteAllData } from "@/store/sync";
 import { useUi, type SettingsView } from "@/store/ui";
 
@@ -240,32 +241,7 @@ function PrivacyView() {
 function TermsView() {
   return (
     <div className="max-h-[50vh] overflow-y-auto px-[4px] text-[12.5px] leading-[1.6] text-ink-3">
-      <p className="m-0 mb-2 text-muted">Last updated: July 10, 2026</p>
-      <h3 className="mb-1 mt-3 text-[13px] font-semibold text-ink">The service</h3>
-      <p className="m-0 mb-2">
-        {APP_NAME} is a free practice tool for looping and slowing down music. It is provided
-        &quot;as is&quot;, without warranty of any kind; use it at your own risk. The service may
-        change or be discontinued at any time.
-      </p>
-      <h3 className="mb-1 mt-3 text-[13px] font-semibold text-ink">Your content</h3>
-      <p className="m-0 mb-2">
-        You keep full ownership of the media you upload. You are responsible for having the rights
-        to any content you use with the app; uploaded files are stored only to provide library
-        sync and are never shared with anyone else.
-      </p>
-      <h3 className="mb-1 mt-3 text-[13px] font-semibold text-ink">YouTube content</h3>
-      <p className="m-0 mb-2">
-        YouTube playback goes through the official embedded player and is subject to
-        YouTube&apos;s Terms of Service.
-      </p>
-      <h3 className="mb-1 mt-3 text-[13px] font-semibold text-ink">Accounts</h3>
-      <p className="m-0 mb-2">
-        Accounts are free. We may suspend or remove accounts that abuse the service. You can
-        delete your account and all its data yourself at any time from the settings.
-      </p>
-      <p className="m-0 text-muted">
-        Questions: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
-      </p>
+      <TermsOfService />
     </div>
   );
 }
