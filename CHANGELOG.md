@@ -3,7 +3,8 @@
 ## v1.7 (2026-09-30)
 
 ### Features
-- **Public privacy and account deletion pages**: multi-looper.com/privacy and multi-looper.com/delete-account, readable without opening the app. Account deletion can also be requested by email
+- **Public legal pages**: privacy policy, terms of service and how to delete your account, at multi-looper.com/privacy, /terms and /delete-account, readable without opening the app and linked from each other
+- Privacy policy and terms of service links on the home screen
 - The privacy policy now covers the Android app and microphone recordings
 
 ### Dev
