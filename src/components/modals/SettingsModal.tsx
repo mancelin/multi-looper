@@ -23,6 +23,7 @@ import {
   LICENSE_URL,
   REPO_URL,
 } from "@/lib/appInfo";
+import { PrivacyPolicy } from "@/components/legal/PrivacyPolicy";
 import { changePassword, deleteAccount, deleteAllData } from "@/store/sync";
 import { useUi, type SettingsView } from "@/store/ui";
 
@@ -231,38 +232,7 @@ function InfoView() {
 function PrivacyView() {
   return (
     <div className="max-h-[50vh] overflow-y-auto px-[4px] text-[12.5px] leading-[1.6] text-ink-3">
-      <p className="m-0 mb-2 text-muted">Last updated: July 10, 2026</p>
-      <h3 className="mb-1 mt-3 text-[13px] font-semibold text-ink">Data stored on your device</h3>
-      <p className="m-0 mb-2">
-        As a guest, everything stays on your device: your library (tracks, loops, settings) lives
-        in your browser&apos;s local storage, and local media files are kept in its IndexedDB.
-        Nothing is sent anywhere.
-      </p>
-      <h3 className="mb-1 mt-3 text-[13px] font-semibold text-ink">Data stored with an account</h3>
-      <p className="m-0 mb-2">
-        If you create an account, we store your email address, a hashed password, your library
-        (track metadata and loop positions) and any media files you upload, solely to sync your
-        library across devices. If you sign in with Google we receive your email address from
-        Google; nothing else.
-      </p>
-      <h3 className="mb-1 mt-3 text-[13px] font-semibold text-ink">YouTube playback</h3>
-      <p className="m-0 mb-2">
-        YouTube tracks play through the embedded YouTube player, which loads content from
-        YouTube/Google. Their privacy policy applies to that playback.
-      </p>
-      <h3 className="mb-1 mt-3 text-[13px] font-semibold text-ink">What we don&apos;t do</h3>
-      <p className="m-0 mb-2">
-        No analytics, no ads, no tracking cookies. Your data is never sold or shared with third
-        parties.
-      </p>
-      <h3 className="mb-1 mt-3 text-[13px] font-semibold text-ink">Deleting your data</h3>
-      <p className="m-0 mb-2">
-        Settings → &quot;Delete all data&quot; removes every track (local and synced).
-        &quot;Delete account&quot; permanently removes your account and everything stored with it.
-      </p>
-      <p className="m-0 text-muted">
-        Questions: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
-      </p>
+      <PrivacyPolicy />
     </div>
   );
 }
