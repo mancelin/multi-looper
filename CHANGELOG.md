@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.8 (2026-10-03)
+
+### Features
+- **Reordered player controls**: play and loop, then Set A/B here with undo/redo, then your loops, the loop start/end, and speed and volume last. On wide screens play and the Set A/B buttons share one line
+
+### Fixes
+- Android app: "Continue with Google" opens Google's sign-in with an account picker, instead of a browser tab showing the last page you visited
+- Phones: the add-track "+" button stays visible in the top bar when a track is open and you are signed in
+
 ## v1.7 (2026-09-30)
 
 ### Features
