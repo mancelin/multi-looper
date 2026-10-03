@@ -48,13 +48,19 @@ export function TopBar() {
           <div className="flex h-[26px] w-[26px] items-center justify-center rounded-[7px] bg-gradient-to-br from-accent-2 to-accent-3 shadow-[0_2px_10px_rgba(45,212,191,.35)]">
             <EqIcon />
           </div>
-          <span className="whitespace-nowrap text-[12px] font-bold tracking-[.06em] min-[480px]:text-[14px] min-[480px]:tracking-[.14em]">
+          {/* with a track open the library button joins the bar, so phones drop the
+              wordmark (and the account chip its SYNCED label) to keep "+" on screen */}
+          <span
+            className={`whitespace-nowrap text-[12px] font-bold tracking-[.06em] min-[480px]:text-[14px] min-[480px]:tracking-[.14em] ${
+              hasTracks ? "hidden min-[480px]:inline" : ""
+            }`}
+          >
             multi-looper
           </span>
         </div>
       </div>
 
-      <div className="flex min-w-0 max-w-[640px] flex-1 items-center gap-2 sm:gap-[10px]">
+      <div className="flex min-w-[38px] max-w-[640px] flex-1 items-center gap-2 sm:gap-[10px]">
         <button
           onClick={() => setAddMenuOpen(true)}
           data-testid="open-add-menu"

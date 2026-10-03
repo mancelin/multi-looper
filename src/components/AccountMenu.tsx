@@ -52,7 +52,7 @@ export function AccountArea() {
       >
         <span className="flex items-center gap-[5px] text-[10px] font-semibold tracking-[.04em] text-accent">
           <span className="h-[6px] w-[6px] rounded-full bg-accent-2 shadow-[0_0_6px_rgba(45,212,191,.8)]" />
-          SYNCED
+          <span className="hidden min-[480px]:inline">SYNCED</span>
         </span>
         <span className="flex h-[28px] w-[28px] items-center justify-center rounded-[7px] bg-gradient-to-br from-accent-2 to-accent-3 text-[12px] font-bold text-on-accent-2">
           {initialsFor(account.email)}

@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@capacitor/android": "^8.4.1",
+    "@capacitor/browser": "^8.0.5",
     "@capacitor/core": "^8.4.1",
     "next": "16.2.10",
     "pocketbase": "^0.27.0",

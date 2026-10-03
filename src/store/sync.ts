@@ -1,5 +1,7 @@
 "use client";
 
+import { Browser } from "@capacitor/browser";
+import { Capacitor } from "@capacitor/core";
 import { ClientResponseError, type RecordModel } from "pocketbase";
 import { clearFiles, getFile, releaseFile } from "@/lib/fileRegistry";
 import { clearExtraMediaHeights } from "@/lib/extraMediaSize";
@@ -343,12 +345,28 @@ export async function consumeVerificationLink(): Promise<void> {
   }
 }
 
+/** Make Google show its account picker instead of reusing the browser's last account. */
+function chooseAccount(url: string): string {
+  const u = new URL(url);
+  u.searchParams.set("prompt", "select_account");
+  return u.toString();
+}
+
 export async function signInWithGoogle(): Promise<void> {
   const ui = useUi.getState();
   ui.setAuthError("");
   ui.setAuthBusy(true);
   try {
-    await pb.collection("users").authWithOAuth2({ provider: "google" });
+    // The SDK's default opens an empty popup and points it at Google afterwards;
+    // in the Android app that popup lands in the external browser blank (it
+    // shows whatever tab was last open). Open the real URL in a Custom Tab
+    // instead; the SDK still waits for the result over realtime.
+    const native = Capacitor.isNativePlatform();
+    await pb.collection("users").authWithOAuth2({
+      provider: "google",
+      ...(native && { urlCallback: (url: string) => void Browser.open({ url: chooseAccount(url) }) }),
+    });
+    if (native) void Browser.close().catch(() => {});
     useUi.getState().closeAuth();
     useUi.getState().setAccountMenuOpen(false);
     await handleAuthed();
