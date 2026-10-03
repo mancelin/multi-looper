@@ -1446,9 +1446,18 @@ for (const [label, viewport] of [
     await uploadWav(page, 3);
     await expect(page.getByTitle("Rename loop")).toHaveCount(1); // wait for decode
 
-    // play/time/loop, set A/B + undo/redo, loop chips, start/end/length, speed + volume
+    // play/time/loop + set A/B share a line when it fits (desktop) and wrap
+    // otherwise (phone); below them: loop chips, start/end/length, speed + volume
+    const time = (await page.getByTestId("time").boundingBox())!;
+    const setA = (await page.getByRole("button", { name: "Set A here" }).boundingBox())!;
+    if (label === "desktop") {
+      expect(Math.abs(setA.y + setA.height / 2 - (time.y + time.height / 2))).toBeLessThan(12);
+      expect(setA.x).toBeGreaterThan(time.x + time.width);
+    } else {
+      expect(setA.y).toBeGreaterThan(time.y + time.height);
+    }
+
     const rows = [
-      page.getByTestId("time"),
       page.getByRole("button", { name: "Set A here" }),
       page.getByTitle("Rename loop"),
       page.getByTestId("loop-a"),

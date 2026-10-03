@@ -177,7 +177,7 @@ export function LoopSetButtons({ track }: { track: Track }) {
     "flex h-full w-[42px] cursor-pointer items-center justify-center rounded-[11px] border border-white/10 bg-white/5 text-ink-3 hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:border-white/8 disabled:bg-white/3 disabled:text-muted-3 disabled:hover:border-white/8 disabled:hover:text-muted-3";
 
   return (
-    <div className="box-content flex h-[42px] items-stretch gap-2 px-4 pt-3 sm:px-[26px]">
+    <div className="flex h-[42px] items-stretch gap-2">
       <button
         onClick={() => setLoopA(player.getT())}
         disabled={!canA}

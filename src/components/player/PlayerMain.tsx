@@ -72,8 +72,11 @@ export function PlayerMain({ track }: { track: Track }) {
       <VideoPanel track={track} mainRef={mainRef} />
       <Waveform track={track} />
       <ExtraMediaTimes track={track} />
-      <Transport track={track} />
-      <LoopSetButtons track={track} />
+      {/* one line when it fits; the set-A/B group wraps under the transport otherwise */}
+      <div className="flex flex-wrap items-center gap-x-[18px] gap-y-3 px-4 pt-[14px] sm:px-[26px]">
+        <Transport track={track} />
+        <LoopSetButtons track={track} />
+      </div>
       <LoopStrip track={track} />
       <LoopTrim track={track} />
       <SpeedVolume />

@@ -25,7 +25,7 @@ export function Transport({ track }: { track: Track }) {
   }, [track.id]);
 
   return (
-    <div className="flex flex-wrap items-center gap-3 px-4 pt-[14px] sm:gap-[18px] sm:px-[26px]">
+    <div className="flex flex-wrap items-center gap-3 sm:gap-[18px]">
       <button
         onClick={() => player.togglePlay()}
         aria-label={playing ? "Pause" : "Play"}
