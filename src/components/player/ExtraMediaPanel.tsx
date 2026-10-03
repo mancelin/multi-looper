@@ -109,10 +109,13 @@ export function ExtraMediaPanel({ track }: { track: Track }) {
       if (!media) clearSegmentMedia(track.id, seg.id);
       setEditId(null);
     };
+    // No `min-h-0` here: when the controls below leave no spare column height,
+    // the editor would collapse and paint over the waveform. Its content
+    // (toolbar, 140px textarea, buttons) is the floor; the column scrolls.
     return (
       <div
         style={height !== null ? { height } : undefined}
-        className={`flex min-h-0 px-4 pb-1 pt-[6px] sm:px-[26px] ${
+        className={`flex px-4 pb-1 pt-[6px] sm:px-[26px] ${
           height === null ? FILL : "flex-none"
         }`}
       >

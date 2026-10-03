@@ -8,9 +8,9 @@ import type { Track } from "@/lib/types";
 import { ExtraMediaPanel } from "./ExtraMediaPanel";
 import { ExtraMediaTimes } from "./ExtraMediaTimes";
 import { LoopStrip } from "./LoopStrip";
-import { LoopTrim } from "./LoopTrim";
+import { LoopSetButtons, LoopTrim } from "./LoopTrim";
 import { TrackHeader } from "./TrackHeader";
-import { Transport } from "./Transport";
+import { SpeedVolume, Transport } from "./Transport";
 import { VideoPanel } from "./VideoPanel";
 import { Waveform } from "./Waveform";
 
@@ -73,8 +73,10 @@ export function PlayerMain({ track }: { track: Track }) {
       <Waveform track={track} />
       <ExtraMediaTimes track={track} />
       <Transport track={track} />
+      <LoopSetButtons track={track} />
       <LoopStrip track={track} />
       <LoopTrim track={track} />
+      <SpeedVolume />
     </main>
   );
 }

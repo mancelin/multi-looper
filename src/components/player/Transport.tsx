@@ -9,12 +9,9 @@ import { useUi } from "@/store/ui";
 
 export function Transport({ track }: { track: Track }) {
   const playing = useUi((s) => s.playing);
-  const rate = useUi((s) => s.rate);
-  const volume = useUi((s) => s.volume);
   const loopEnabled = useUi((s) => s.loopEnabled);
   const toggleLoop = useUi((s) => s.toggleLoop);
   const timeRef = useRef<HTMLSpanElement>(null);
-  const rateRef = useRef<HTMLInputElement>(null);
 
   useEffect(
     () =>
@@ -27,24 +24,8 @@ export function Transport({ track }: { track: Track }) {
     if (timeRef.current) timeRef.current.textContent = fmt(player.getT());
   }, [track.id]);
 
-  useEffect(() => {
-    if (rateRef.current && document.activeElement !== rateRef.current) {
-      rateRef.current.value = rate.toFixed(2);
-    }
-  }, [rate]);
-
-  const commitRate = () => {
-    const v = parseTime(rateRef.current?.value);
-    if (v != null) player.applyRate(v);
-    setTimeout(() => {
-      if (rateRef.current && document.activeElement !== rateRef.current) {
-        rateRef.current.value = useUi.getState().rate.toFixed(2);
-      }
-    }, 0);
-  };
-
   return (
-    <div className="flex flex-wrap items-center gap-3 px-4 pb-[18px] pt-[14px] sm:gap-[18px] sm:px-[26px]">
+    <div className="flex flex-wrap items-center gap-3 px-4 pt-[14px] sm:gap-[18px] sm:px-[26px]">
       <button
         onClick={() => player.togglePlay()}
         aria-label={playing ? "Pause" : "Play"}
@@ -76,6 +57,34 @@ export function Transport({ track }: { track: Track }) {
         </button>
       </div>
 
+    </div>
+  );
+}
+
+/** Playback speed and volume, the last row of the player column. */
+export function SpeedVolume() {
+  const rate = useUi((s) => s.rate);
+  const volume = useUi((s) => s.volume);
+  const rateRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (rateRef.current && document.activeElement !== rateRef.current) {
+      rateRef.current.value = rate.toFixed(2);
+    }
+  }, [rate]);
+
+  const commitRate = () => {
+    const v = parseTime(rateRef.current?.value);
+    if (v != null) player.applyRate(v);
+    setTimeout(() => {
+      if (rateRef.current && document.activeElement !== rateRef.current) {
+        rateRef.current.value = useUi.getState().rate.toFixed(2);
+      }
+    }, 0);
+  };
+
+  return (
+    <div className="flex flex-wrap items-center gap-3 px-4 pb-[18px] pt-3 sm:gap-[18px] sm:px-[26px]">
       <div className="flex min-w-0 max-w-[380px] flex-1 basis-[240px] items-center gap-[10px] rounded-[11px] border border-white/8 bg-panel-2 px-[14px] py-2">
         <ClockIcon className="flex-none text-muted" />
         <span className="flex-none text-[9.5px] font-semibold tracking-[.1em] text-muted-3">SPEED</span>

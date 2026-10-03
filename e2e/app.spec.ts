@@ -1435,3 +1435,28 @@ test("on a phone the notes editor and the saved note stay above the waveform", a
   await expect(page.getByTestId("markdown-editor")).toBeVisible();
   await ctx.close();
 });
+
+for (const [label, viewport] of [
+  ["desktop", { width: 1280, height: 720 }],
+  ["phone", { width: 360, height: 740 }],
+] as const) {
+  test(`player controls stack in order on ${label}`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    await page.goto("/");
+    await uploadWav(page, 3);
+    await expect(page.getByTitle("Rename loop")).toHaveCount(1); // wait for decode
+
+    // play/time/loop, set A/B + undo/redo, loop chips, start/end/length, speed + volume
+    const rows = [
+      page.getByTestId("time"),
+      page.getByRole("button", { name: "Set A here" }),
+      page.getByTitle("Rename loop"),
+      page.getByTestId("loop-a"),
+      page.getByTitle(/Type a speed/),
+      page.getByRole("button", { name: "Mute" }),
+    ];
+    const ys: number[] = [];
+    for (const row of rows) ys.push((await row.boundingBox())!.y);
+    for (let i = 1; i < ys.length; i++) expect(ys[i]).toBeGreaterThan(ys[i - 1]);
+  });
+}
