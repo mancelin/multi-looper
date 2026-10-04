@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.9 (2026-10-04)
+
+### Features
+- Removing a loop asks for confirmation first, showing the loop's name and range
+
+### Dev
+- Android release builds are shrunk and optimized with R8, with line numbers kept for crash reports
+- The PocketBase container listens on loopback only, so nginx is the sole public entrance
+
 ## v1.8 (2026-10-03)
 
 ### Features
