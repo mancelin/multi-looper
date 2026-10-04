@@ -9,7 +9,7 @@ import { useLibrary } from "@/store/library";
 import { useUi } from "@/store/ui";
 
 export function LoopStrip({ track }: { track: Track }) {
-  const removeLoop = useLibrary((s) => s.removeLoop);
+  const askRemoveLoop = useUi((s) => s.askRemoveLoop);
   const renameLoop = useLibrary((s) => s.renameLoop);
   const pushToast = useUi((s) => s.pushToast);
 
@@ -67,7 +67,7 @@ export function LoopStrip({ track }: { track: Track }) {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    removeLoop(l.id);
+                    askRemoveLoop(track.id, l.id);
                   }}
                   title="Remove loop"
                   className="flex h-[22px] w-[22px] flex-none cursor-pointer items-center justify-center rounded-[6px] border-none bg-transparent text-muted-4 hover:bg-[rgba(248,113,113,.12)] hover:text-danger"

@@ -40,6 +40,8 @@ export interface UiState {
   recordDenoise: boolean;
   /** track awaiting the remove confirmation, null when the dialog is closed */
   confirmRemoveId: string | null;
+  /** loop awaiting the remove confirmation, null when the dialog is closed */
+  confirmRemoveLoop: { trackId: string; loopId: string } | null;
   /** extra-media removal awaiting confirmation: either just the segment's
    *  media ("media") or the whole segment and its stretch of track ("segment") */
   confirmExtraMedia: { trackId: string; segId: string; mode: "media" | "segment" } | null;
@@ -78,6 +80,8 @@ export interface UiState {
   setRecordDenoise: (v: boolean) => void;
   askRemoveTrack: (id: string) => void;
   closeRemoveConfirm: () => void;
+  askRemoveLoop: (trackId: string, loopId: string) => void;
+  closeRemoveLoopConfirm: () => void;
   askRemoveExtraMedia: (trackId: string, segId: string, mode?: "media" | "segment") => void;
   closeExtraMediaConfirm: () => void;
   toggleExtraTimes: () => void;
@@ -117,6 +121,7 @@ export const useUi = create<UiState>()((set) => ({
   recordOpen: false,
   recordDenoise: true,
   confirmRemoveId: null,
+  confirmRemoveLoop: null,
   confirmExtraMedia: null,
   extraTimesOpen: false,
 
@@ -150,6 +155,8 @@ export const useUi = create<UiState>()((set) => ({
   setRecordDenoise: (v) => set({ recordDenoise: v }),
   askRemoveTrack: (id) => set({ confirmRemoveId: id }),
   closeRemoveConfirm: () => set({ confirmRemoveId: null }),
+  askRemoveLoop: (trackId, loopId) => set({ confirmRemoveLoop: { trackId, loopId } }),
+  closeRemoveLoopConfirm: () => set({ confirmRemoveLoop: null }),
   askRemoveExtraMedia: (trackId, segId, mode = "media") =>
     set({ confirmExtraMedia: { trackId, segId, mode } }),
   closeExtraMediaConfirm: () => set({ confirmExtraMedia: null }),

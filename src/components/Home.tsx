@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { AddTrackModal } from "@/components/modals/AddTrackModal";
 import { AuthModal } from "@/components/modals/AuthModal";
 import { ConfirmRemoveExtraMediaModal } from "@/components/modals/ConfirmRemoveExtraMediaModal";
+import { ConfirmRemoveLoopModal } from "@/components/modals/ConfirmRemoveLoopModal";
 import { ConfirmRemoveModal } from "@/components/modals/ConfirmRemoveModal";
 import { ImportModal } from "@/components/modals/ImportModal";
 import { RecordModal } from "@/components/modals/RecordModal";
@@ -78,6 +79,7 @@ export function Home() {
       <ImportModal />
       <SettingsModal />
       <ConfirmRemoveModal />
+      <ConfirmRemoveLoopModal />
       <ConfirmRemoveExtraMediaModal />
       <Toasts />
     </div>

@@ -25,6 +25,7 @@ export function ShortcutsProvider() {
       // the transport behind it
       if (useUi.getState().confirmRemoveId) return;
       if (useUi.getState().confirmExtraMedia) return;
+      if (useUi.getState().confirmRemoveLoop) return;
       const k = e.key;
       if (e.ctrlKey || e.metaKey) {
         // Ctrl/Cmd+Z undo, +Shift redo; every other combo stays with the browser

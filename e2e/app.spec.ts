@@ -795,6 +795,34 @@ test("cancelling the remove confirmation keeps the track", async ({ page }) => {
   await expect(page.getByLabel("Track title")).toHaveValue("keeper");
 });
 
+test("removing a loop asks for confirmation", async ({ page }) => {
+  await page.goto("/");
+  await uploadWav(page, 3);
+  await expect(page.getByTitle("Rename loop")).toHaveCount(1);
+  // a lone loop can't be removed, so it has no ×
+  await expect(page.getByTitle("Remove loop")).toHaveCount(0);
+
+  await page.getByTitle("Add a loop at the playhead (N)").click();
+  await expect(page.getByTitle("Rename loop")).toHaveCount(2);
+
+  // cancel keeps it, Escape too
+  await page.getByTitle("Remove loop").nth(1).click();
+  await expect(page.getByTestId("confirm-remove-loop")).toContainText("Loop 2");
+  await page.getByTestId("confirm-remove-loop-cancel").click();
+  await expect(page.getByTestId("confirm-remove-loop")).toHaveCount(0);
+  await page.getByTitle("Remove loop").nth(1).click();
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId("confirm-remove-loop")).toHaveCount(0);
+  await expect(page.getByTitle("Rename loop")).toHaveCount(2);
+
+  // confirming removes it
+  await page.getByTitle("Remove loop").nth(1).click();
+  await page.getByTestId("confirm-remove-loop-ok").click();
+  await expect(page.getByTestId("confirm-remove-loop")).toHaveCount(0);
+  await expect(page.getByTitle("Rename loop")).toHaveCount(1);
+  await expect(page.getByTitle("Rename loop")).toHaveValue("Loop 1");
+});
+
 /** The × on the extra-media panel is guarded by a confirmation dialog. */
 async function removeExtraMedia(page: Page, title: "Remove image" | "Remove notes") {
   await page.getByTitle(title).click();
