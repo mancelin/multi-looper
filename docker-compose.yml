@@ -3,7 +3,8 @@ services:
     build: ./pb
     container_name: multilooper-pocketbase
     ports:
-      - "8090:8090"
+      # loopback only: nginx is the sole public entrance (ufw also blocks 8090)
+      - "127.0.0.1:8090:8090"
     volumes:
       - ./pb/pb_data:/pb_data
       - ./pb/pb_migrations:/pb_migrations
