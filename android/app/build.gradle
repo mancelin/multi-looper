@@ -40,8 +40,12 @@ android {
             if (keystoreFile.exists()) {
                 signingConfig = signingConfigs.release
             }
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // R8: shrink, obfuscate and optimize. Capacitor's consumer rules keep
+            // the plugin classes and the JS bridge. The mapping file ships inside
+            // the AAB, so Play deobfuscates crash reports on its own.
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }
