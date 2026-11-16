@@ -199,6 +199,26 @@ export async function refreshStorageUsed(): Promise<void> {
   }
 }
 
+const AUTH_REFRESH_INTERVAL = 12 * 60 * 60 * 1000;
+let lastAuthRefresh = Date.now(); // boot/sign-in just issued a fresh token
+
+/**
+ * Sliding session: renew the token when the app comes back (tab visible,
+ * network up) so a long-lived tab or resident Android app never outlives it.
+ * A revoked token (401) is left for bootAuth to drop on the next launch.
+ */
+async function keepAuthAlive(): Promise<void> {
+  if (!useUi.getState().account || !pb.authStore.isValid || !navigator.onLine) return;
+  if (Date.now() - lastAuthRefresh < AUTH_REFRESH_INTERVAL) return;
+  lastAuthRefresh = Date.now();
+  try {
+    await pb.collection("users").authRefresh({ requestKey: null });
+  } catch (e) {
+    // unreachable - retry on the next resume
+    if (!(e instanceof ClientResponseError && e.status === 401)) lastAuthRefresh = 0;
+  }
+}
+
 export function startSync(): void {
   if (subscribed) return;
   subscribed = true;
@@ -208,6 +228,10 @@ export function startSync(): void {
       if (useUi.getState().account) scheduleFlush();
     },
   );
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") void keepAuthAlive();
+  });
+  window.addEventListener("online", () => void keepAuthAlive());
 }
 
 function seedSyncState(tracks: Track[]): void {
