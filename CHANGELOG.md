@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.10 (2026-11-16)
+
+### Features
+- Stay signed in longer: a session now lasts 90 days and renews itself each time you come back to the app, so regular users are no longer signed out after a week
+
+### Fixes
+- Android app: shared loop links point at multi-looper.com instead of localhost
+
 ## v1.9 (2026-10-04)
 
 ### Features
