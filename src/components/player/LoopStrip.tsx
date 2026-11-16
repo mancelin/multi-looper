@@ -2,7 +2,7 @@
 
 import { CloseIcon, PlusIcon, ShareIcon } from "@/components/icons";
 import { addLoopAtPlayhead, selectLoopAndSeek } from "@/lib/loopEdit";
-import { buildShareUrl } from "@/lib/share";
+import { buildShareUrl, shareOrigin } from "@/lib/share";
 import { fmtS } from "@/lib/time";
 import { activeLoop, type Track } from "@/lib/types";
 import { useLibrary } from "@/store/library";
@@ -14,7 +14,7 @@ export function LoopStrip({ track }: { track: Track }) {
   const pushToast = useUi((s) => s.pushToast);
 
   const shareActiveLoop = async () => {
-    const url = buildShareUrl(window.location.origin, track, activeLoop(track));
+    const url = buildShareUrl(shareOrigin(), track, activeLoop(track));
     if (!url) return;
     try {
       await navigator.clipboard.writeText(url);

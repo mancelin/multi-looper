@@ -1,5 +1,6 @@
 "use client";
 
+import { Capacitor } from "@capacitor/core";
 import { ACCENTS, uid, type Loop, type Track } from "@/lib/types";
 import { extractVideoId, syntheticYtPeaks, thumbUrl } from "@/lib/youtube";
 import { useLibrary } from "@/store/library";
@@ -16,6 +17,14 @@ export interface SharedLoop {
   b: number;
   name?: string;
   title?: string;
+}
+
+/** Public web origin. The Android app's webview serves from https://localhost. */
+const PUBLIC_ORIGIN = "https://multi-looper.com";
+
+/** Origin share links point at: the current site on the web, the public one in the app. */
+export function shareOrigin(): string {
+  return Capacitor.isNativePlatform() ? PUBLIC_ORIGIN : window.location.origin;
 }
 
 const fmt = (v: number) => String(Math.round(v * 1000) / 1000);
